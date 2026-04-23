@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, UserPlus } from 'lucide-react';
+import { Mail, Lock, UserPlus, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -34,6 +34,11 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
         <div>
+          <img
+            src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
+            alt="DealKro Logo"
+            className="mx-auto h-24 w-auto object-contain"
+          />
           <h2 className="mt-6 text-3xl font-bold text-gray-900 text-center">
             Welcome back
           </h2>

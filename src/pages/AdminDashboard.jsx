@@ -23,8 +23,8 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-8 px-4 lg:px-0">
+      <div className="max-w-7xl mx-auto px-4 lg:px-0">
         {/* Welcome Header */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-12 border border-white/50">
           <div className="flex items-center gap-4 mb-6">

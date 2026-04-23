@@ -6,15 +6,24 @@ import toast from 'react-hot-toast';
 
 const AdminUsers = () => {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ role: 'all', search: '' });
+  const [filters, setFilters] = useState({ role: 'all', search: '', page: 1, limit: 10 });
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: usersData = { users: [], total: 0, page: 1, pages: 1 }, isLoading, error } = useQuery({
     queryKey: ['adminUsers', filters],
-    queryFn: () => {
-      const params = new URLSearchParams(filters);
-      return api.get(`/admin/users?${params}`).then(res => res.data.data);
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('role', filters.role);
+      params.append('page', filters.page.toString());
+      params.append('limit', filters.limit.toString());
+      if (filters.search.trim()) params.append('search', filters.search);
+      const res = await api.get(`/admin/users?${params}`);
+      return res.data.data;
     },
   });
+
+  const users = usersData.users || [];
+
+  if (error) toast.error('Failed to load users');
 
   const deleteMutation = useMutation({
     mutationFn: (userId) => api.delete(`/admin/users/${userId}`),
@@ -38,7 +47,7 @@ const AdminUsers = () => {
           <Users size={36} className="text-primary-600" />
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Manage Users</h1>
-            <p className="text-gray-600">{users.length} users • {filters.role} filter</p>
+            <p className="text-gray-600">{users.length} users • {filters.role} filter ({usersData.total} total)</p>
           </div>
         </div>
 
@@ -51,7 +60,7 @@ const AdminUsers = () => {
                 type="text"
                 placeholder="Search by name or email..."
                 value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
                 className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -158,9 +167,26 @@ const AdminUsers = () => {
           </div>
         )}
 
-        <div className="mt-12 text-center text-sm text-gray-500">
-          Showing users with {filters.role} filter
-        </div>
+        {usersData.pages > 1 && (
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <button 
+              onClick={() => setFilters(p => ({...p, page: Math.max(1, p.page - 1)}))}
+              disabled={filters.page <= 1}
+              className="px-3 py-1 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>Page {filters.page} of {usersData.pages}</span>
+            <button 
+              onClick={() => setFilters(p => ({...p, page: p.page + 1}))}
+              disabled={filters.page >= usersData.pages}
+              className="px-3 py-1 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+            >
+              Next
+            </button>
+            <span className="text-gray-500">({usersData.total} total)</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { LocationProvider } from './context/LocationContext';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import AdminLayout from './components/AdminLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import AdminLogin from './pages/AdminLogin';
@@ -20,6 +21,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminUsers from './pages/AdminUsers';
 import Footer from './components/Footer';
+import Categories from './pages/Categories';
+import Favorites from './pages/Favorites';
+import Notifications from './pages/Notifications';
+import SearchResults from './pages/SearchResults';
 
 
 function App() {
@@ -87,33 +92,29 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } 
-              />
-              <Route 
-                path="/admin/products" 
-                element={
-                  <AdminRoute>
-                    <AdminProducts />
-                  </AdminRoute>
-                } 
-              />
-              <Route 
-                path="/admin/users" 
-                element={
-                  <AdminRoute>
-                    <AdminUsers />
-                  </AdminRoute>
-                } 
-              />
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }>
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="users" element={<AdminUsers />} />
+              </Route>
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/favorites" element={
+                <ProtectedRoute>
+                  <Favorites />
+                </ProtectedRoute>
+              } />
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <Notifications />
+                </ProtectedRoute>
+              } />
+              <Route path="/search" element={<SearchResults />} />
               <Route path="*" element={<Navigate to="/" replace />} />
-
             </Routes>
             <Footer />
             <Toaster position="top-right" />
@@ -127,4 +128,3 @@ function App() {
 
 
 export default App;
-

@@ -10,6 +10,13 @@ const Footer = () => {
     <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-gray-300 border-t border-gray-700">
       {/* Top Footer */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex items-center justify-center mb-10">
+          <img
+            src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
+            alt="DealKro Logo"
+            className="h-20 w-auto object-contain"
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           
           {/* Popular Categories */}

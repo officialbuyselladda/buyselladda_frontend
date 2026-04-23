@@ -10,16 +10,25 @@ import toast from 'react-hot-toast';
 const AdminProducts = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ status: 'all', search: '' });
-  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [filters, setFilters] = useState({ status: 'all', search: '', page: 1, limit: 10 });
+  const [selectedProducts, setSelectedProducts] = useState([]); 
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: productsData = { products: [], total: 0, page: 1, pages: 1 }, isLoading, error } = useQuery({
     queryKey: ['adminProducts', filters],
-    queryFn: () => {
-      const params = new URLSearchParams(filters);
-      return api.get(`/admin/products?${params}`).then(res => res.data.data);
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('status', filters.status);
+      params.append('page', filters.page.toString());
+      params.append('limit', filters.limit.toString());
+      if (filters.search.trim()) params.append('search', filters.search);
+      const res = await api.get(`/admin/products?${params}`);
+      return res.data.data;
     },
   });
+
+  const products = productsData.products || [];
+
+  if (error) toast.error('Failed to load products');
 
   const approveMutation = useMutation({
     mutationFn: (productId) => api.put(`/admin/products/${productId}/approve`),
@@ -76,7 +85,7 @@ const AdminProducts = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Manage Products</h1>
-            <p className="text-gray-600">{products.length} products • {filters.status} filter</p>
+            <p className="text-gray-600">{products.length} products • {filters.status} filter ({productsData.total} total)</p>
           </div>
           <div className="flex gap-2">
             <button 
@@ -103,11 +112,11 @@ const AdminProducts = () => {
           <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
+  <input
                 type="text"
                 placeholder="Search products by title or seller..."
                 value={filters.search}
-                onChange={(e) => setFilters({...filters, search: e.target.value})}
+                onChange={(e) => setFilters({...filters, search: e.target.value, page: 1})}
                 className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -240,9 +249,26 @@ const AdminProducts = () => {
           </div>
         )}
 
-        <div className="mt-12 text-center text-sm text-gray-500">
-          Showing products with {filters.status} filter. Page size: 20
-        </div>
+        {productsData.pages > 1 && (
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <button 
+              onClick={() => setFilters(p => ({...p, page: Math.max(1, p.page - 1)}))}
+              disabled={filters.page <= 1}
+              className="px-3 py-1 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>Page {filters.page} of {productsData.pages}</span>
+            <button 
+              onClick={() => setFilters(p => ({...p, page: p.page + 1}))}
+              disabled={filters.page >= productsData.pages}
+              className="px-3 py-1 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+            >
+              Next
+            </button>
+            <span className="text-gray-500">({productsData.total} total)</span>
+          </div>
+        )}
       </div>
     </div>
   );

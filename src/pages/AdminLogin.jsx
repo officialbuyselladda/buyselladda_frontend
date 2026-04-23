@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Shield, Mail, Lock, User } from 'lucide-react';
+import { Shield, Mail, Lock } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -16,37 +16,40 @@ const schema = yup.object({
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { adminLogin, user } = useAuth();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema)
   });
 
+  // Auto-redirect if already logged in as admin
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      toast.success('Welcome back to Admin Panel');
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
   const onSubmit = async (data) => {
     setLoading(true);
-    try {
-const { data: response } = await api.post('/auth/admin-login', data);
-      if (response.success) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        toast.success(response.message || 'Admin login successful!');
-        navigate('/admin-dashboard');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+    const result = await adminLogin(data.email, data.password);
+    if (result.success) {
+      setTimeout(() => {
+        navigate('/admin/dashboard', { replace: true });
+      }, 100);
     }
+    setLoading(false);
   };
-
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/50">
         <div className="text-center">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-            <Shield className="w-10 h-10 text-white" />
-          </div>
+          <img
+            src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
+            alt="DealKro Logo"
+            className="mx-auto h-24 w-auto object-contain mb-6"
+          />
           <h2 className="mt-2 text-4xl font-bold bg-gradient-to-r from-gray-900 via-emerald-700 to-blue-600 bg-clip-text text-transparent">
             Admin Panel
           </h2>
@@ -121,3 +124,4 @@ const { data: response } = await api.post('/auth/admin-login', data);
     </div>
   );
 }
+

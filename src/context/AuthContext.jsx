@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load initial state
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -23,6 +24,22 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser));
     }
     setLoading(false);
+  }, []);
+
+  // Listen for storage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      if (token && storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (email, password) => {
@@ -37,6 +54,22 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
+      return { success: false };
+    }
+  };
+
+  const adminLogin = async (email, password) => {
+    try {
+      const { data } = await api.post('/auth/admin-login', { email, password });
+      if (data.success) {
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        setUser(data.data.user);
+        toast.success(data.message);
+        return { success: true };
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Admin login failed');
       return { success: false };
     }
   };
@@ -64,6 +97,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     login,
+    adminLogin,
     register,
     logout,
     loading,
