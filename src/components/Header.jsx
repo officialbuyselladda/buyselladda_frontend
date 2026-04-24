@@ -79,9 +79,9 @@ const Header = () => {
                       </option>
                     ))}
                   </select>
-                  <button type="submit" className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold">
+                  <button type="submit" className="px-6 py-3 bg-olx-orange-500 hover:bg-olx-orange-600 text-white font-bold">
                     Find
-                  </button>
+                  </button> 
                 </form>
               </div>
 
@@ -96,8 +96,8 @@ const Header = () => {
                 {user?.role === 'user' && (
                   <Link
                     to="/create-product"
-                    className="px-4 lg:px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl"
-                  >
+                    className="px-4 lg:px-6 py-2 bg-olx-orange-500 hover:bg-olx-orange-600 text-white font-bold rounded-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl"
+                  > 
                     <Plus size={18} />
                     <span className="hidden lg:inline">Post Free Ad</span>
                   </Link>

@@ -4,29 +4,29 @@ import { cn } from '../utils';
 
 const ProductCard = ({ product }) => {
   return (
-    <Link to={`/products/${product._id}`} className="group block p-6 bg-white rounded-xl border border-gray-200 hover:shadow-lg hover:border-primary-200 transition-all duration-300 overflow-hidden">
-      <div className="aspect-video bg-gray-100 rounded-lg mb-4 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+    <Link to={`/products/${product._id}`} className="group block p-4 bg-white border border-gray-200 hover:border-olx-orange-400 hover:shadow-md rounded-lg transition-all duration-200 overflow-hidden h-full flex flex-col"> 
+      <div className="aspect-[4/3] bg-gray-100 rounded-md mb-3 overflow-hidden flex-shrink-0 group-hover:scale-[1.02] transition-transform duration-200">
         {product.images && product.images[0]?.url && (
           <img 
             src={product.images[0].url} 
             alt={product.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover hover:opacity-95 transition-opacity"
           />
         )}
-      </div>
+      </div> 
       
       <div className="space-y-2">
         <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary-600 transition-colors">
           {product.title}
         </h3>
         
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <span className="font-bold text-xl text-gray-900">₹{product.price.toLocaleString()}</span>
-          <div className="flex items-center space-x-1">
-            <Tag size={16} />
-            <span>{product.category}</span>
+        <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+          <span className="font-black text-2xl text-olx-orange-500 tracking-tight">₹{product.price.toLocaleString()}</span>
+          <div className="flex items-center space-x-1 text-xs bg-olx-orange-100 text-olx-orange-700 px-2 py-1 rounded-full">
+            <Tag size={12} />
+            <span className="font-medium">{product.category}</span>
           </div>
-        </div>
+        </div> 
         
         <div className="flex items-center justify-between text-xs text-gray-400">
           <div className="flex items-center space-x-1">
@@ -36,15 +36,19 @@ const ProductCard = ({ product }) => {
           <span>{product.condition}</span>
         </div>
         
-        <div className="flex items-center space-x-1 text-sm text-gray-500 mt-2">
-          <MapPin size={16} />
-          <span>{product.location}</span>
-        </div>
+        <div className="flex items-center space-x-1 text-xs text-gray-500 mt-auto">
+          <MapPin size={14} />
+          <span className="truncate">{product.location}</span>
+        </div> 
       </div>
-      
+      {product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 24*60*60*1000) && (
+        <div className="mt-2 self-start px-2 py-1 bg-olx-orange-100 border border-olx-orange-300 text-xs font-bold text-olx-orange-700 rounded">
+          NEW
+        </div>
+      )}
       {product.status !== 'approved' && (
-        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-          {product.status === 'pending' ? 'Pending Approval' : 'Rejected'}
+        <div className="mt-1 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+          {product.status === 'pending' ? 'Pending' : 'Rejected'}
         </div>
       )}
     </Link>
@@ -52,4 +56,5 @@ const ProductCard = ({ product }) => {
 };
 
 export default ProductCard;
+
 

@@ -5,6 +5,20 @@ export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/api';
+
+export const useCategories = () => {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data } = await api.get('/categories/tree');
+      return data.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
+};
+
 export const CATEGORIES = [
   'Electronics',
   'Vehicles',
@@ -13,6 +27,7 @@ export const CATEGORIES = [
   'Services',
   'Others'
 ];
+
 
 export const CONDITIONS = ['New', 'Used'];
 
