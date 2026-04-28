@@ -68,11 +68,14 @@ const AdminReports = () => {
         filters={filters}
         onFilterChange={setFilters}
         actions={[
-          {
-            label: 'Resolve Selected',
-            icon: <CheckCircle size={18} />,
-            onClick: handleBulkResolve
-          }
+          <button 
+            key="resolve" 
+            onClick={handleBulkResolve}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all flex items-center gap-2 text-sm"
+          >
+            <CheckCircle size={18} />
+            Resolve Selected ({selectedReports.length})
+          </button>
         ]}
         pagination={{ page: 1, pages: 1, total: mockReports.length }}
         emptyState="No reports found. Great job team!"

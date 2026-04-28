@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Shield, Lock, Phone, Save, LogOut } from 'lucide-react';
+import { User, Mail, Shield, Lock, Phone, Save, LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const AdminSettings = () => {

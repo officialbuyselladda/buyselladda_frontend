@@ -9,6 +9,10 @@ import {
   MessagesSquare, 
   Flag, 
   BarChart3,
+  Folder,
+  Heart,
+  Bell,
+  ShieldAlert,
   LogOut, 
   ChevronLeft,
   ChevronRight,
@@ -54,6 +58,26 @@ const navItems = [
       icon: BarChart3 
     },
     { 
+      path: '/admin/categories', 
+      label: 'Categories', 
+      icon: Folder 
+    },
+    { 
+      path: '/admin/favorites', 
+      label: 'Favorites', 
+      icon: Heart 
+    },
+    { 
+      path: '/admin/notifications', 
+      label: 'Notifications', 
+      icon: Bell 
+    },
+    { 
+      path: '/admin/moderation', 
+      label: 'Moderation', 
+      icon: ShieldAlert 
+    },
+    { 
       path: '/admin/settings', 
       label: 'Settings', 
       icon: Settings 
@@ -66,11 +90,12 @@ const navItems = [
   };
 
   return (
-    <div className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white fixed h-full z-40 transition-all duration-300 lg:translate-x-0 ${
+    <div className={`bg-gradient-to-b from-slate-900 to-slate-800 text-white fixed h-screen z-40 transition-all duration-300 lg:translate-x-0 flex flex-col ${
       isCollapsed ? '-translate-x-full lg:w-20' : 'w-64 lg:w-64'
     }`}>
+
       {/* Logo */}
-      <div className="p-6 border-b border-slate-700">
+      <div className="p-6 border-b border-slate-700 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Shield size={28} className="text-emerald-400" />
           {!isCollapsed && (
@@ -84,8 +109,8 @@ const navItems = [
         </div>
       </div>
 
-      {/* Nav Links */}
-      <nav className="p-4 space-y-2 mt-6">
+      {/* Scrollable Nav Links */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-900 mt-6">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -107,8 +132,8 @@ const navItems = [
         })}
       </nav>
 
-      {/* User Info */}
-      <div className="absolute bottom-6 left-0 right-0 px-4">
+      {/* User Info - Sticky Bottom */}
+      <div className="flex-shrink-0 px-4 pb-20">
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700 border-opacity-50">
           {!isCollapsed && (
             <div className="flex items-center gap-3 mb-3">

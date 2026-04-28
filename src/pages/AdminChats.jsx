@@ -46,14 +46,9 @@ const AdminChats = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingChat, setDeletingChat] = useState(null);
 
-  const { data: chatsData = { chats: mockChats, total: mockChats.length } } = useQuery({
-    queryKey: ['adminChats', filters],
-    queryFn: () => {
-      // Real API: api.get('/admin/chats', { params: filters })
-      return new Promise(resolve => setTimeout(() => resolve({ data: { data: chatsData } }), 500));
-    },
-    placeholderData: { chats: [], total: 0 }
-  });
+  const chatsData = { chats: mockChats, total: mockChats.length, page: 1, pages: 1 };
+  // Mock - replace with:
+  // const { data: chatsData } = useQuery({ queryKey: ['adminChats', filters], queryFn: () => api.get('/admin/chats', { params: filters }).then(res => res.data.data) });
 
   const chats = chatsData.chats || [];
 
@@ -142,11 +137,14 @@ const AdminChats = () => {
         filters={filters}
         onFilterChange={setFilters}
         actions={[
-          {
-            label: 'Delete Selected',
-            icon: <Trash2 size={18} />,
-            onClick: () => bulkDelete()
-          }
+          <button 
+            key="delete" 
+            onClick={() => bulkDelete()}
+            className="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all flex items-center gap-2 text-sm"
+          >
+            <Trash2 size={18} />
+            Delete Selected ({selectedChats.length})
+          </button>
         ]}
         pagination={{
           page: 1,
