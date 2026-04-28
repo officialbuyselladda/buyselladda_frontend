@@ -27,7 +27,7 @@ api.interceptors.response.use(
 
 export const uploadApi = axios.create({
   baseURL: '/api',
-  headers: { 'Content-Type': 'multipart/form-data' },
+
 });
 
 uploadApi.interceptors.request.use((config) => {

@@ -162,10 +162,10 @@ const Footer = () => {
                 Help
               </h3>
               <ul className="ftr-list">
-                <li><Link to="#" className="ftr-link"><Phone size={13} /> Contact</Link></li>
-                <li><Link to="#" className="ftr-link"><Shield size={13} /> Safety</Link></li>
-                <li><Link to="#" className="ftr-link"><Mail size={13} /> Report Problem</Link></li>
-                <li><Link to="/notifications" className="ftr-link"><Bell size={13} /> Support</Link></li>
+                <li><Link to="/contact" className="ftr-link"><Phone size={13} /> Contact</Link></li>
+                <li><Link to="/safety" className="ftr-link"><Shield size={13} /> Safety</Link></li>
+                <li><Link to="/report" className="ftr-link"><Mail size={13} /> Report Problem</Link></li>
+                <li><Link to="/support" className="ftr-link"><Bell size={13} /> Support</Link></li>
               </ul>
             </div>
 
@@ -218,11 +218,11 @@ const Footer = () => {
             {/* Copyright */}
             <p className="ftr-copy">
               © 2024 DealKro. All rights reserved &nbsp;|&nbsp;
-              <Link to="#" className="ftr-copy-link">Privacy Policy</Link>
+              <Link to="/privacy" className="ftr-copy-link">Privacy Policy</Link>
               &nbsp;|&nbsp;
-              <Link to="#" className="ftr-copy-link">Terms of Use</Link>
+              <Link to="/terms" className="ftr-copy-link">Terms of Use</Link>
               &nbsp;|&nbsp;
-              <Link to="#" className="ftr-copy-link">Help</Link>
+              <Link to="/help" className="ftr-copy-link">Help</Link>
             </p>
 
             {/* City pills (bottom) */}

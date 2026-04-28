@@ -13,7 +13,7 @@ export const useCategories = () => {
     queryKey: ['categories'],
     queryFn: async () => {
       const { data } = await api.get('/categories/tree');
-      return data.data;
+      return data?.data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 min
   });

@@ -25,7 +25,13 @@ import Categories from './pages/Categories';
 import Favorites from './pages/Favorites';
 import Notifications from './pages/Notifications';
 import SearchResults from './pages/SearchResults';
-
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
+import Help from './pages/Help';
+import Contact from './pages/Contact';
+import Safety from './pages/Safety';
+import ReportProblem from './pages/ReportProblem';
+import Support from './pages/Support';
 
 function App() {
   const queryClient = new QueryClient({
@@ -113,6 +119,13 @@ function App() {
                   <Notifications />
                 </ProtectedRoute>
               } />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfUse />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/safety" element={<Safety />} />
+              <Route path="/report" element={<ReportProblem />} />
+              <Route path="/support" element={<Support />} />
               <Route path="/search" element={<SearchResults />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -128,3 +141,4 @@ function App() {
 
 
 export default App;
+

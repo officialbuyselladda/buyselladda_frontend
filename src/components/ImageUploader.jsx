@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import api from '../services/api';
-import { uploadApi } from '../services/api';
 import toast from 'react-hot-toast';
 
 const ImageUploader = ({ onImagesChange, existingImages = [] }) => {
@@ -19,7 +18,7 @@ const ImageUploader = ({ onImagesChange, existingImages = [] }) => {
 
     try {
       setUploading(true);
-      const { data } = await uploadApi.post('/upload', formData);
+      const { data } = await api.post('/upload', formData);
       if (data.success) {
         const newImage = { public_id: data.data.public_id, url: data.data.url };
         setImages(prev => [...prev, newImage]);
@@ -27,7 +26,8 @@ const ImageUploader = ({ onImagesChange, existingImages = [] }) => {
         toast.success('Image uploaded');
       }
     } catch (error) {
-      toast.error('Upload failed');
+      console.error('Upload error:', error.response?.data || error);
+      toast.error(error.response?.data?.message || 'Upload failed');
     } finally {
       setUploading(false);
     }

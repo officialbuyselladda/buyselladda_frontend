@@ -1,63 +1,122 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { cn, useCategories, CATEGORIES } from '../utils';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
-import { Search, Map, ArrowUp, ArrowDown, MapPin, ChevronLeft } from 'lucide-react';
+import { Search, MapPin, X, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
+/* ─────────────────────────────────────────────
+   Skeleton Card
+───────────────────────────────────────────── */
+const SkeletonCard = () => (
+  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse">
+    <div className="bg-gray-100 aspect-[4/3] w-full" />
+    <div className="p-3 space-y-2">
+      <div className="h-3 bg-gray-100 rounded-full w-3/4" />
+      <div className="h-4 bg-gray-100 rounded-full w-1/2" />
+      <div className="h-3 bg-gray-100 rounded-full w-2/3" />
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Category Pill
+───────────────────────────────────────────── */
+const CategoryPill = ({ label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      'flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border',
+      active
+        ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-100'
+        : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-500'
+    )}
+  >
+    {label}
+  </button>
+);
+
+/* ─────────────────────────────────────────────
+   Main Home Component
+───────────────────────────────────────────── */
 const Home = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showMap, setShowMap] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(null);
   const [page, setPage] = useState(1);
 
-  const { user } = useAuth();
   const { userLocation, userAddress, clearLocation } = useLocation();
   const { data: categoriesData } = useCategories();
+  const categoryScrollRef = useRef(null);
+  const observerRef = useRef(null);
+  const sentinelRef = useRef(null);
 
   const filters = useMemo(() => ({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
-    lat: searchParams.get('lat') || '',
-    lng: searchParams.get('lng') || '',
   }), [searchParams]);
 
-  const fetchProducts = useCallback(async (currentPage = 1) => {
+  /* ── Fetch ── */
+  const fetchProducts = useCallback(async (currentPage = 1, append = false) => {
     try {
-      setLoading(true);
+      if (currentPage === 1) setLoading(true);
+      else setLoadingMore(true);
 
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
-      if (filters.lat) params.append('lat', filters.lat);
-      if (filters.lng) params.append('lng', filters.lng);
       params.append('page', currentPage.toString());
       params.append('limit', '20');
 
       const { data } = await api.get('/products?' + params);
+      const validProducts = (data.data?.products || []).filter(p => p && p._id);
+      const total = data.data?.total || null;
 
-      const rawProducts = data.data?.products || [];
-      const validProducts = rawProducts.filter(p => p && p._id);
+      if (total !== null) setTotalCount(total);
+      setHasMore(validProducts.length === 20);
 
-      if (currentPage === 1) setProducts(validProducts);
-      else setProducts(prev => [...prev, ...validProducts]);
+      if (!append) setProducts(validProducts);
+      else setProducts(prev => {
+        const ids = new Set(prev.map(p => p._id));
+        return [...prev, ...validProducts.filter(p => !ids.has(p._id))];
+      });
 
-    } catch (err) {
+    } catch {
       toast.error('Failed to load products');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [filters]);
 
+  /* ── Reset on filter change ── */
   useEffect(() => {
     setPage(1);
-    fetchProducts(1);
+    setHasMore(true);
+    fetchProducts(1, false);
   }, [filters]);
+
+  /* ── Infinite scroll ── */
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          const next = page + 1;
+          setPage(next);
+          fetchProducts(next, true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sentinelRef.current) observerRef.current.observe(sentinelRef.current);
+    return () => observerRef.current?.disconnect();
+  }, [hasMore, loadingMore, loading, page, fetchProducts]);
 
   const updateFilter = (key, value) => {
     const params = new URLSearchParams(searchParams);
@@ -65,174 +124,172 @@ const Home = () => {
     setSearchParams(params);
   };
 
-  const loadMore = () => {
-    const next = page + 1;
-    setPage(next);
-    fetchProducts(next);
-  };
+  const clearSearch = () => updateFilter('search', '');
 
-  const mapMarkers = products
-    .filter(p => p.locationCoords?.coordinates)
-    .map(p => ({
-      lat: p.locationCoords.coordinates[1],
-      lng: p.locationCoords.coordinates[0],
-      id: p._id,
-      title: p.title
-    }));
+  const allCategories = categoriesData || CATEGORIES;
 
+  /* ─────────────────────────────────────────────
+     RENDER
+  ───────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-[#F5F5F5]">
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-4 space-y-3">
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-
-       
-
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-8">
-
-          {/* LEFT SIDEBAR */}
-          <div className="hidden lg:block lg:col-span-3">
-            <div className="bg-white rounded-2xl p-5 shadow-sm border sticky top-24">
-              <h3 className="font-bold mb-4">Categories</h3>
-
-              <div className="space-y-2">
-                <button
-                  onClick={() => updateFilter('category', '')}
-                  className={cn(
-                    "w-full text-left px-3 py-2 rounded-lg",
-                    !filters.category
-                      ? "bg-orange-500 text-white"
-                      : "hover:bg-gray-100"
-                  )}
-                >
-                  All Categories
-                </button>
-
-                {(categoriesData || CATEGORIES).map(cat => (
-                  <button
-                    key={cat._id || cat}
-                    onClick={() =>
-                      updateFilter(
-                        'category',
-                        filters.category === (cat.slug || cat) ? '' : (cat.slug || cat)
-                      )
-                    }
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg",
-                      filters.category === (cat.slug || cat)
-                        ? "bg-orange-500 text-white"
-                        : "hover:bg-gray-100"
-                    )}
-                  >
-                    {cat.name || cat}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* ── Active Search Banner ── */}
+        {filters.search && (
+          <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-2xl px-4 py-2.5">
+            <Search className="w-4 h-4 text-orange-400 flex-shrink-0" />
+            <span className="text-sm text-gray-700 flex-1">
+              Results for <span className="font-semibold text-orange-500">"{filters.search}"</span>
+            </span>
+            <button
+              onClick={clearSearch}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-orange-100 hover:bg-orange-200 transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-orange-500" />
+            </button>
           </div>
+        )}
 
-          {/* MAIN CONTENT */}
-          <div className="lg:col-span-6">
-
-            {/* LOCATION */}
-            {userLocation && (
-              <div className="bg-white rounded-xl p-4 mb-4 flex justify-between shadow-sm">
-                <span className="text-sm flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Near {userAddress || 'you'}
-                </span>
-
-                <button onClick={clearLocation} className="text-sm text-blue-600">
-                  Change
-                </button>
-              </div>
-            )}
-
-            {/* HEADER */}
-            <div className="flex justify-between mb-4">
-              <h2 className="font-bold text-lg">
-                {loading ? "Loading..." : `${products.length} results`}
-              </h2>
+        {/* ── Location Banner ── */}
+        {userLocation && (
+          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 shadow-sm">
+            <div className="w-7 h-7 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-4 h-4 text-blue-500" />
             </div>
+            <span className="text-sm text-gray-600 flex-1">
+              Showing near <span className="font-medium text-gray-800">{userAddress || 'your location'}</span>
+            </span>
+            <button
+              onClick={clearLocation}
+              className="text-xs font-medium text-blue-500 hover:text-blue-700 transition-colors"
+            >
+              Change
+            </button>
+          </div>
+        )}
 
-            {/* PRODUCTS */}
-            {loading && products.length === 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Array(6).fill(0).map((_, i) => (
-                  <div key={i} className="animate-pulse h-48 bg-white rounded-xl"></div>
-                ))}
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-xl">
-                <Search className="mx-auto mb-3 text-gray-400" size={40} />
-                <p>No products found</p>
-              </div>
+        {/* ── Categories ── */}
+        <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100">
+          <div
+            ref={categoryScrollRef}
+            className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            <CategoryPill
+              label="All"
+              active={!filters.category}
+              onClick={() => updateFilter('category', '')}
+            />
+            {allCategories.map(cat => {
+              const slug = cat.slug || cat;
+              const name = cat.name || cat;
+              return (
+                <CategoryPill
+                  key={cat._id || slug}
+                  label={name}
+                  active={filters.category === slug}
+                  onClick={() => updateFilter('category', filters.category === slug ? '' : slug)}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Results Header ── */}
+        <div className="flex items-center justify-between px-1">
+          <div className="text-sm text-gray-500">
+            {loading ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-3 h-3 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-3 h-3 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </span>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
-                {products.map(p => (
-                  <div key={p._id} className="hover:scale-[1.02] transition-all duration-300">
-                    <ProductCard product={p} />
-                  </div>
-                ))}
-              </div>
+              <span>
+                <span className="font-semibold text-gray-800 text-base">{totalCount ?? products.length}</span>
+                {' '}listings found
+              </span>
             )}
-
-            {/* LOAD MORE */}
-            {products.length > 0 && (
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={loadMore}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all"
-                >
-                  {loading ? "Loading..." : "Load More"}
-                </button>
-              </div>
-            )}
-
-            {/* MAP */}
-            {showMap && userLocation && (
-              <div className="mt-6 bg-white p-4 rounded-xl shadow">
-                <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-                  <GoogleMap
-                    mapContainerStyle={{ width: '100%', height: '400px' }}
-                    center={{
-                      lat: parseFloat(filters.lat),
-                      lng: parseFloat(filters.lng)
-                    }}
-                    zoom={12}
-                  >
-                    {mapMarkers.map(m => (
-                      <Marker key={m.id} position={{ lat: m.lat, lng: m.lng }} />
-                    ))}
-                  </GoogleMap>
-                </LoadScript>
-              </div>
-            )}
-
           </div>
+          {filters.category && (
+            <span className="text-xs bg-orange-100 text-orange-600 px-2.5 py-1 rounded-full font-medium capitalize">
+              {filters.category}
+            </span>
+          )}
+        </div>
 
-          {/* RIGHT SIDEBAR */}
-          <div className="hidden xl:block xl:col-span-3">
-            <div className="bg-white p-5 rounded-2xl shadow-sm sticky top-24">
-              <h3 className="font-bold mb-3">Popular</h3>
-
-              {CATEGORIES.slice(0, 5).map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => updateFilter('category', cat)}
-                  className="block w-full text-left py-2 hover:text-blue-600"
+        {/* ── Product Grid ── */}
+        {loading && products.length === 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            {Array(12).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+              <Search className="w-7 h-7 text-gray-300" />
+            </div>
+            <p className="text-gray-700 font-semibold text-lg">No listings found</p>
+            <p className="text-gray-400 text-sm mt-1">Try a different search or category</p>
+            {(filters.search || filters.category) && (
+              <button
+                onClick={() => setSearchParams({})}
+                className="mt-4 px-5 py-2 bg-orange-500 text-white text-sm rounded-full hover:bg-orange-600 transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              {products.map((p, i) => (
+                <div
+                  key={p._id}
+                  className="opacity-0 animate-fadeIn"
+                  style={{ animationDelay: `${Math.min(i % 20, 11) * 40}ms`, animationFillMode: 'forwards' }}
                 >
-                  {cat}
-                </button>
+                  <ProductCard product={p} />
+                </div>
               ))}
             </div>
-          </div>
 
-        </div>
+            {/* ── Load More Skeleton (auto-trigger) ── */}
+            {loadingMore && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 mt-0">
+                {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+              </div>
+            )}
+
+            {/* ── Sentinel for Infinite Scroll ── */}
+            {hasMore && <div ref={sentinelRef} className="h-10" />}
+
+            {/* ── End of Results ── */}
+            {!hasMore && products.length > 0 && (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center gap-2 text-gray-400 text-sm">
+                  <div className="h-px w-12 bg-gray-200" />
+                  You've seen it all
+                  <div className="h-px w-12 bg-gray-200" />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
       </div>
+
+      {/* ── Global Styles ── */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.35s ease-out; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 };
 
 export default Home;
-
