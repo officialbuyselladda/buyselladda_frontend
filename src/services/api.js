@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
 });
 
 api.interceptors.request.use((config) => {
@@ -25,9 +25,8 @@ api.interceptors.response.use(
   }
 );
 
-export const uploadApi = axios.create({
-  baseURL: '/api',
-
+const uploadApi = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
 });
 
 uploadApi.interceptors.request.use((config) => {
