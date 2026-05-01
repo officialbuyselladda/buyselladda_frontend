@@ -34,6 +34,7 @@ import AdminCategories from './pages/AdminCategories';
 import AdminFavorites from './pages/AdminFavorites';
 import AdminNotifications from './pages/AdminNotifications';
 import AdminModeration from './pages/AdminModeration';
+import AdminSystemSettings from './pages/AdminSystemSettings';
 
 import Categories from './pages/Categories';
 import Favorites from './pages/Favorites';
@@ -137,6 +138,8 @@ const AppContent = () => {
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="moderation" element={<AdminModeration />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="system-settings" element={<AdminSystemSettings />} />
+
 
           {/* ❗ Admin fallback (IMPORTANT) */}
           <Route path="*" element={<div className="p-10 text-xl font-semibold">Admin Page Not Found</div>} />

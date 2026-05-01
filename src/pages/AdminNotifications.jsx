@@ -18,8 +18,9 @@ const AdminNotifications = () => {
     queryKey: ['adminNotifications', filters],
     queryFn: async () => {
       const params = new URLSearchParams(filters);
-      const res = await api.get(`/admin/notifications?${params}`);
+      const res = await api.get(`/notification/admin/list?${params}`);
       return res.data.data;
+
     },
   });
 
@@ -34,13 +35,22 @@ const AdminNotifications = () => {
   });
 
   const sendMutation = useMutation({
-    mutationFn: (data) => api.post('/admin/notifications/send', data),
+    mutationFn: (formData) => {
+      const data = Object.fromEntries(formData);
+      return api.post('/notification/', { 
+        user: data.userId, 
+        title: data.title, 
+        message: data.message, 
+        type: 'system' 
+      });
+    },
     onSuccess: () => {
-      toast.success('Notification sent');
+      toast.success('Notification sent successfully');
       setShowSendModal(false);
       queryClient.invalidateQueries(['adminNotifications']);
     },
   });
+
 
   const handleBulkDelete = () => {
     if (confirm(`Delete ${selectedNotifications.length} notifications?`)) {
@@ -135,12 +145,19 @@ const AdminNotifications = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-6">Send Notification</h2>
-            <form onSubmit={(e) => { e.preventDefault(); sendMutation.mutate({ title: '', message: '' }); }} className="space-y-4">
-              <input name="title" placeholder="Title" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500" />
-              <textarea name="message" rows="5" placeholder="Message" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 resize-vertical" />
+            <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                sendMutation.mutate(formData);
+              }} className="space-y-4">
+              <input name="userId" placeholder="User ID or Email (required)" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500" required />
+              <input name="title" placeholder="Title" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500" required />
+
+              <textarea name="message" rows="5" placeholder="Message" className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 resize-vertical" required />
               <div className="flex gap-3">
+
                 <button type="button" className="flex-1 px-6 py-3 border rounded-xl hover:bg-gray-50">Cancel</button>
-                <button type="submit" className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">Send to All</button>
+                <button type="submit" className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700">Send Notification</button>
               </div>
             </form>
           </div>
@@ -149,6 +166,7 @@ const AdminNotifications = () => {
     </div>
   );
 };
+
 
 export default AdminNotifications;
 
