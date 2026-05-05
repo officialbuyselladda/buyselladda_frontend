@@ -11,16 +11,16 @@ export default ({ mode }) => {
 
     plugins: [react()],
 
-    server: {
+server: {
       port: env.VITE_PORT || 5173,
       proxy: {
         '/api': {
-          target: env.VITE_API_PROXY || 'http://72.60.102.36:5003',
+          target: 'http://localhost:5003',
           changeOrigin: true,
           secure: false,
         },
         '/socket.io': {
-          target: env.VITE_API_PROXY || 'http://72.60.102.36:5003',
+          target: 'http://localhost:5003',
           ws: true,
           secure: false,
         }
