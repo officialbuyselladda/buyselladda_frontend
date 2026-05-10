@@ -1,13 +1,52 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, MapPin, Tag, MessageCircle, Heart, User } from 'lucide-react';
 import { OLXColors } from '../utils/olxTheme';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import toast from 'react-hot-toast';
+import { getImageUrl, placeholderImage } from '../utils/image';
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isNew =
+    product.createdAt &&
+    Date.parse(product.createdAt) > Date.now() - 24 * 60 * 60 * 1000;
 
-  const imageUrl =
-    product?.images?.[0]?.url ||
-    product?.images?.[0] ||
-    "https://via.placeholder.com/400x300?text=No+Image";
+  const imageUrl = getImageUrl(product?.images?.[0]);
+
+  const requireLogin = () => {
+    if (user) return false;
+    toast.error('Please login first');
+    navigate('/login');
+    return true;
+  };
+
+  const handleFavorite = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (requireLogin()) return;
+
+    try {
+      const { data } = await api.post('/favorites/toggle', { productId: product._id });
+      toast.success(data.message || 'Favorite updated');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not update favorite');
+    }
+  };
+
+  const handleChat = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (requireLogin()) return;
+
+    try {
+      const { data } = await api.post(`/products/${product._id}/contact`);
+      navigate(`/chats/${data.data.chat._id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not start chat');
+    }
+  };
 
   return (
     <Link
@@ -21,12 +60,13 @@ const ProductCard = ({ product }) => {
           src={imageUrl}
           alt={product.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(event) => {
+            event.currentTarget.src = placeholderImage;
+          }}
         />
 
         {/* NEW TAG */}
-        {product.createdAt &&
-          new Date(product.createdAt) >
-            new Date(Date.now() - 24 * 60 * 60 * 1000) && (
+        {isNew && (
             <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
               NEW
             </span>
@@ -91,14 +131,14 @@ const ProductCard = ({ product }) => {
         {/* 🔥 ACTION BUTTONS */}
         <div className="flex gap-2 mt-auto pt-3">
           <button
-            onClick={(e) => e.preventDefault()}
+            onClick={handleFavorite}
             className="flex-1 py-2 border rounded-lg hover:bg-gray-100 text-sm flex items-center justify-center gap-1"
           >
             <Heart size={16} />
           </button>
 
           <button
-            onClick={(e) => e.preventDefault()}
+            onClick={handleChat}
             className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm flex items-center justify-center gap-1"
           >
             <MessageCircle size={16} />

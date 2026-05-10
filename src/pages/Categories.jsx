@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Grid, List } from 'lucide-react';
-import { cn } from '../utils';
+import { cn, flattenCategories } from '../utils';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
@@ -31,10 +31,13 @@ const Categories = () => {
 
   const fetchCategories = async () => {
     try {
+      setLoading(true);
       const { data } = await api.get('/categories/tree');
-      setCategories(data.data);
+      setCategories(data.data || []);
     } catch (error) {
       toast.error('Failed to load categories');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,7 +67,23 @@ const Categories = () => {
     fetchCategoryProducts(selectedCategory, page + 1);
   };
 
-  if (!selectedCategory && categories.length > 0) {
+  const allCategories = flattenCategories(categories);
+
+  if (loading && !selectedCategory && categories.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+            {Array(10).fill(0).map((_, index) => (
+              <div key={index} className="h-44 animate-pulse rounded-2xl bg-white" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedCategory) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4">
@@ -104,7 +123,7 @@ const Categories = () => {
     );
   }
 
-  const category = categories.find(c => c.slug === selectedCategory) || {};
+  const category = allCategories.find(c => c.slug === selectedCategory || c.name === selectedCategory) || {};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,7 +210,7 @@ const Categories = () => {
                 <p className="text-gray-500 mb-8 max-w-md mx-auto">
                   Be the first to post in <span className="font-semibold text-gray-900 capitalize">{category.name}</span>
                 </p>
-                <button className="px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-lg">
+                <button onClick={() => navigate('/create-product')} className="px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-lg">
                   Post Free Ad
                 </button>
               </div>

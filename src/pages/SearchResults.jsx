@@ -2,10 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { Search, Filter, ChevronLeft, X, MapPin, Tag, DollarSign } from 'lucide-react';
-import { cn } from '../utils';
+import { cn, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-import { CATEGORIES } from '../utils';
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -14,14 +13,15 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
-    category: '',
+    category: searchParams.get('category') || '',
     minPrice: '',
     maxPrice: '',
     location: ''
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const query = searchParams.get('q') || '';
+  const query = searchParams.get('q') || searchParams.get('search') || '';
+  const { options: categoryOptions } = useCategoryOptions();
 
   const fetchProducts = useCallback(async (currentPage = 1) => {
     try {
@@ -59,7 +59,9 @@ const SearchResults = () => {
   };
 
   const loadMore = () => {
-    fetchProducts(page + 1);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage);
   };
 
   return (
@@ -97,8 +99,7 @@ const SearchResults = () => {
         </div>
 
         {/* Filters Desktop */}
-        {showFilters && (
-          <div className="lg:block hidden bg-white rounded-2xl border p-6 mb-8 sticky top-24">
+        <div className={`${showFilters ? 'block' : 'hidden'} lg:block bg-white rounded-2xl border p-6 mb-8 sticky top-24`}>
             <h3 className="font-bold text-lg mb-6 text-gray-900">Filters</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Category */}
@@ -110,8 +111,8 @@ const SearchResults = () => {
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">All Categories</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {categoryOptions.map(cat => (
+                    <option key={cat._id || getCategoryValue(cat)} value={getCategoryValue(cat)}>{getCategoryLabel(cat)}</option>
                   ))}
                 </select>
               </div>
@@ -162,8 +163,7 @@ const SearchResults = () => {
                 Clear All
               </button>
             </div>
-          </div>
-        )}
+        </div>
 
         {/* Results Header */}
         <div className="bg-white rounded-2xl border shadow-sm p-6 mb-8">
@@ -222,7 +222,7 @@ const SearchResults = () => {
         {products.length > 0 && (
           <div className="flex justify-center mt-12">
             <button
-              onClick={() => setPage(page + 1)}
+              onClick={loadMore}
               className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-xl hover:shadow-2xl"
             >
               Load More Results

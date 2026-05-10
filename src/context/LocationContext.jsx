@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getLocationFromCache, setLocationCache } from '../utils';
+import { clearLocationCache, getLocationFromCache, setLocationCache } from '../utils';
 import { reverseGeocode } from '../utils/geocode';
 
 const LocationContext = createContext();
@@ -91,6 +91,7 @@ const [userLocation, setUserLocation] = useState(null);
     clearLocation: () => {
       setUserLocation(null);
       setUserAddress(null);
+      clearLocationCache();
     }
   };
 

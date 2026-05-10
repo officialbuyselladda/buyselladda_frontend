@@ -1,44 +1,69 @@
 import { Link, useLocation } from 'react-router-dom';
-import { CATEGORIES } from '../utils';
-import { Facebook, Twitter, Instagram, Youtube, Phone, Mail, MapPin, Home, Tag, User, MessageCircle, Heart, Bell, Search, Plus, LogIn, FileText, Shield, Download, Map } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Facebook, Twitter, Instagram, Youtube, Plus, FileText, Shield, Download, Map, Link as LinkIcon } from 'lucide-react';
+import { contentApi } from '../services/api';
 import { cn } from '../utils';
 
-const pageRoutes = [
-  { path: '/',               label: 'Home',          icon: Home },
-  { path: '/categories',     label: 'Categories',    icon: Tag },
-  { path: '/search',         label: 'Search',        icon: Search },
-  { path: '/create-product', label: 'Post Free Ad',  icon: Plus },
-  { path: '/my-products',    label: 'My Ads',        icon: Tag },
-  { path: '/favorites',      label: 'Favorites',     icon: Heart },
-  { path: '/chats',          label: 'Messages',      icon: MessageCircle },
-  { path: '/notifications',  label: 'Notifications', icon: Bell },
-  { path: '/profile',        label: 'My Profile',    icon: User },
-  { path: '/login',          label: 'Login',         icon: LogIn },
-  { path: '/register',       label: 'Sign Up',       icon: User },
-];
+const fallbackFooter = {
+  brandName: 'DealKro',
+  logoUrl: 'https://i.ibb.co/d4v1q3jZ/logo.jpg',
+  tagline: 'Buy and sell locally.\nQuick, easy, safe.',
+  trustTitle: 'Trusted by 10M+ users',
+  trustSubtitle: "India's #1 buying & selling platform",
+  bannerButtonText: 'Post Your Ad',
+  bannerButtonPath: '/create-product',
+  copyrightText: 'DealKro. All rights reserved',
+  columns: [
+    { title: 'Buy & Sell', links: [{ label: 'Post Free Ad', path: '/create-product' }, { label: 'My Ads', path: '/my-products' }, { label: 'Profile', path: '/profile' }] },
+    { title: 'Browse', links: [{ label: 'All Categories', path: '/categories' }, { label: 'Search', path: '/search' }, { label: 'Favorites', path: '/favorites' }] },
+    { title: 'Account', links: [{ label: 'Login', path: '/login' }, { label: 'Sign Up', path: '/register' }, { label: 'Messages', path: '/chats' }] },
+    { title: 'Help', links: [{ label: 'Contact', path: '/contact' }, { label: 'Safety', path: '/safety' }, { label: 'Report Problem', path: '/report' }, { label: 'Support', path: '/support' }] },
+  ],
+  bottomLinks: [{ label: 'Privacy Policy', path: '/privacy' }, { label: 'Terms of Use', path: '/terms' }, { label: 'Help', path: '/help' }],
+  popularCities: ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad'],
+  socialLinks: [{ label: 'Facebook', url: '#' }, { label: 'Twitter', url: '#' }, { label: 'Instagram', url: '#' }, { label: 'Youtube', url: '#' }],
+  appButtons: [{ label: 'App Store', subLabel: 'iOS', url: '#' }, { label: 'Google Play', subLabel: 'Android', url: '#' }],
+};
 
-const popularCities = [
-  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad',
-  'Chennai', 'Kolkata', 'Pune', 'Ahmedabad',
-];
+const socialIconMap = {
+  facebook: Facebook,
+  twitter: Twitter,
+  instagram: Instagram,
+  youtube: Youtube,
+};
 
-const navigateToCity = (e, city) => {
-  e.preventDefault();
+const getSocialIcon = (label = '') => socialIconMap[label.toLowerCase()] || LinkIcon;
+
+const SmartLink = ({ item, className, children, onClick }) => {
+  const target = item?.path || item?.url || '#';
+  if (target.startsWith('http') || target.startsWith('mailto:') || target.startsWith('tel:') || target === '#') {
+    return <a href={target} className={className} onClick={onClick}>{children}</a>;
+  }
+  return <Link to={target} className={className} onClick={onClick}>{children}</Link>;
+};
+
+const navigateToCity = (event, city) => {
+  event.preventDefault();
   const url = new URL(window.location);
+  url.pathname = '/';
   url.searchParams.set('city', city.toLowerCase());
   window.location = url.toString();
 };
 
 const Footer = () => {
   const location = useLocation();
+  const { data } = useQuery({
+    queryKey: ['siteContent'],
+    queryFn: contentApi.getSiteContent,
+    staleTime: 5 * 60 * 1000,
+  });
+  const footer = { ...fallbackFooter, ...(data?.footer || {}) };
 
   return (
     <>
       <style>{footerStyles}</style>
 
       <footer className="ftr-root">
-
-        {/* ── Trust banner ── */}
         <div className="ftr-banner">
           <div className="ftr-banner-inner">
             <div className="ftr-banner-left">
@@ -46,217 +71,129 @@ const Footer = () => {
                 <Shield size={18} />
               </div>
               <div>
-                <p className="ftr-banner-title">Trusted by 10M+ users</p>
-                <p className="ftr-banner-sub">India's #1 buying &amp; selling platform</p>
+                <p className="ftr-banner-title">{footer.trustTitle}</p>
+                <p className="ftr-banner-sub">{footer.trustSubtitle}</p>
               </div>
             </div>
-            <Link to="/create-product" className="ftr-banner-btn">
+            <SmartLink item={{ path: footer.bannerButtonPath }} className="ftr-banner-btn">
               <Plus size={14} strokeWidth={2.5} />
-              Post Your Ad
-            </Link>
+              {footer.bannerButtonText}
+            </SmartLink>
           </div>
         </div>
 
-        {/* ── Main grid ── */}
         <div className="ftr-main">
           <div className="ftr-grid">
-
-            {/* Brand */}
             <div className="ftr-brand">
-              <img
-                src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
-                alt="DealKro"
-                className="ftr-logo"
-              />
-              <p className="ftr-brand-tagline">Buy and sell locally.<br />Quick, easy, safe.</p>
+              {footer.logoUrl && <img src={footer.logoUrl} alt={footer.brandName} className="ftr-logo" />}
+              <p className="ftr-brand-tagline">{String(footer.tagline || '').split('\n').map((line) => <span key={line}>{line}<br /></span>)}</p>
               <div className="ftr-social-row">
-                {[
-                  { Icon: Facebook,  label: 'Facebook' },
-                  { Icon: Twitter,   label: 'Twitter' },
-                  { Icon: Instagram, label: 'Instagram' },
-                  { Icon: Youtube,   label: 'Youtube' },
-                ].map(({ Icon, label }) => (
-                  <a key={label} href="#" className="ftr-social-btn" aria-label={label}>
-                    <Icon size={16} />
-                  </a>
-                ))}
+                {(footer.socialLinks || []).map((item) => {
+                  const Icon = getSocialIcon(item.label);
+                  return (
+                    <SmartLink key={`${item.label}-${item.url}`} item={item} className="ftr-social-btn">
+                      <Icon size={16} />
+                    </SmartLink>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Buy & Sell */}
-            <div className="ftr-col">
-              <h3 className="ftr-col-title">
-                <Plus size={14} />
-                Buy &amp; Sell
-              </h3>
-              <ul className="ftr-list">
-                <li>
-                  <Link to="/create-product" className="ftr-link">
-                    <Plus size={13} /> Post Free Ad
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/my-products" className="ftr-link">
-                    <Tag size={13} /> My Ads
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/profile" className="ftr-link">
-                    <User size={13} /> Profile
-                  </Link>
-                </li>
-              </ul>
-            </div>
+            {(footer.columns || []).map((column) => (
+              <div className="ftr-col" key={column.title}>
+                <h3 className="ftr-col-title">
+                  <FileText size={14} />
+                  {column.title}
+                </h3>
+                <ul className="ftr-list">
+                  {(column.links || []).map((item) => (
+                    <li key={`${column.title}-${item.label}-${item.path || item.url}`}>
+                      <SmartLink
+                        item={item}
+                        className={cn('ftr-link', location.pathname === item.path && 'ftr-link-active')}
+                      >
+                        <LinkIcon size={13} />
+                        {item.label}
+                      </SmartLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
 
-            {/* Browse */}
-            <div className="ftr-col">
-              <h3 className="ftr-col-title">
-                <Tag size={14} />
-                Browse
-              </h3>
-              <ul className="ftr-list">
-                {pageRoutes.slice(1, 6).map(({ path, label, icon: Icon }) => (
-                  <li key={path}>
-                    <Link
-                      to={path}
-                      className={cn('ftr-link', location.pathname === path && 'ftr-link-active')}
-                    >
-                      <Icon size={13} />
-                      {label}
+            {(footer.appButtons || []).length > 0 && (
+              <div className="ftr-col">
+                <h3 className="ftr-col-title">
+                  <Download size={14} />
+                  Download App
+                </h3>
+                <p className="ftr-app-sub">Buy &amp; sell on the go</p>
+                <div className="ftr-app-btns">
+                  {footer.appButtons.map((item, index) => (
+                    <SmartLink key={`${item.label}-${item.url}`} item={item} className={`ftr-app-btn ${index % 2 ? 'ftr-app-android' : 'ftr-app-ios'}`}>
+                      <span className="ftr-app-store-label">{item.label}</span>
+                      <span className="ftr-app-store-sub">{item.subLabel}</span>
+                    </SmartLink>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(footer.popularCities || []).length > 0 && (
+              <div className="ftr-cities-col">
+                <h3 className="ftr-col-title">
+                  <Map size={14} />
+                  Popular Cities
+                </h3>
+                <div className="ftr-cities-grid">
+                  {footer.popularCities.map((city) => (
+                    <Link key={city} to="/" className="ftr-city-pill" onClick={(event) => navigateToCity(event, city)}>
+                      {city}
                     </Link>
-                  </li>
-                ))}
-                <li>
-                  <Link to="/categories" className="ftr-link ftr-link-accent">
-                    All Categories →
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Account */}
-            <div className="ftr-col">
-              <h3 className="ftr-col-title">
-                <User size={14} />
-                Account
-              </h3>
-              <ul className="ftr-list">
-                {pageRoutes.slice(8).map(({ path, label, icon: Icon }) => (
-                  <li key={path}>
-                    <Link
-                      to={path}
-                      className={cn('ftr-link', location.pathname === path && 'ftr-link-active')}
-                    >
-                      <Icon size={13} />
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Help */}
-            <div className="ftr-col">
-              <h3 className="ftr-col-title">
-                <FileText size={14} />
-                Help
-              </h3>
-              <ul className="ftr-list">
-                <li><Link to="/contact" className="ftr-link"><Phone size={13} /> Contact</Link></li>
-                <li><Link to="/safety" className="ftr-link"><Shield size={13} /> Safety</Link></li>
-                <li><Link to="/report" className="ftr-link"><Mail size={13} /> Report Problem</Link></li>
-                <li><Link to="/support" className="ftr-link"><Bell size={13} /> Support</Link></li>
-              </ul>
-            </div>
-
-            {/* Download */}
-            <div className="ftr-col">
-              <h3 className="ftr-col-title">
-                <Download size={14} />
-                Download App
-              </h3>
-              <p className="ftr-app-sub">Buy &amp; sell on the go</p>
-              <div className="ftr-app-btns">
-                <a href="#" className="ftr-app-btn ftr-app-ios">
-                  <span className="ftr-app-store-label">App Store</span>
-                  <span className="ftr-app-store-sub">iOS</span>
-                </a>
-                <a href="#" className="ftr-app-btn ftr-app-android">
-                  <span className="ftr-app-store-label">Google Play</span>
-                  <span className="ftr-app-store-sub">Android</span>
-                </a>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Popular Cities */}
-            <div className="ftr-cities-col">
-              <h3 className="ftr-col-title">
-                <Map size={14} />
-                Popular Cities
-              </h3>
-              <div className="ftr-cities-grid">
-                {popularCities.map((city) => (
-                  <Link
-                    key={city}
-                    to="/"
-                    className="ftr-city-pill"
-                    onClick={(e) => navigateToCity(e, city)}
-                  >
-                    {city}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
+            )}
           </div>
         </div>
 
-        {/* ── Bottom bar ── */}
         <div className="ftr-bottom">
           <div className="ftr-bottom-inner">
-
-            {/* Copyright */}
             <p className="ftr-copy">
-              © 2024 DealKro. All rights reserved &nbsp;|&nbsp;
-              <Link to="/privacy" className="ftr-copy-link">Privacy Policy</Link>
-              &nbsp;|&nbsp;
-              <Link to="/terms" className="ftr-copy-link">Terms of Use</Link>
-              &nbsp;|&nbsp;
-              <Link to="/help" className="ftr-copy-link">Help</Link>
+              © {new Date().getFullYear()} {footer.copyrightText}
+              {(footer.bottomLinks || []).map((item) => (
+                <span key={`${item.label}-${item.path}`}>
+                  &nbsp;|&nbsp;
+                  <SmartLink item={item} className="ftr-copy-link">{item.label}</SmartLink>
+                </span>
+              ))}
             </p>
 
-            {/* City pills (bottom) */}
             <div className="ftr-bottom-cities">
-              {popularCities.map((city) => (
-                <Link
-                  key={city}
-                  to="/"
-                  className="ftr-bottom-city"
-                  onClick={(e) => navigateToCity(e, city)}
-                >
+              {(footer.popularCities || []).map((city) => (
+                <Link key={city} to="/" className="ftr-bottom-city" onClick={(event) => navigateToCity(event, city)}>
                   {city}
                 </Link>
               ))}
             </div>
 
-            {/* Social icons (bottom) */}
             <div className="ftr-bottom-social">
-              {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-                <a key={i} href="#" className="ftr-bottom-social-btn">
-                  <Icon size={14} />
-                </a>
-              ))}
+              {(footer.socialLinks || []).map((item) => {
+                const Icon = getSocialIcon(item.label);
+                return (
+                  <SmartLink key={`${item.label}-bottom`} item={item} className="ftr-bottom-social-btn">
+                    <Icon size={14} />
+                  </SmartLink>
+                );
+              })}
             </div>
-
           </div>
         </div>
-
       </footer>
     </>
   );
 };
 
-/* ─── Styles ─────────────────────────────────────────────────────── */
 const footerStyles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap');
 
@@ -267,7 +204,6 @@ const footerStyles = `
     border-top: 1px solid rgba(255,255,255,.06);
   }
 
-  /* ── trust banner ── */
   .ftr-banner {
     background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
     border-bottom: 1px solid rgba(255,255,255,.08);
@@ -300,7 +236,6 @@ const footerStyles = `
   }
   .ftr-banner-btn:hover { box-shadow: 0 6px 18px rgba(0,0,0,.25); transform: translateY(-1px); color: #1D4ED8; text-decoration: none; }
 
-  /* ── main grid ── */
   .ftr-main { max-width: 1200px; margin: 0 auto; padding: 56px 24px 48px; }
   .ftr-grid {
     display: grid;
@@ -309,7 +244,6 @@ const footerStyles = `
     align-items: start;
   }
 
-  /* Brand */
   .ftr-brand { grid-column: span 2; }
   .ftr-logo  { height: 44px; width: auto; margin-bottom: 14px; border-radius: 8px; }
   .ftr-brand-tagline { font-size: 13px; color: #94A3B8; line-height: 1.65; margin: 0 0 18px; }
@@ -324,7 +258,6 @@ const footerStyles = `
   }
   .ftr-social-btn:hover { background: rgba(255,255,255,.12); color: #fff; transform: translateY(-1px); }
 
-  /* Columns */
   .ftr-col { min-width: 0; }
   .ftr-col-title {
     display: flex; align-items: center; gap: 7px;
@@ -334,7 +267,6 @@ const footerStyles = `
     margin: 0 0 16px;
   }
 
-  /* Links */
   .ftr-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
   .ftr-link {
     display: flex; align-items: center; gap: 7px;
@@ -345,10 +277,7 @@ const footerStyles = `
   }
   .ftr-link:hover { color: #fff; transform: translateX(2px); text-decoration: none; }
   .ftr-link-active { color: #60A5FA !important; font-weight: 500; }
-  .ftr-link-accent { color: #60A5FA !important; font-weight: 600; margin-top: 4px; }
-  .ftr-link-accent:hover { color: #93C5FD !important; }
 
-  /* App buttons */
   .ftr-app-sub { font-size: 12px; color: #64748B; margin: 0 0 12px; }
   .ftr-app-btns { display: flex; flex-direction: column; gap: 8px; }
   .ftr-app-btn {
@@ -363,7 +292,6 @@ const footerStyles = `
   .ftr-app-store-label { display: block; font-size: 12px; color: #fff; }
   .ftr-app-store-sub   { display: block; font-size: 10px; color: rgba(255,255,255,.75); }
 
-  /* Cities block */
   .ftr-cities-col { grid-column: span 2; }
   .ftr-cities-grid { display: flex; flex-wrap: wrap; gap: 7px; }
   .ftr-city-pill {
@@ -377,7 +305,6 @@ const footerStyles = `
   }
   .ftr-city-pill:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.18); text-decoration: none; }
 
-  /* ── bottom bar ── */
   .ftr-bottom {
     border-top: 1px solid rgba(255,255,255,.06);
     background: rgba(0,0,0,.25);
@@ -388,7 +315,7 @@ const footerStyles = `
     display: flex; align-items: center; justify-content: space-between;
     flex-wrap: wrap; gap: 14px;
   }
-  .ftr-copy { font-size: 11px; color: #475569; margin: 0; order: 3; }
+  .ftr-copy { font-size: 11px; color: #94A3B8; margin: 0; order: 3; }
   .ftr-copy-link { color: #60A5FA; text-decoration: none; font-weight: 500; }
   .ftr-copy-link:hover { color: #93C5FD; text-decoration: underline; }
   .ftr-bottom-cities { display: flex; flex-wrap: wrap; gap: 6px; order: 1; }

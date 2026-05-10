@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Bell, CheckCircle, AlertCircle, Mail, ChevronRight } from 'lucide-react';
@@ -7,6 +8,7 @@ import { toast } from 'react-hot-toast';
 
 const Notifications = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -124,7 +126,12 @@ const Notifications = () => {
                   "bg-white rounded-xl border p-6 hover:shadow-md transition-all cursor-pointer group",
                   !notification.isRead && "border-blue-200 bg-blue-50 shadow-sm ring-2 ring-blue-100"
                 )}
-                onClick={() => !notification.isRead && markAsRead(notification._id)}
+                onClick={async () => {
+                  if (!notification.isRead) await markAsRead(notification._id);
+                  if (notification.type === 'new_message' && notification.relatedChat?._id) {
+                    navigate(`/chats/${notification.relatedChat._id}`);
+                  }
+                }}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 pt-0.5">

@@ -5,8 +5,9 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Trash2, Edit3, Eye, Clock, Package, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { CONDITIONS, PRODUCT_STATUS } from '../utils';
+import { PRODUCT_STATUS } from '../utils';
 import toast from 'react-hot-toast';
+import { getImageUrl, placeholderImage } from '../utils/image';
 
 const MyProducts = () => {
   const { user } = useAuth();
@@ -20,8 +21,8 @@ const MyProducts = () => {
     queryFn: () => api.get(`/products/my-products?status=${activeTab === 'all' ? '' : activeTab}&page=${page}&limit=${pageSize}`).then(res => res.data),
     enabled: !!user,
   });
-  const products = productsData?.data || []; 
-  const pagination = productsData?.pagination || {};
+  const products = productsData?.data?.data || []; 
+  const pagination = productsData?.data?.pagination || {};
 
   const deleteMutation = useMutation({
     mutationFn: (productId) => api.delete(`/products/${productId}`),
@@ -95,9 +96,12 @@ const MyProducts = () => {
                 <div key={product._id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden border hover:border-primary-200">
                   <div className="aspect-video bg-gray-100 overflow-hidden relative">
                     <img 
-                      src={product.images?.[0]?.url || '/placeholder.jpg'} 
+                      src={getImageUrl(product.images?.[0])} 
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(event) => {
+                        event.currentTarget.src = placeholderImage;
+                      }}
                     />
                     <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold ${
                       product.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
@@ -125,9 +129,15 @@ const MyProducts = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Link 
-                        to={`/products/${product._id}`}
+                        to={product.status === 'approved' ? `/products/${product._id}` : '#'}
                         className="flex-1 flex items-center justify-center py-2 px-4 border border-gray-200 text-sm font-medium rounded-xl hover:bg-gray-50 transition-all"
                         title="View"
+                        onClick={(event) => {
+                          if (product.status !== 'approved') {
+                            event.preventDefault();
+                            toast('This ad will be visible after admin approval.');
+                          }
+                        }}
                       >
                         <Eye size={16} />
                         <span className="ml-1">View</span>

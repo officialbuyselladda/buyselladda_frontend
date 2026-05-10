@@ -21,7 +21,7 @@ const AdminNavbar = () => {
   const { data: notifications } = useQuery({
     queryKey: ['adminNotifications'],
     queryFn: () =>
-      api.get('/notification/admin/list?limit=10').then(res => res.data.data?.notifications || []),
+api.get('/notifications/admin/list?limit=10').then(res => res.data.data?.notifications || []),
     staleTime: 5 * 60 * 1000,
   });
 

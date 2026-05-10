@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { chatApi } from '../services/api';
@@ -6,16 +6,28 @@ import { useAuth } from '../context/AuthContext';
 import { MessageCircle, User, Clock, Phone, MapPin, Package, ArrowLeft, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
+import io from 'socket.io-client';
+
+const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || '/';
 
 const ChatList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { data: chats, isLoading, error } = useQuery({
+  const { data: chats, isLoading, error, refetch } = useQuery({
     queryKey: ['chats'],
     queryFn: chatApi.getChats,
     enabled: !!user,
+    refetchInterval: 5000,
   });
+
+  useEffect(() => {
+    if (!user?._id) return undefined;
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    socket.emit('join_user', user._id);
+    socket.on('chat_updated', () => refetch());
+    return () => socket.disconnect();
+  }, [refetch, user?._id]);
 
   if (isLoading) {
     return (
@@ -113,9 +125,12 @@ const ChatList = () => {
             <div className="divide-y divide-gray-100">
               {chatsArray.map((chat) => {
                 // Ensure otherUser exists
-                const otherUser = chat.users?.find(u => u._id !== user._id) || chat.users?.[0];
                 const lastMessage = chat.lastMessage;
                 const unreadCount = chat.unreadCount || 0;
+                
+// Handle both users and participants from backend
+                const chatUsers = chat.users || chat.participants || [];
+                const otherUserChat = chatUsers.find(u => u && u._id !== user._id) || chatUsers[0];
                 
                 return (
                   <Link 
@@ -147,7 +162,7 @@ const ChatList = () => {
                         <h3 className={`font-semibold truncate ${
                           unreadCount > 0 ? 'text-gray-900' : 'text-gray-700'
                         } group-hover:text-primary-600 transition-colors`}>
-                          {otherUser?.name || 'Unknown User'}
+                          {otherUserChat?.name || 'Unknown User'}
                         </h3>
                         <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
                           {lastMessage?.createdAt 
@@ -165,7 +180,7 @@ const ChatList = () => {
                             {lastMessage.sender?._id === user._id && (
                               <span className="text-gray-400 mr-1">You: </span>
                             )}
-                            {lastMessage.content}
+                            {lastMessage.text || lastMessage.content || 'Sent an image'}
                           </>
                         ) : (
                           'Say hi to start the conversation'

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -15,26 +15,72 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  // Load initial state
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+  // Validate token with backend - ensures user is still valid
+  const validateToken = useCallback(async (token) => {
+    try {
+      const { data } = await api.get('/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data.success && data.data?.user) {
+        return data.data.user;
+      }
+      return null;
+    } catch (error) {
+      // Token invalid or expired - clear storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return null;
     }
-    setLoading(false);
   }, []);
 
-  // Listen for storage changes
+  // Load initial state - runs only once on mount
   useEffect(() => {
-    const handleStorageChange = () => {
+    const initAuth = async () => {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
+      
       if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        setUser(null);
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          // Set user immediately from localStorage for instant UI update
+          setUser(parsedUser);
+          
+          // Optionally validate token in background (commented out to prevent unnecessary API calls)
+          // const validatedUser = await validateToken(token);
+          // if (validatedUser) {
+          //   setUser(validatedUser);
+          //   localStorage.setItem('user', JSON.stringify(validatedUser));
+          // } else {
+          //   // Token invalid, user already cleared
+          // }
+        } catch (e) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
+      
+      setLoading(false);
+      setInitialLoadDone(true);
+    };
+
+    // Small delay to ensure components are ready
+    initAuth();
+  }, [validateToken]);
+
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' || e.key === 'user') {
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        if (token && storedUser) {
+          setUser(JSON.parse(storedUser));
+        } else {
+          setUser(null);
+        }
       }
     };
 
@@ -87,7 +133,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
@@ -101,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     loading,
+    isAuthenticated: !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

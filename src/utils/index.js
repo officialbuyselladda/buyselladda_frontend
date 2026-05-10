@@ -28,6 +28,29 @@ export const CATEGORIES = [
   'Others'
 ];
 
+export const flattenCategories = (categories = []) => {
+  const result = [];
+  const walk = (items) => {
+    (items || []).forEach((item) => {
+      if (!item) return;
+      result.push(item);
+      if (item.children?.length) walk(item.children);
+    });
+  };
+  walk(categories);
+  return result;
+};
+
+export const getCategoryValue = (category) => category?.slug || category?.name || category;
+export const getCategoryLabel = (category) => category?.name || category;
+
+export const useCategoryOptions = () => {
+  const query = useCategories();
+  const dynamicCategories = flattenCategories(query.data || []);
+  const options = dynamicCategories.length ? dynamicCategories : CATEGORIES;
+  return { ...query, options };
+};
+
 
 export const CONDITIONS = ['New', 'Used'];
 
@@ -50,6 +73,12 @@ export const getLocationFromCache = () => {
 export const setLocationCache = (locationData) => {
   try {
     localStorage.setItem('userLocation', JSON.stringify(locationData));
+  } catch {}
+};
+
+export const clearLocationCache = () => {
+  try {
+    localStorage.removeItem('userLocation');
   } catch {}
 };
 

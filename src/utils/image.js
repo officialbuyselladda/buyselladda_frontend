@@ -1,0 +1,14 @@
+export const placeholderImage =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+      <rect width="400" height="300" fill="#f3f4f6"/>
+      <text x="200" y="150" text-anchor="middle" dominant-baseline="middle" fill="#9ca3af" font-family="Arial" font-size="20">No Image</text>
+    </svg>
+  `);
+
+export const getImageUrl = (image) => {
+  if (!image) return placeholderImage;
+  if (typeof image === 'string') return image;
+  return image.url || image.secure_url || image.originalUrl || image.previewUrl || placeholderImage;
+};

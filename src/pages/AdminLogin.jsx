@@ -16,29 +16,32 @@ const schema = yup.object({
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { adminLogin, user } = useAuth();
+  const [loginSuccess, setLoginSuccess] = useState(false);
+  const { adminLogin, user, loading: authLoading } = useAuth();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema)
   });
 
-  // Auto-redirect if already logged in as admin
+  // Auto-redirect if already logged in as admin (only when not in login process)
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (!authLoading && user && user.role === 'admin' && !loginSuccess) {
       toast.success('Welcome back to Admin Panel');
       navigate('/admin/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate, loginSuccess]);
 
   const onSubmit = async (data) => {
     setLoading(true);
     const result = await adminLogin(data.email, data.password);
+    setLoading(false);
     if (result.success) {
+      setLoginSuccess(true);
+      // Small delay to allow state to update properly
       setTimeout(() => {
         navigate('/admin/dashboard', { replace: true });
-      }, 100);
+      }, 150);
     }
-    setLoading(false);
   };
 
   return (

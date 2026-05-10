@@ -6,6 +6,7 @@ import { LocationProvider } from './context/LocationContext';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -35,6 +36,7 @@ import AdminFavorites from './pages/AdminFavorites';
 import AdminNotifications from './pages/AdminNotifications';
 import AdminModeration from './pages/AdminModeration';
 import AdminSystemSettings from './pages/AdminSystemSettings';
+import AdminSupportTickets from './pages/AdminSupportTickets';
 
 import Categories from './pages/Categories';
 import Favorites from './pages/Favorites';
@@ -54,12 +56,13 @@ import Support from './pages/Support';
 const AppContent = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isChatRoomRoute = /^\/chats\/[^/]+/.test(location.pathname);
 
   return (
     <div className="min-h-screen bg-gray-50">
 
       {/* ❗ Admin me header hide */}
-      {!isAdminRoute && <Header />}
+      {!isAdminRoute && !isChatRoomRoute && <Header />}
 
       <Routes>
 
@@ -70,6 +73,15 @@ const AppContent = () => {
 
         <Route 
           path="/create-product" 
+          element={
+            <ProtectedRoute>
+              <CreateProduct />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/edit-product/:id" 
           element={
             <ProtectedRoute>
               <CreateProduct />
@@ -136,6 +148,7 @@ const AppContent = () => {
           <Route path="categories" element={<AdminCategories />} />
           <Route path="favorites" element={<AdminFavorites />} />
           <Route path="notifications" element={<AdminNotifications />} />
+          <Route path="support-tickets" element={<AdminSupportTickets />} />
           <Route path="moderation" element={<AdminModeration />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="system-settings" element={<AdminSystemSettings />} />
@@ -167,7 +180,11 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/safety" element={<Safety />} />
         <Route path="/report" element={<ReportProblem />} />
-        <Route path="/support" element={<Support />} />
+        <Route path="/support" element={
+          <ProtectedRoute>
+            <Support />
+          </ProtectedRoute>
+        } />
         <Route path="/search" element={<SearchResults />} />
 
         {/* ❗ PUBLIC fallback */}
@@ -175,8 +192,11 @@ const AppContent = () => {
 
       </Routes>
 
-      {/* ❗ Admin me footer hide */}
-      {!isAdminRoute && <Footer />}
+{/* ❗ Admin me footer hide */}
+      {!isAdminRoute && !isChatRoomRoute && <Footer />}
+
+      {/* Scroll to top button - visible everywhere */}
+      <ScrollToTop />
 
       <Toaster position="top-right" />
     </div>

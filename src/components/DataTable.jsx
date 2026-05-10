@@ -1,6 +1,18 @@
 import React from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
+const getNestedValue = (row, path) => {
+  if (!path) return undefined;
+  return path.split('.').reduce((value, key) => value?.[key], row);
+};
+
+const renderCellValue = (value) => {
+  if (value === null || value === undefined) return '-';
+  if (React.isValidElement(value)) return value;
+  if (typeof value === 'object') return JSON.stringify(value);
+  return value;
+};
+
 const DataTable = ({
   columns,
   data,
@@ -106,9 +118,11 @@ const DataTable = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data.map((row, rowIdx) => (
+              {data.map((row, rowIdx) => {
+                const rowId = row.id || row._id || rowIdx;
+                return (
                 <tr
-                  key={row.id || rowIdx}
+                  key={rowId}
                   className={`hover:bg-gray-50 transition-colors cursor-pointer ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick?.(row)}
                 >
@@ -117,12 +131,12 @@ const DataTable = ({
                       <input
                         type="checkbox"
                         className="rounded border-gray-300"
-                        checked={selectedRows.includes(row.id)}
+                        checked={selectedRows.includes(rowId)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            onSelectionChange([...selectedRows, row.id]);
+                            onSelectionChange([...selectedRows, rowId]);
                           } else {
-                            onSelectionChange(selectedRows.filter(id => id !== row.id));
+                            onSelectionChange(selectedRows.filter(id => id !== rowId));
                           }
                         }}
                       />
@@ -130,11 +144,16 @@ const DataTable = ({
                   )}
                   {columns.map((col, colIdx) => (
                     <td key={colIdx} className={`p-6 ${col.className || ''}`}>
-                      {col.render ? col.render(row) : row[col.key]}
+                      {col.cell
+                        ? col.cell(row)
+                        : col.render
+                          ? col.render(row)
+                          : renderCellValue(getNestedValue(row, col.accessor) ?? row[col.key])}
                     </td>
                   ))}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

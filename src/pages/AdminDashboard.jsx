@@ -1,498 +1,427 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import {
-  BarChart3, Users, Package, MessageCircle, Eye, Shield, DollarSign, TrendingUp, Clock,
-  LineChart, BarChart
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  Clock,
+  Eye,
+  LifeBuoy,
+  MessageCircle,
+  Package,
+  Shield,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
 import {
-  ResponsiveContainer, PieChart, Pie, Cell,
-  LineChart as ReLineChart, BarChart as ReBarChart,
-  Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+  Bar,
+  BarChart as ReBarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart as ReLineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
+import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
-// Mock chart data
-const statusData = [
-  { name: 'Approved', value: 1248, color: '#10b981' },
-  { name: 'Pending', value: 324, color: '#f59e0b' },
-  { name: 'Rejected', value: 128, color: '#ef4444' },
-];
+const statusColors = {
+  approved: '#10b981',
+  pending: '#f59e0b',
+  rejected: '#ef4444',
+  suspicious: '#8b5cf6',
+  sold: '#3b82f6',
+  deleted: '#6b7280',
+  unknown: '#9ca3af',
+};
 
-const growthData = [
-  { month: 'Jan', users: 400, products: 240 },
-  { month: 'Feb', users: 600, products: 380 },
-  { month: 'Mar', users: 800, products: 500 },
-  { month: 'Apr', users: 1000, products: 650 },
-  { month: 'May', users: 1200, products: 800 },
-];
+const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
+const formatCurrency = (value) => `Rs. ${Number(value || 0).toLocaleString('en-IN')}`;
+const labelize = (value) => String(value || '').replace(/_/g, ' ');
 
-const revenueData = [
-  { week: 'W1', revenue: 12000 },
-  { week: 'W2', revenue: 18000 },
-  { week: 'W3', revenue: 24000 },
-  { week: 'W4', revenue: 32000 },
-];
+const tooltipValue = (value, name) => {
+  if (name === 'listingValue') return formatCurrency(value);
+  return formatNumber(value);
+};
 
-/* ─── Custom Tooltip ─────────────────────────────────── */
 const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        background: '#fff',
-        border: '1px solid #e5e7eb',
-        borderRadius: 12,
-        padding: '10px 16px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-        fontSize: 13,
-      }}>
-        <p style={{ fontWeight: 700, color: '#111', marginBottom: 4 }}>{label}</p>
-        {payload.map((p, i) => (
-          <p key={i} style={{ color: p.color, margin: 0 }}>
-            {p.name}: <strong>{typeof p.value === 'number' && p.dataKey === 'revenue' ? `₹${p.value.toLocaleString()}` : p.value}</strong>
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-/* ─── Stat Card ──────────────────────────────────────── */
-const StatCard = ({ stat }) => {
-  const gradients = {
-    blue: 'linear-gradient(135deg,#3b82f6,#2563eb)',
-    emerald: 'linear-gradient(135deg,#10b981,#059669)',
-    yellow: 'linear-gradient(135deg,#f59e0b,#d97706)',
-    purple: 'linear-gradient(135deg,#8b5cf6,#7c3aed)',
-    indigo: 'linear-gradient(135deg,#6366f1,#4f46e5)',
-    green: 'linear-gradient(135deg,#22c55e,#16a34a)',
-  };
+  if (!active || !payload?.length) return null;
 
   return (
-    <Link
-      to={stat.link || '#'}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 18,
-        background: '#fff',
-        borderRadius: 20,
-        padding: '24px 28px',
-        boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
-        border: '1px solid #f0f0f0',
-        textDecoration: 'none',
-        transition: 'box-shadow .2s, transform .2s',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 16px rgba(0,0,0,0.06)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-    >
-      <div style={{
-        width: 56, height: 56, borderRadius: 16, flexShrink: 0,
-        background: gradients[stat.color] || gradients.blue,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-      }}>
-        <stat.icon size={26} color="#fff" />
-      </div>
-      <div>
-        <p style={{ fontSize: 12, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{stat.label}</p>
-        <p style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: '4px 0 0', lineHeight: 1 }}>{stat.value}</p>
-      </div>
-    </Link>
-  );
-};
-
-/* ─── Chart Card ─────────────────────────────────────── */
-const ChartCard = ({ title, icon: Icon, children, link, linkLabel }) => (
-  <div style={{
-    background: '#fff',
-    borderRadius: 24,
-    padding: '28px 24px',
-    boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
-    border: '1px solid #f0f0f0',
-    display: 'flex', flexDirection: 'column',
-  }}>
-    <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 20px' }}>
-      <Icon size={20} color="#6366f1" />
-      {title}
-    </h3>
-    {children}
-    {link && (
-      <Link to={link} style={{ color: '#10b981', fontWeight: 600, fontSize: 13, marginTop: 16, textDecoration: 'none' }}>
-        {linkLabel || 'View More →'}
-      </Link>
-    )}
-  </div>
-);
-
-/* ─── Main Component ─────────────────────────────────── */
-const AdminDashboard = () => {
-  const { user } = useAuth();
-
-  const { data: stats } = useQuery({
-    queryKey: ['adminStats'],
-    queryFn: () => api.get('/admin/dashboard').then(res => res.data.data),
-  });
-
-  const statsData = [
-    { label: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'blue', link: '/admin/users' },
-    { label: 'Total Products', value: stats?.totalProducts || 0, icon: Package, color: 'emerald', link: '/admin/products' },
-    { label: 'Pending Approval', value: stats?.pendingProducts || 0, icon: Clock, color: 'yellow', link: '/admin/products?status=pending' },
-    { label: 'Total Chats', value: stats?.totalChats || 0, icon: MessageCircle, color: 'purple' },
-    { label: 'Total Views', value: stats?.totalViews || 0, icon: Eye, color: 'indigo' },
-    { label: 'Revenue', value: `₹${(stats?.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'green' },
-  ];
-
-  const recentUsers = stats?.recentUsers || [];
-  const recentProducts = stats?.recentProducts || [];
-
-  return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
-        .admin-grid-6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .admin-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .admin-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .admin-grid-header { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        .main-bottom { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        @media (max-width: 1024px) {
-          .admin-grid-6 { grid-template-columns: repeat(2, 1fr); }
-          .admin-grid-3 { grid-template-columns: repeat(2, 1fr); }
-          .admin-grid-header { grid-template-columns: repeat(2, 1fr); }
-          .quick-grid { grid-template-columns: repeat(2, 1fr); }
-          .main-bottom { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 640px) {
-          .admin-grid-6 { grid-template-columns: 1fr; }
-          .admin-grid-3 { grid-template-columns: 1fr; }
-          .admin-grid-2 { grid-template-columns: 1fr; }
-          .admin-grid-header { grid-template-columns: 1fr; }
-          .quick-grid { grid-template-columns: 1fr; }
-        }
-        .action-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.12) !important; }
-        .action-card { transition: transform .2s, box-shadow .2s; }
-        .user-row:hover { background: #f9fafb; }
-        .badge-approved { background: #dcfce7; color: #15803d; }
-        .badge-pending  { background: #fef9c3; color: #a16207; }
-        .badge-default  { background: #f3f4f6; color: #374151; }
-      `}</style>
-
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 20px 60px' }}>
-
-        {/* ── Welcome Header ── */}
-        <div style={{
-          background: '#fff',
-          borderRadius: 28,
-          padding: '32px 36px',
-          marginBottom: 28,
-          boxShadow: '0 2px 20px rgba(0,0,0,0.07)',
-          border: '1px solid #f0f0f0',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 18,
-              background: 'linear-gradient(135deg,#10b981,#059669)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
-            }}>
-              <Shield size={28} color="#fff" />
-            </div>
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
-                Admin Dashboard
-              </h1>
-              <p style={{ color: '#6b7280', margin: 0, fontSize: 15 }}>Welcome back, <strong style={{ color: '#374151' }}>{user?.name}</strong></p>
-            </div>
-          </div>
-
-          <div className="admin-grid-header">
-            {/* Today */}
-            <div style={{
-              background: 'linear-gradient(135deg,rgba(16,185,129,0.07),rgba(59,130,246,0.07))',
-              border: '1px solid rgba(16,185,129,0.18)',
-              borderRadius: 18, padding: '20px 24px',
-              display: 'flex', alignItems: 'center', gap: 14,
-            }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <TrendingUp size={22} color="#10b981" />
-              </div>
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Today</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: '2px 0 0' }}>{stats?.todayProducts || 0} <span style={{ fontSize: 14, fontWeight: 500, color: '#6b7280' }}>new products</span></p>
-              </div>
-            </div>
-            {/* Pending */}
-            <div style={{
-              background: 'linear-gradient(135deg,rgba(245,158,11,0.07),rgba(249,115,22,0.07))',
-              border: '1px solid rgba(245,158,11,0.2)',
-              borderRadius: 18, padding: '20px 24px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Clock size={22} color="#f59e0b" />
-                </div>
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Pending</p>
-                  <p style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: '2px 0 0' }}>{stats?.pendingProducts || 0}</p>
-                </div>
-              </div>
-              <Link to="/admin/products?status=pending" style={{ color: '#10b981', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>Review All →</Link>
-            </div>
-            {/* New Users */}
-            <div style={{
-              background: 'linear-gradient(135deg,rgba(59,130,246,0.07),rgba(99,102,241,0.07))',
-              border: '1px solid rgba(59,130,246,0.18)',
-              borderRadius: 18, padding: '20px 24px',
-              display: 'flex', alignItems: 'center', gap: 14,
-            }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Users size={22} color="#3b82f6" />
-              </div>
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>New Users</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: '#111827', margin: '2px 0 0' }}>{stats?.newUsersToday || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Stats Grid ── */}
-        <div className="admin-grid-6" style={{ marginBottom: 28 }}>
-          {statsData.map((stat, i) => <StatCard key={i} stat={stat} />)}
-        </div>
-
-        {/* ── Charts Row ── */}
-        <div className="admin-grid-3" style={{ marginBottom: 28 }}>
-          {/* Pie */}
-          <ChartCard title="Product Status" icon={BarChart3} link="/admin/analytics" linkLabel="View Full Analytics →">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={44}>
-                  {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
-              {statusData.map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: s.color }} />
-                  <span style={{ fontSize: 12, color: '#6b7280' }}>{s.name}: <strong style={{ color: '#111' }}>{s.value}</strong></span>
-                </div>
-              ))}
-            </div>
-          </ChartCard>
-
-          {/* Line */}
-          <ChartCard title="Monthly Growth" icon={LineChart}>
-            <ResponsiveContainer width="100%" height={220}>
-              <ReLineChart data={growthData}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="users" name="Users" stroke="#3b82f6" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="products" name="Products" stroke="#10b981" strokeWidth={2.5} dot={false} />
-              </ReLineChart>
-            </ResponsiveContainer>
-            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 18, height: 3, borderRadius: 2, background: '#3b82f6' }} />
-                <span style={{ fontSize: 12, color: '#6b7280' }}>Users</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 18, height: 3, borderRadius: 2, background: '#10b981' }} />
-                <span style={{ fontSize: 12, color: '#6b7280' }}>Products</span>
-              </div>
-            </div>
-          </ChartCard>
-
-          {/* Bar */}
-          <ChartCard title="Weekly Revenue" icon={BarChart}>
-            <ResponsiveContainer width="100%" height={220}>
-              <ReBarChart data={revenueData} barSize={28}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="week" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="revenue" name="Revenue" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-              </ReBarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        {/* ── Quick Actions + Platform Health ── */}
-        <div className="main-bottom" style={{ marginBottom: 28 }}>
-          {/* Quick Actions */}
-          <div style={{
-            background: '#fff',
-            borderRadius: 24,
-            padding: '28px 28px',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
-            border: '1px solid #f0f0f0',
-          }}>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#111827', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 22px' }}>
-              <BarChart3 size={22} color="#6366f1" />
-              Quick Actions
-            </h2>
-            <div className="quick-grid">
-              {[
-                {
-                  to: '/admin/products', icon: Package, color: '#10b981',
-                  bg: 'linear-gradient(135deg,#ecfdf5,#d1fae5)',
-                  border: '#bbf7d0', title: 'Manage Products',
-                  sub: `${stats?.pendingProducts || 0} pending`, cta: 'Review →', ctaColor: '#059669',
-                },
-                {
-                  to: '/admin/users', icon: Users, color: '#3b82f6',
-                  bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)',
-                  border: '#bfdbfe', title: 'Manage Users',
-                  sub: `${stats?.totalUsers || 0} total`, cta: 'View All →', ctaColor: '#2563eb',
-                },
-                {
-                  to: '/admin/analytics', icon: BarChart3, color: '#8b5cf6',
-                  bg: 'linear-gradient(135deg,#f5f3ff,#ede9fe)',
-                  border: '#c4b5fd', title: 'Analytics',
-                  sub: 'Detailed reports', cta: 'Dive Deep →', ctaColor: '#7c3aed',
-                },
-              ].map((c, i) => (
-                <Link key={i} to={c.to} className="action-card" style={{
-                  background: c.bg,
-                  border: `1.5px solid ${c.border}`,
-                  borderRadius: 18, padding: '24px 20px',
-                  textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                }}>
-                  <div style={{
-                    width: 52, height: 52, borderRadius: 16, marginBottom: 14,
-                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                  }}>
-                    <c.icon size={26} color={c.color} />
-                  </div>
-                  <p style={{ fontWeight: 700, fontSize: 15, color: '#111827', margin: '0 0 4px', textAlign: 'center' }}>{c.title}</p>
-                  <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 12px', textAlign: 'center' }}>{c.sub}</p>
-                  <span style={{ color: c.ctaColor, fontWeight: 700, fontSize: 13 }}>{c.cta}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Platform Health */}
-          <div style={{
-            background: 'linear-gradient(160deg,#f0fdf4,#eff6ff)',
-            borderRadius: 24, padding: '28px 28px',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
-            border: '1px solid #e0f2fe',
-            display: 'flex', flexDirection: 'column', gap: 0,
-          }}>
-            <h3 style={{ fontSize: 18, fontWeight: 800, color: '#111827', margin: '0 0 22px' }}>Platform Health</h3>
-            {[
-              { label: 'Uptime', value: '99.9%', color: '#10b981' },
-              { label: 'Active Users', value: stats?.activeUsers || 0, color: '#3b82f6' },
-              { label: 'Server Load', value: 'Low', color: '#10b981' },
-            ].map((row, i) => (
-              <div key={i} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '14px 0',
-                borderBottom: i < 2 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-              }}>
-                <span style={{ fontSize: 14, color: '#6b7280', fontWeight: 500 }}>{row.label}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: row.color }}>{row.value}</span>
-              </div>
-            ))}
-            <Link to="/admin/system-settings" style={{
-              color: '#10b981', fontWeight: 700, fontSize: 13,
-              textDecoration: 'none', marginTop: 20, display: 'block',
-            }}>
-              System Settings →
-            </Link>
-          </div>
-        </div>
-
-        {/* ── Recent Lists ── */}
-        {(recentUsers.length > 0 || recentProducts.length > 0) && (
-          <div className="admin-grid-2">
-            {/* Recent Users */}
-            <div style={{
-              background: '#fff', borderRadius: 24, padding: '28px',
-              boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0',
-            }}>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: '#111827', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Users size={18} color="#3b82f6" /> Recent Users
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {recentUsers.slice(0, 5).map((u) => (
-                  <div key={u._id} className="user-row" style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '12px 14px', borderRadius: 14,
-                    transition: 'background .15s', cursor: 'default',
-                  }}>
-                    <div style={{
-                      width: 42, height: 42, borderRadius: 13, flexShrink: 0,
-                      background: 'linear-gradient(135deg,#3b82f6,#6366f1)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Users size={18} color="#fff" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 600, color: '#111827', margin: 0, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name}</p>
-                      <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
-                    </div>
-                    <span className="badge-default" style={{
-                      fontSize: 11, fontWeight: 600, padding: '3px 10px',
-                      borderRadius: 20, whiteSpace: 'nowrap',
-                    }}>{u.role}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Products */}
-            <div style={{
-              background: '#fff', borderRadius: 24, padding: '28px',
-              boxShadow: '0 2px 16px rgba(0,0,0,0.06)', border: '1px solid #f0f0f0',
-            }}>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: '#111827', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Package size={18} color="#10b981" /> Recent Products
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {recentProducts.slice(0, 5).map((p) => (
-                  <div key={p._id} className="user-row" style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '12px 14px', borderRadius: 14,
-                    transition: 'background .15s', cursor: 'default',
-                  }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 13, flexShrink: 0,
-                      background: 'linear-gradient(135deg,#10b981,#34d399)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <Package size={20} color="#fff" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 600, color: '#111827', margin: 0, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</p>
-                      <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>₹{p.price?.toLocaleString()}</p>
-                    </div>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap',
-                      ...(p.status === 'approved' ? { background: '#dcfce7', color: '#15803d' } : { background: '#fef9c3', color: '#a16207' }),
-                    }}>
-                      {p.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-lg">
+      {label && <p className="mb-1 font-bold text-gray-950">{label}</p>}
+      {payload.map((item) => (
+        <p key={item.dataKey || item.name} style={{ color: item.color }} className="font-semibold capitalize">
+          {labelize(item.name)}: {tooltipValue(item.value, item.dataKey)}
+        </p>
+      ))}
     </div>
   );
 };
+
+const StatCard = ({ label, value, icon: Icon, color, to, helper }) => {
+  const content = (
+    <div className="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400">{label}</p>
+          <p className="mt-2 text-3xl font-black text-gray-950">{value}</p>
+          {helper && <p className="mt-1 text-sm font-semibold text-gray-500">{helper}</p>}
+        </div>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
+          <Icon size={23} />
+        </div>
+      </div>
+    </div>
+  );
+
+  return to ? <Link to={to}>{content}</Link> : content;
+};
+
+const ChartCard = ({ title, icon: Icon, children, action }) => (
+  <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-2 text-lg font-black text-gray-950">
+        <Icon size={20} className="text-emerald-600" />
+        {title}
+      </h2>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+
+const EmptyChart = ({ label }) => (
+  <div className="flex h-[240px] items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm font-semibold text-gray-500">
+    {label}
+  </div>
+);
+
+const AdminDashboard = () => {
+  const { user } = useAuth();
+
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['adminStats'],
+    queryFn: () => api.get('/admin/dashboard').then((res) => res.data.data),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-40 animate-pulse rounded-3xl bg-white" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((item) => <div key={item} className="h-32 animate-pulse rounded-2xl bg-white" />)}
+        </div>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          {[0, 1, 2].map((item) => <div key={item} className="h-80 animate-pulse rounded-2xl bg-white" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center">
+        <p className="font-bold text-red-700">Dashboard data load nahi ho paya.</p>
+      </div>
+    );
+  }
+
+  const statusData = stats?.statusData || [];
+  const growthData = stats?.growthData || [];
+  const weeklyListingValue = stats?.weeklyListingValue || [];
+  const recentUsers = stats?.recentUsers || [];
+  const recentProducts = stats?.recentProducts || [];
+  const recentSupportTickets = stats?.recentSupportTickets || [];
+
+  const cards = [
+    {
+      label: 'Total Users',
+      value: formatNumber(stats?.totalUsers),
+      icon: Users,
+      color: 'bg-blue-50 text-blue-600',
+      to: '/admin/users',
+      helper: `${formatNumber(stats?.newUsersToday)} new today`,
+    },
+    {
+      label: 'Total Ads',
+      value: formatNumber(stats?.totalProducts),
+      icon: Package,
+      color: 'bg-emerald-50 text-emerald-600',
+      to: '/admin/products',
+      helper: `${formatNumber(stats?.approvedProducts)} approved`,
+    },
+    {
+      label: 'Review Queue',
+      value: formatNumber(stats?.reviewQueue),
+      icon: Clock,
+      color: 'bg-amber-50 text-amber-600',
+      to: '/admin/reports',
+      helper: `${formatNumber(stats?.pendingProducts)} pending`,
+    },
+    {
+      label: 'Support Tickets',
+      value: formatNumber(stats?.openSupportTickets),
+      icon: LifeBuoy,
+      color: 'bg-purple-50 text-purple-600',
+      to: '/admin/support-tickets',
+      helper: `${formatNumber(stats?.urgentSupportTickets)} urgent`,
+    },
+    {
+      label: 'Chats',
+      value: formatNumber(stats?.totalChats),
+      icon: MessageCircle,
+      color: 'bg-indigo-50 text-indigo-600',
+      to: '/admin/chats',
+      helper: `${formatNumber(stats?.totalMessages)} messages`,
+    },
+    {
+      label: 'Listing Value',
+      value: formatCurrency(stats?.listingValue),
+      icon: TrendingUp,
+      color: 'bg-orange-50 text-orange-600',
+      helper: `${formatNumber(stats?.soldProducts)} sold ads`,
+    },
+    {
+      label: 'Total Views',
+      value: formatNumber(stats?.totalViews),
+      icon: Eye,
+      color: 'bg-cyan-50 text-cyan-600',
+      helper: 'Across all ads',
+    },
+    {
+      label: 'Active Users',
+      value: formatNumber(stats?.activeUsers),
+      icon: CheckCircle2,
+      color: 'bg-lime-50 text-lime-600',
+      helper: 'Seen in last 15 min',
+    },
+  ];
+
+  const quickActions = [
+    { to: '/admin/reports', icon: Clock, label: 'Review pending ads', value: stats?.reviewQueue || 0, color: 'text-amber-600 bg-amber-50' },
+    { to: '/admin/support-tickets', icon: LifeBuoy, label: 'Handle complaints', value: stats?.openSupportTickets || 0, color: 'text-purple-600 bg-purple-50' },
+    { to: '/admin/users', icon: Users, label: 'Manage users', value: stats?.totalUsers || 0, color: 'text-blue-600 bg-blue-50' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:p-8">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+              <Shield size={18} />
+              Live Admin Overview
+            </div>
+            <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">Dashboard Overview</h1>
+            <p className="mt-2 max-w-2xl text-gray-600">
+              Welcome back, <span className="font-bold text-gray-900">{user?.name || 'Admin'}</span>. All numbers below are loaded from current platform data.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+            <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Today</p>
+            <div className="mt-3 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-3xl font-black text-gray-950">{formatNumber(stats?.todayProducts)}</p>
+                <p className="text-sm font-semibold text-gray-600">new ads</p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-gray-950">{formatNumber(stats?.newUsersToday)}</p>
+                <p className="text-sm font-semibold text-gray-600">new users</p>
+              </div>
+            </div>
+            <p className={`mt-4 text-sm font-bold ${Number(stats?.todayDelta || 0) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+              {Number(stats?.todayDelta || 0) >= 0 ? '+' : ''}{formatNumber(stats?.todayDelta)} ads vs yesterday
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {cards.map((card) => <StatCard key={card.label} {...card} />)}
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <ChartCard
+          title="Ad Status"
+          icon={BarChart3}
+          action={<Link to="/admin/products" className="text-sm font-bold text-emerald-600">Manage</Link>}
+        >
+          {statusData.length ? (
+            <>
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={54} outerRadius={86}>
+                    {statusData.map((entry) => <Cell key={entry.status} fill={statusColors[entry.status] || statusColors.unknown} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap gap-3">
+                {statusData.map((item) => (
+                  <div key={item.status} className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                    <span className="h-3 w-3 rounded-full" style={{ background: statusColors[item.status] || statusColors.unknown }} />
+                    {item.name}: {formatNumber(item.value)}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : <EmptyChart label="No ad status data yet" />}
+        </ChartCard>
+
+        <ChartCard title="6 Month Growth" icon={TrendingUp}>
+          {growthData.length ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <ReLineChart data={growthData}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eef2f7" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line type="monotone" dataKey="users" name="Users" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="products" name="Products" stroke="#10b981" strokeWidth={3} dot={false} />
+              </ReLineChart>
+            </ResponsiveContainer>
+          ) : <EmptyChart label="No growth data yet" />}
+        </ChartCard>
+
+        <ChartCard title="Weekly Listing Value" icon={BarChart3}>
+          {weeklyListingValue.length ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <ReBarChart data={weeklyListingValue}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#eef2f7" />
+                <XAxis dataKey="week" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={(value) => `${Math.round(value / 1000)}k`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="listingValue" name="Listing Value" fill="#f97316" radius={[8, 8, 0, 0]} />
+              </ReBarChart>
+            </ResponsiveContainer>
+          ) : <EmptyChart label="No listing value data yet" />}
+        </ChartCard>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-lg font-black text-gray-950">Quick Actions</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {quickActions.map(({ to, icon: Icon, label, value, color }) => (
+              <Link key={label} to={to} className="rounded-2xl border border-gray-100 p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
+                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
+                  <Icon size={23} />
+                </div>
+                <p className="text-2xl font-black text-gray-950">{formatNumber(value)}</p>
+                <p className="mt-1 text-sm font-bold text-gray-600">{label}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-black text-gray-950">
+            <AlertTriangle size={20} className="text-amber-600" />
+            Operations Snapshot
+          </h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
+              <span className="font-semibold text-amber-800">Pending ads</span>
+              <span className="font-black text-amber-900">{formatNumber(stats?.pendingProducts)}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-purple-50 px-4 py-3">
+              <span className="font-semibold text-purple-800">Urgent tickets</span>
+              <span className="font-black text-purple-900">{formatNumber(stats?.urgentSupportTickets)}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-red-50 px-4 py-3">
+              <span className="font-semibold text-red-800">Rejected ads</span>
+              <span className="font-black text-red-900">{formatNumber(stats?.rejectedProducts)}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <RecentList title="Recent Users" icon={Users} to="/admin/users" empty="No users yet">
+          {recentUsers.map((item) => (
+            <ListRow
+              key={item._id}
+              title={item.name}
+              subtitle={item.email}
+              meta={item.isBlocked ? 'blocked' : item.role}
+              tone={item.isBlocked ? 'red' : 'gray'}
+            />
+          ))}
+        </RecentList>
+
+        <RecentList title="Recent Ads" icon={Package} to="/admin/products" empty="No ads yet">
+          {recentProducts.map((item) => (
+            <ListRow
+              key={item._id}
+              title={item.title}
+              subtitle={`${formatCurrency(item.price)} | ${item.category || 'Uncategorized'}`}
+              meta={item.status}
+              tone={item.status === 'approved' ? 'green' : item.status === 'pending' ? 'amber' : 'gray'}
+            />
+          ))}
+        </RecentList>
+
+        <RecentList title="Recent Support" icon={LifeBuoy} to="/admin/support-tickets" empty="No tickets yet">
+          {recentSupportTickets.map((item) => (
+            <ListRow
+              key={item._id}
+              title={item.subject}
+              subtitle={`${item.ticketNumber} | ${item.user?.email || 'Unknown user'}`}
+              meta={labelize(item.status)}
+              tone={item.priority === 'urgent' ? 'red' : item.status === 'resolved' ? 'green' : 'purple'}
+            />
+          ))}
+        </RecentList>
+      </section>
+    </div>
+  );
+};
+
+const toneClasses = {
+  gray: 'bg-gray-100 text-gray-700',
+  green: 'bg-emerald-50 text-emerald-700',
+  amber: 'bg-amber-50 text-amber-700',
+  red: 'bg-red-50 text-red-700',
+  purple: 'bg-purple-50 text-purple-700',
+};
+
+const RecentList = ({ title, icon: Icon, to, empty, children }) => {
+  const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
+  return (
+    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-lg font-black text-gray-950">
+          <Icon size={20} className="text-emerald-600" />
+          {title}
+        </h2>
+        <Link to={to} className="text-sm font-bold text-emerald-600">View all</Link>
+      </div>
+      <div className="space-y-3">
+        {hasChildren ? children : <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-sm font-semibold text-gray-500">{empty}</div>}
+      </div>
+    </section>
+  );
+};
+
+const ListRow = ({ title, subtitle, meta, tone = 'gray' }) => (
+  <div className="rounded-xl border border-gray-100 p-4">
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="truncate font-bold text-gray-950">{title || 'Untitled'}</p>
+        <p className="mt-1 truncate text-sm text-gray-500">{subtitle || '-'}</p>
+      </div>
+      <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold capitalize ${toneClasses[tone] || toneClasses.gray}`}>
+        {meta || 'active'}
+      </span>
+    </div>
+  </div>
+);
 
 export default AdminDashboard;

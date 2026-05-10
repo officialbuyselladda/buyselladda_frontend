@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { cn, useCategories, CATEGORIES } from '../utils';
+import { cn, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
 import api from '../services/api';
 import { useLocation } from '../context/LocationContext';
-import { Search, MapPin, X, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { Search, MapPin, X, ChevronRight, LocateFixed } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 /* ─────────────────────────────────────────────
@@ -49,9 +49,11 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(null);
   const [page, setPage] = useState(1);
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(() => localStorage.getItem('locationPromptDismissed') === 'true');
+  const [locationWarning, setLocationWarning] = useState(null);
 
-  const { userLocation, userAddress, clearLocation } = useLocation();
-  const { data: categoriesData } = useCategories();
+  const { userLocation, userAddress, loadingLocation, getLocation, clearLocation } = useLocation();
+  const { options: allCategories } = useCategoryOptions();
   const categoryScrollRef = useRef(null);
   const observerRef = useRef(null);
   const sentinelRef = useRef(null);
@@ -70,12 +72,18 @@ const Home = () => {
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
+      if (userLocation?.lat && userLocation?.lng) {
+        params.append('lat', String(userLocation.lat));
+        params.append('lng', String(userLocation.lng));
+        params.append('radius', '25');
+      }
       params.append('page', currentPage.toString());
       params.append('limit', '20');
 
       const { data } = await api.get('/products?' + params);
       const validProducts = (data.data?.products || []).filter(p => p && p._id);
-      const total = data.data?.total || null;
+      const total = data.data?.pagination?.total ?? null;
+      setLocationWarning(data.data?.warning || null);
 
       if (total !== null) setTotalCount(total);
       setHasMore(validProducts.length === 20);
@@ -92,14 +100,14 @@ const Home = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [filters]);
+  }, [filters, userLocation?.lat, userLocation?.lng]);
 
   /* ── Reset on filter change ── */
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     fetchProducts(1, false);
-  }, [filters]);
+  }, [filters, userLocation?.lat, userLocation?.lng, fetchProducts]);
 
   /* ── Infinite scroll ── */
   useEffect(() => {
@@ -125,8 +133,10 @@ const Home = () => {
   };
 
   const clearSearch = () => updateFilter('search', '');
-
-  const allCategories = categoriesData || CATEGORIES;
+  const dismissLocationPrompt = () => {
+    localStorage.setItem('locationPromptDismissed', 'true');
+    setLocationPromptDismissed(true);
+  };
 
   /* ─────────────────────────────────────────────
      RENDER
@@ -134,6 +144,30 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-4 space-y-3">
+
+        {!userLocation && !locationPromptDismissed && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 shadow-sm sm:flex-row sm:items-center">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-blue-600">
+              <LocateFixed size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">Show nearby products</p>
+              <p className="text-xs text-gray-600">Allow location access to see ads closest to you first.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={getLocation}
+                disabled={loadingLocation}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                {loadingLocation ? 'Detecting...' : 'Allow'}
+              </button>
+              <button onClick={dismissLocationPrompt} className="rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-white">
+                Later
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Active Search Banner ── */}
         {filters.search && (
@@ -158,7 +192,7 @@ const Home = () => {
               <MapPin className="w-4 h-4 text-blue-500" />
             </div>
             <span className="text-sm text-gray-600 flex-1">
-              Showing near <span className="font-medium text-gray-800">{userAddress || 'your location'}</span>
+              Showing products within 25 km of <span className="font-medium text-gray-800">{userAddress || 'your location'}</span>
             </span>
             <button
               onClick={clearLocation}
@@ -166,6 +200,12 @@ const Home = () => {
             >
               Change
             </button>
+          </div>
+        )}
+
+        {locationWarning && userLocation && (
+          <div className="rounded-2xl border border-yellow-100 bg-yellow-50 px-4 py-2.5 text-sm text-yellow-800">
+            {locationWarning}
           </div>
         )}
 
@@ -182,8 +222,8 @@ const Home = () => {
               onClick={() => updateFilter('category', '')}
             />
             {allCategories.map(cat => {
-              const slug = cat.slug || cat;
-              const name = cat.name || cat;
+              const slug = getCategoryValue(cat);
+              const name = getCategoryLabel(cat);
               return (
                 <CategoryPill
                   key={cat._id || slug}

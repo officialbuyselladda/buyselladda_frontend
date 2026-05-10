@@ -1,39 +1,44 @@
-import { ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
-// formatDistanceToNow imported from utils
+import { formatDistanceToNow } from 'date-fns';
+import { CheckCheck, User } from 'lucide-react';
 import { cn } from '../utils';
 
-const ChatMessage = ({ message, isOwn, currentUser }) => {
+const ChatMessage = ({ message, isOwn }) => {
+  const senderName = message.sender?.name || 'User';
+  const avatarUrl = message.sender?.avatar?.url;
+
   return (
-    <div className={cn(
-      'flex group',
-      isOwn ? 'justify-end' : 'justify-start'
-    )}>
-      <div className={cn(
-        'max-w-xs lg:max-w-md px-4 py-2 rounded-2xl shadow',
-        isOwn 
-          ? 'bg-primary-600 text-white rounded-br-sm ml-4' 
-          : 'bg-white border rounded-bl-sm mr-4'
-      )}>
+    <div className={cn('group flex items-end gap-2', isOwn ? 'justify-end' : 'justify-start')}>
+      {!isOwn && (
+        <div className="mb-5 flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600">
+          {avatarUrl ? <img src={avatarUrl} alt={senderName} className="h-full w-full object-cover" /> : <User size={15} />}
+        </div>
+      )}
+
+      <div
+        className={cn(
+          'max-w-[78%] px-4 py-2.5 shadow-sm sm:max-w-md lg:max-w-lg',
+          isOwn
+            ? 'rounded-3xl rounded-br-md bg-emerald-600 text-white'
+            : 'rounded-3xl rounded-bl-md border border-gray-100 bg-white text-gray-800'
+        )}
+      >
         {message.text && (
-          <p className="text-sm break-words">{message.text}</p>
+          <p className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed">{message.text}</p>
         )}
-        
-        {message.image && (
-          <img 
-            src={message.image.url} 
-            alt=""
-            className="mt-2 rounded-lg max-h-48 w-full object-cover"
-          />
-        )}
-        
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-opacity-20">
-          <div className="flex space-x-1 text-xs opacity-75">
-            <span>Seen</span>
-            {message.read && <MessageCircle size={12} />}
-          </div>
-          <span className="text-xs">
-            {formatDistanceToNow(new Date(message.createdAt))}
-          </span>
+
+        <div
+          className={cn(
+            'mt-1.5 flex items-center justify-end gap-1.5 text-[11px]',
+            isOwn ? 'text-white/75' : 'text-gray-400'
+          )}
+        >
+          <span>{formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}</span>
+          {isOwn && (
+            <span className="inline-flex items-center gap-1">
+              <CheckCheck size={13} />
+              {message.pending ? 'Sending' : message.read ? 'Seen' : 'Sent'}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -41,4 +46,3 @@ const ChatMessage = ({ message, isOwn, currentUser }) => {
 };
 
 export default ChatMessage;
-

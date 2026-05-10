@@ -1,174 +1,116 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import DataTable from '../components/DataTable';
-import StatusBadge from '../components/StatusBadge';
-import ConfirmationModal from '../components/ConfirmationModal';
-import { MessageSquare, User, Clock, Trash2, Eye } from 'lucide-react';
+import { MessageSquare, Search, Trash2, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const mockChats = [
-  {
-    id: '1',
-    title: 'John Doe - Product Inquiry',
-    participants: 'John Doe, You',
-    lastMessage: 'Interested in your iPhone 14 Pro',
-    lastUpdated: '2024-10-20 14:30',
-    status: 'active',
-    unread: 3,
-    userId: 'user1'
-  },
-  {
-    id: '2',
-    title: 'Sarah Wilson - Price Negotiation',
-    participants: 'Sarah Wilson, You',
-    lastMessage: 'Can you lower the price to 25k?',
-    lastUpdated: '2024-10-20 13:45',
-    status: 'active',
-    unread: 0,
-    userId: 'user2'
-  },
-  {
-    id: '3',
-    title: 'Mike Johnson - Spam Report',
-    participants: 'Mike Johnson, You',
-    lastMessage: '[Reported as spam]',
-    lastUpdated: '2024-10-20 12:15',
-    status: 'reported',
-    unread: 1,
-    userId: 'user3'
-  }
-];
-
 const AdminChats = () => {
-  const [filters, setFilters] = useState({ status: 'all', search: '', page: 1 });
-  const [selectedChats, setSelectedChats] = useState([]);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingChat, setDeletingChat] = useState(null);
+  const queryClient = useQueryClient();
+  const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
 
-  const chatsData = { chats: mockChats, total: mockChats.length, page: 1, pages: 1 };
-  // Mock - replace with:
-  // const { data: chatsData } = useQuery({ queryKey: ['adminChats', filters], queryFn: () => api.get('/admin/chats', { params: filters }).then(res => res.data.data) });
+  const { data = { chats: [], total: 0, page: 1, pages: 1 }, isLoading } = useQuery({
+    queryKey: ['adminChats', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams(filters);
+      const res = await api.get(`/admin/chats?${params}`);
+      return res.data.data;
+    },
+  });
 
-  const chats = chatsData.chats || [];
-
-  const columns = [
-    {
-      header: 'Chat',
-      key: 'title',
-      render: (row) => (
-        <div className="font-semibold text-gray-900 hover:text-primary-600">
-          {row.title}
-        </div>
-      )
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/admin/chats/${id}`),
+    onSuccess: () => {
+      toast.success('Chat deleted');
+      queryClient.invalidateQueries({ queryKey: ['adminChats'] });
     },
-    {
-      header: 'Participants',
-      render: (row) => (
-        <span className="text-gray-700">{row.participants}</span>
-      )
-    },
-    {
-      header: 'Last Message',
-      key: 'lastMessage',
-      className: 'max-w-md'
-    },
-    {
-      header: 'Status',
-      render: (row) => <StatusBadge status={row.status} />
-    },
-    {
-      header: 'Last Updated',
-      key: 'lastUpdated'
-    },
-    {
-      header: 'Unread',
-      render: (row) => row.unread > 0 ? (
-        <span className="font-semibold text-primary-600">{row.unread}</span>
-      ) : (
-        <span className="text-gray-400">0</span>
-      )
-    },
-    {
-      header: 'Actions',
-      render: (row) => (
-        <div className="flex gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-xl">
-            <Eye size={18} />
-          </button>
-          <button className="p-2 hover:bg-red-50 rounded-xl text-red-600">
-            <Trash2 size={18} />
-          </button>
-        </div>
-      )
-    }
-  ];
-
-  const handleDelete = (chatId) => {
-    setDeletingChat(chatId);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = () => {
-    toast.success('Chat deleted');
-    setShowDeleteModal(false);
-    setDeletingChat(null);
-    // Real delete: mutation
-  };
-
-  const bulkDelete = () => handleDelete();
+    onError: (error) => toast.error(error.response?.data?.message || 'Delete failed'),
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <MessageSquare size={40} className="text-primary-600" />
+        <MessageSquare size={40} className="text-emerald-600" />
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Manage Chats</h1>
-          <p className="text-gray-600">{chats.length} conversations</p>
+          <h1 className="text-3xl font-bold text-gray-900">Chats Control</h1>
+          <p className="text-gray-600">{data.total} conversations across the marketplace</p>
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={chats}
-        enableSelection
-        selectedRows={selectedChats}
-        onSelectionChange={setSelectedChats}
-        filters={filters}
-        onFilterChange={setFilters}
-        actions={[
-          <button 
-            key="delete" 
-            onClick={() => bulkDelete()}
-            className="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all flex items-center gap-2 text-sm"
-          >
-            <Trash2 size={18} />
-            Delete Selected ({selectedChats.length})
-          </button>
-        ]}
-        pagination={{
-          page: 1,
-          pages: 1,
-          total: chats.length
-        }}
-        onPageChange={() => {}}
-        emptyState="No chats found"
-        className="shadow-2xl"
-      />
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <input
+            value={filters.search}
+            onChange={(event) => setFilters({ ...filters, search: event.target.value, page: 1 })}
+            placeholder="Search product, buyer, seller, or last message..."
+            className="w-full rounded-xl border border-gray-200 py-3 pl-12 pr-4 outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+      </div>
 
-      <ConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={confirmDelete}
-        title="Delete Chat?"
-        message="This action cannot be undone. All messages will be permanently removed."
-        confirmText="Delete Chat"
-        danger
-        loading={false}
-      />
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+        {isLoading ? (
+          <div className="p-12 text-center text-gray-500">Loading chats...</div>
+        ) : data.chats.length === 0 ? (
+          <div className="p-12 text-center text-gray-500">No chats found</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-sm text-gray-600">
+                <tr>
+                  <th className="p-5">Conversation</th>
+                  <th className="p-5">Participants</th>
+                  <th className="p-5">Last Message</th>
+                  <th className="p-5">Unread</th>
+                  <th className="p-5">Updated</th>
+                  <th className="p-5">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data.chats.map((chat) => (
+                  <tr key={chat._id} className="hover:bg-gray-50">
+                    <td className="p-5">
+                      <p className="font-semibold text-gray-900">{chat.title}</p>
+                      <p className="text-sm text-gray-500">{chat.product ? `₹${chat.product.price?.toLocaleString()}` : 'No product attached'}</p>
+                    </td>
+                    <td className="p-5">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <Users size={16} />
+                        {(chat.participants || []).map((user) => user.name || user.email).join(', ')}
+                      </div>
+                    </td>
+                    <td className="p-5 max-w-md truncate text-sm text-gray-600">{chat.lastMessage?.text || 'No messages yet'}</td>
+                    <td className="p-5">
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{chat.unread || 0}</span>
+                    </td>
+                    <td className="p-5 text-sm text-gray-500">{new Date(chat.updatedAt).toLocaleString()}</td>
+                    <td className="p-5">
+                      <button
+                        onClick={() => {
+                          if (confirm('Delete this chat and all messages?')) deleteMutation.mutate(chat._id);
+                        }}
+                        className="rounded-lg p-2 text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {data.pages > 1 && (
+        <div className="flex justify-center gap-3 text-sm">
+          <button onClick={() => setFilters((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))} disabled={filters.page <= 1} className="rounded-lg border px-3 py-2 disabled:opacity-50">Previous</button>
+          <span className="px-3 py-2">Page {data.page} of {data.pages}</span>
+          <button onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))} disabled={filters.page >= data.pages} className="rounded-lg border px-3 py-2 disabled:opacity-50">Next</button>
+        </div>
+      )}
     </div>
   );
 };
 
 export default AdminChats;
-

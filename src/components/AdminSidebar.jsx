@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Shield, LayoutDashboard, Package, Users, MessagesSquare,
   Flag, BarChart3, Folder, Heart, Bell, ShieldAlert,
-  LogOut, ChevronLeft, ChevronRight, User, Settings
+  LogOut, ChevronLeft, ChevronRight, User, Settings, FileText, LifeBuoy
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -29,6 +29,7 @@ const AdminSidebar = () => {
         { path: '/admin/users', label: 'Users', icon: Users },
         { path: '/admin/chats', label: 'Chats', icon: MessagesSquare },
         { path: '/admin/reports', label: 'Reports', icon: Flag, badge: '3', badgeColor: 'red' },
+        { path: '/admin/support-tickets', label: 'Support Tickets', icon: LifeBuoy },
         { path: '/admin/categories', label: 'Categories', icon: Folder },
       ],
     },
@@ -44,6 +45,7 @@ const AdminSidebar = () => {
       label: 'System',
       items: [
         { path: '/admin/settings', label: 'Settings', icon: Settings },
+        { path: '/admin/system-settings', label: 'Website Content', icon: FileText },
       ],
     },
   ];

@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Image } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, LocateFixed } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import ImageUploader from '../components/ImageUploader';
-import { CATEGORIES, CONDITIONS } from '../utils';
+import { CONDITIONS, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { reverseGeocode } from '../utils/geocode';
 
 const schema = yup.object({
   title: yup.string().min(3).max(100).required('Title is required'),
@@ -21,26 +22,124 @@ const schema = yup.object({
 
 const CreateProduct = () => {
   const navigate = useNavigate();
+  const { id: editProductId } = useParams();
   const { user } = useAuth();
+  const { options: categoryOptions } = useCategoryOptions();
+  const categoryOptionsKey = useMemo(
+    () => categoryOptions.map((category) => `${getCategoryValue(category)}:${getCategoryLabel(category)}`).join('|'),
+    [categoryOptions]
+  );
   const [images, setImages] = useState([]);
+  const [initialImages, setInitialImages] = useState([]);
+  const [locationCoords, setLocationCoords] = useState(null);
+  const [locating, setLocating] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(Boolean(editProductId));
+  const isEditMode = Boolean(editProductId);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
     resolver: yupResolver(schema)
   });
 
-  const onSubmit = async (data) => {
+  useEffect(() => {
+    if (!editProductId) return;
+
+    const loadProduct = async () => {
+      try {
+        setLoadingProduct(true);
+        const { data } = await api.get(`/products/my-products/${editProductId}`);
+        const product = data.data;
+        const matchedCategory = categoryOptions.find((category) => (
+          getCategoryValue(category) === product.category || getCategoryLabel(category) === product.category
+        ));
+        reset({
+          title: product.title || '',
+          description: product.description || '',
+          price: product.price || '',
+          category: matchedCategory ? getCategoryValue(matchedCategory) : product.category || '',
+          condition: product.condition || 'Used',
+          location: product.location || '',
+        });
+        const safeImages = (product.images || []).filter((image) => image?.url);
+        setImages(safeImages);
+        setInitialImages(safeImages);
+        if (product.locationCoords?.coordinates?.length === 2) {
+          setLocationCoords({
+            lng: product.locationCoords.coordinates[0],
+            lat: product.locationCoords.coordinates[1],
+          });
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to load product');
+        navigate('/my-products');
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
+    loadProduct();
+  }, [categoryOptionsKey, editProductId, navigate, reset]);
+
+  const useExactLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Location is not supported in this browser');
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setLocationCoords(coords);
+
+        const address = await reverseGeocode(coords.lat, coords.lng);
+        setValue('location', address || `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        toast.success('Exact location added');
+        setLocating(false);
+      },
+      (error) => {
+        const message =
+          error.code === error.PERMISSION_DENIED
+            ? 'Please allow location permission to use exact location'
+            : 'Could not get your exact location';
+        toast.error(message);
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+const onSubmit = async (data) => {
     try {
+      if (images.length === 0) {
+        toast.error('Please upload at least one product image');
+        return;
+      }
       setLoading(true);
       const productData = {
         ...data,
         price: Number(data.price),
         images,
+        ...(locationCoords && {
+          locationCoords: {
+            type: 'Point',
+            coordinates: [locationCoords.lng, locationCoords.lat],
+          },
+        }),
       };
       
-      const { data: response } = await api.post('/products', productData);
-      toast.success(response.message || 'Product created successfully!');
-      navigate('/');
+      const request = isEditMode
+        ? api.put(`/products/${editProductId}`, productData)
+        : api.post('/products', productData);
+      const { data: response } = await request;
+      toast.success(response?.message || (isEditMode ? 'Your ad has been updated and sent for review.' : 'Your ad has been posted and is pending admin approval.'));
+      navigate('/my-products');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create product');
     } finally {
@@ -60,11 +159,15 @@ const CreateProduct = () => {
         </button>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          {loadingProduct ? (
+            <div className="py-20 text-center text-gray-500">Loading product...</div>
+          ) : (
+          <>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create New Ad
+            {isEditMode ? 'Edit Ad' : 'Create New Ad'}
           </h1>
           <p className="text-gray-600 mb-8">
-            Fill in the details to post your product
+            {isEditMode ? 'Update your product details. Approved ads go back to review after edits.' : 'Fill in the details to post your product'}
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -75,6 +178,7 @@ const CreateProduct = () => {
               </label>
               <ImageUploader 
                 onImagesChange={setImages} 
+                existingImages={initialImages}
               />
             </div>
 
@@ -129,8 +233,8 @@ const CreateProduct = () => {
                   className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Select category</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {categoryOptions.map(cat => (
+                    <option key={cat._id || getCategoryValue(cat)} value={getCategoryValue(cat)}>{getCategoryLabel(cat)}</option>
                   ))}
                 </select>
                 {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
@@ -164,6 +268,15 @@ const CreateProduct = () => {
                   className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="e.g. Mumbai, Maharashtra"
                 />
+                <button
+                  type="button"
+                  onClick={useExactLocation}
+                  disabled={locating}
+                  className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800 disabled:opacity-60"
+                >
+                  <LocateFixed size={16} />
+                  {locating ? 'Getting exact location...' : 'Use exact location'}
+                </button>
                 {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>}
               </div>
             </div>
@@ -176,13 +289,15 @@ const CreateProduct = () => {
               {loading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Creating your ad...</span>
+                  <span>{isEditMode ? 'Updating your ad...' : 'Creating your ad...'}</span>
                 </div>
               ) : (
-                'Post Ad Now'
+                isEditMode ? 'Update Ad' : 'Post Ad Now'
               )}
             </button>
           </form>
+          </>
+          )}
         </div>
       </div>
     </div>

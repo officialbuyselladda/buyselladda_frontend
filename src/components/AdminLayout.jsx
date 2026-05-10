@@ -17,7 +17,10 @@ const AdminLayout = () => {
         <AdminNavbar />
 
         {/* Page Content */}
-        <main className="flex-1 ml-0 lg:ml-64 p-4 lg:p-8 overflow-y-auto">
+        <main
+          data-scroll-container="page"
+          className="flex-1 ml-0 lg:ml-64 p-4 lg:p-8 overflow-y-auto"
+        >
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

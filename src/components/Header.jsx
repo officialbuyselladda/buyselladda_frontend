@@ -1,8 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useContext, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
-import { cn, CATEGORIES } from '../utils';
+import api from '../services/api';
+import { cn, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
 import {
   Search, Menu, ChevronDown, MapPin, LogOut, Shield,
   MessageCircle, Plus, X, User, Bell, ChevronRight, Home
@@ -28,6 +30,16 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileCatOpen, setMobileCatOpen] = useState(false);
+  const { options: categoryOptions } = useCategoryOptions();
+  const { data: unreadNotificationCount = 0 } = useQuery({
+    queryKey: ['notificationUnreadCount', user?._id],
+    queryFn: async () => {
+      const res = await api.get('/notifications/unread-count');
+      return res.data.data?.unreadCount || 0;
+    },
+    enabled: Boolean(user?._id && user?.role === 'user'),
+    refetchInterval: 15000,
+  });
 
   const userMenuRef = useRef(null);
   useOutsideClick(userMenuRef, () => setUserMenuOpen(false));
@@ -95,9 +107,9 @@ const Header = () => {
                   style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
                 >
                   <option value="">All Categories</option>
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat._id || cat} value={cat.slug || cat}>
-                      {cat.name || cat}
+                  {categoryOptions.map((cat) => (
+                    <option key={cat._id || getCategoryValue(cat)} value={getCategoryValue(cat)}>
+                      {getCategoryLabel(cat)}
                     </option>
                   ))}
                 </select>
@@ -151,12 +163,26 @@ const Header = () => {
 
               {/* Chat */}
               {user?.role === 'user' && (
-                <Link
-                  to="/chats"
-                  className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 hover:text-orange-500 transition-colors relative"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </Link>
+                <>
+                  <Link
+                    to="/notifications"
+                    className="relative flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-orange-500"
+                    title="Notifications"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadNotificationCount > 0 && (
+                      <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-500 px-1 text-center text-[10px] font-bold text-white">
+                        {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    to="/chats"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 hover:text-orange-500 transition-colors relative"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </Link>
+                </>
               )}
 
               {/* Admin Panel */}
@@ -191,7 +217,7 @@ const Header = () => {
                         <p className="text-xs text-gray-400 truncate">{user.email}</p>
                       </div>
                       <Link
-                        to="/my-ads"
+                        to="/my-products"
                         onClick={() => setUserMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                       >
@@ -203,6 +229,13 @@ const Header = () => {
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
                       >
                         <MessageCircle className="w-4 h-4" /> Messages
+                      </Link>
+                      <Link
+                        to="/notifications"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors"
+                      >
+                        <Bell className="w-4 h-4" /> Notifications
                       </Link>
                       <div className="border-t border-gray-100 mt-1 pt-1">
                         <button
@@ -251,12 +284,10 @@ const Header = () => {
               {/* Quick Links */}
               {[
                 { label: 'All Ads', to: '/' },
-                { label: 'Mobiles', to: '/?category=mobiles' },
-                { label: 'Cars', to: '/?category=cars' },
-                { label: 'Bikes', to: '/?category=bikes' },
-                { label: 'Electronics', to: '/?category=electronics' },
-                { label: 'Furniture', to: '/?category=furniture' },
-                { label: 'Books', to: '/?category=books' },
+                ...categoryOptions.slice(0, 6).map((cat) => ({
+                  label: getCategoryLabel(cat),
+                  to: `/?category=${encodeURIComponent(getCategoryValue(cat))}`,
+                })),
               ].map(item => (
                 <Link
                   key={item.label}
@@ -278,13 +309,13 @@ const Header = () => {
                   More <ChevronDown className="w-3 h-3" />
                 </button>
                 <div className="absolute top-full left-0 mt-1 w-48 bg-white shadow-xl border border-gray-100 rounded-2xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                  {CATEGORIES.slice(3).map(cat => (
+                  {categoryOptions.slice(6).map(cat => (
                     <Link
-                      key={cat._id || cat}
-                      to={`/?category=${cat.slug || cat}`}
+                      key={cat._id || getCategoryValue(cat)}
+                      to={`/?category=${encodeURIComponent(getCategoryValue(cat))}`}
                       className="flex items-center justify-between px-3 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
                     >
-                      {cat.name || cat}
+                      {getCategoryLabel(cat)}
                       <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
                     </Link>
                   ))}
@@ -345,11 +376,10 @@ const Header = () => {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: 'All Ads', to: '/' },
-                  { label: 'Mobiles', to: '/?category=mobiles' },
-                  { label: 'Cars', to: '/?category=cars' },
-                  { label: 'Electronics', to: '/?category=electronics' },
-                  { label: 'Furniture', to: '/?category=furniture' },
-                  { label: 'Books', to: '/?category=books' },
+                  ...categoryOptions.slice(0, 5).map((cat) => ({
+                    label: getCategoryLabel(cat),
+                    to: `/?category=${encodeURIComponent(getCategoryValue(cat))}`,
+                  })),
                 ].map(item => (
                   <Link
                     key={item.label}
@@ -375,14 +405,14 @@ const Header = () => {
               </button>
               {mobileCatOpen && (
                 <div className="mt-1 rounded-xl border border-gray-100 overflow-hidden">
-                  {CATEGORIES.map(cat => (
+                  {categoryOptions.map(cat => (
                     <Link
-                      key={cat._id || cat}
-                      to={`/?category=${cat.slug || cat}`}
+                      key={cat._id || getCategoryValue(cat)}
+                      to={`/?category=${encodeURIComponent(getCategoryValue(cat))}`}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 border-b border-gray-50 last:border-0 transition-colors"
                     >
-                      {cat.name || cat}
+                      {getCategoryLabel(cat)}
                       <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
                     </Link>
                   ))}
@@ -420,6 +450,18 @@ const Header = () => {
                   {user.role === 'admin' && (
                     <Link to="/admin/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm text-purple-600 font-semibold hover:bg-purple-50 rounded-xl">
                       <Shield className="w-4 h-4" /> Admin Panel
+                    </Link>
+                  )}
+                  {user.role === 'user' && (
+                    <Link to="/notifications" onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-3 py-2.5 text-sm text-gray-700 font-semibold hover:bg-orange-50 hover:text-orange-600 rounded-xl">
+                      <span className="flex items-center gap-2">
+                        <Bell className="w-4 h-4" /> Notifications
+                      </span>
+                      {unreadNotificationCount > 0 && (
+                        <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                          {unreadNotificationCount}
+                        </span>
+                      )}
                     </Link>
                   )}
                   <button
