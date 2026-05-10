@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, UserPlus, Shield } from 'lucide-react';
+import { Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
 
 const schema = yup.object({
   email: yup.string().email('Valid email required').required('Email is required'),
@@ -18,97 +17,115 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(schema),
   });
 
   const onSubmit = async (data) => {
     setLoading(true);
     const result = await login(data.email, data.password);
     setLoading(false);
-    if (result.success) {
-      navigate('/');
-    }
+    if (result.success) navigate('/');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
-        <div>
-          <img
-            src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
-            alt="DealKro Logo"
-            className="mx-auto h-24 w-auto object-contain"
-          />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 text-center">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 text-center">
-            Sign in to your account
-          </p>
-        </div>
-        
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                {...register('email')}
-                type="email"
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Enter your email"
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                {...register('password')}
-                type="password"
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Enter your password"
-              />
-            </div>
-            {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-
-        <div className="text-center space-y-3 pt-4">
-          <Link 
-            to="/admin/login" 
-            className="w-full block bg-gradient-to-r from-emerald-600 to-blue-600 text-white py-3 px-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-blue-700 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 mx-auto"
-          >
-            <Shield className="w-5 h-5" />
-            Admin Login
+    <main className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl lg:grid-cols-[minmax(0,1fr)_460px]">
+        <section className="hidden bg-gradient-to-br from-orange-50 via-white to-emerald-50 p-10 lg:flex lg:flex-col lg:justify-between">
+          <Link to="/" className="inline-flex w-fit items-center">
+            <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-16 w-auto object-contain" />
           </Link>
-          <p className="text-sm text-gray-600 border-t pt-4">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
-              Sign up
-            </Link>
-          </p>
-        </div>
 
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-orange-700 shadow-sm">
+              <ShieldCheck size={18} />
+              Trusted local marketplace
+            </div>
+            <h1 className="max-w-xl text-4xl font-black leading-tight text-gray-950">
+              Sign in to manage your ads, chats, favorites, and support tickets.
+            </h1>
+            <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
+              Buy and sell near you with safer conversations, verified activity, and a smoother DealKro experience.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 text-sm font-semibold text-gray-700">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">Post ads fast</div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">Chat securely</div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">Track listings</div>
+          </div>
+        </section>
+
+        <section className="flex flex-col justify-center p-6 sm:p-10">
+          <div className="mx-auto w-full max-w-sm">
+            <div className="mb-8 text-center lg:hidden">
+              <Link to="/" className="inline-flex justify-center">
+                <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-20 w-auto object-contain" />
+              </Link>
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-3xl font-black text-gray-950">Welcome back</h2>
+              <p className="mt-2 text-sm text-gray-600">Login to continue to your DealKro account.</p>
+            </div>
+
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">Email address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...register('email')}
+                    type="email"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
+                </div>
+                {errors.email && <p className="mt-1 text-sm font-medium text-red-600">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...register('password')}
+                    type="password"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                  />
+                </div>
+                {errors.password && <p className="mt-1 text-sm font-medium text-red-600">{errors.password.message}</p>}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full items-center justify-center rounded-xl bg-orange-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-bold text-orange-600 hover:text-orange-700">
+                Create one
+              </Link>
+            </p>
+
+            <p className="mt-8 border-t border-gray-100 pt-5 text-center text-xs leading-6 text-gray-500">
+              By signing in, you agree to DealKro's{' '}
+              <Link to="/terms" className="font-bold text-gray-700 hover:text-orange-600">Terms of Use</Link>
+              {' '}and acknowledge our{' '}
+              <Link to="/privacy" className="font-bold text-gray-700 hover:text-orange-600">Privacy Policy</Link>.
+            </p>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 
 export default Login;
-

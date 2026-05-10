@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, User } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -18,100 +18,130 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const { register: reg, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(schema),
   });
 
   const onSubmit = async (data) => {
     setLoading(true);
     const result = await register(data.name, data.email, data.password);
     setLoading(false);
-    if (result.success) {
-      navigate('/login');
-    }
+    if (result.success) navigate('/login');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
-        <div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 text-center">
-            Create account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 text-center">
-            Join DealKro today
-          </p>
-        </div>
-        
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                {...reg('name')}
-                type="text"
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="Enter your name"
-              />
+    <main className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl lg:grid-cols-[460px_minmax(0,1fr)]">
+        <section className="flex flex-col justify-center p-6 sm:p-10">
+          <div className="mx-auto w-full max-w-sm">
+            <div className="mb-8 text-center">
+              <Link to="/" className="inline-flex justify-center lg:hidden">
+                <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-20 w-auto object-contain" />
+              </Link>
             </div>
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+
+            <div className="mb-8">
+              <h2 className="text-3xl font-black text-gray-950">Create account</h2>
+              <p className="mt-2 text-sm text-gray-600">Join DealKro and start buying or selling near you.</p>
+            </div>
+
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">Full name</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...reg('name')}
+                    type="text"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="Your name"
+                    autoComplete="name"
+                  />
+                </div>
+                {errors.name && <p className="mt-1 text-sm font-medium text-red-600">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">Email address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...reg('email')}
+                    type="email"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
+                </div>
+                {errors.email && <p className="mt-1 text-sm font-medium text-red-600">{errors.email.message}</p>}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...reg('password')}
+                    type="password"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="Create a password"
+                    autoComplete="new-password"
+                  />
+                </div>
+                {errors.password && <p className="mt-1 text-sm font-medium text-red-600">{errors.password.message}</p>}
+              </div>
+
+              <p className="text-xs leading-6 text-gray-500">
+                By creating an account, you agree to DealKro's{' '}
+                <Link to="/terms" className="font-bold text-gray-700 hover:text-orange-600">Terms of Use</Link>
+                {' '}and confirm that you have read our{' '}
+                <Link to="/privacy" className="font-bold text-gray-700 hover:text-orange-600">Privacy Policy</Link>.
+              </p>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex w-full items-center justify-center rounded-xl bg-orange-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Creating account...' : 'Create account'}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-bold text-orange-600 hover:text-orange-700">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <section className="hidden bg-gradient-to-br from-orange-50 via-white to-emerald-50 p-10 lg:flex lg:flex-col lg:justify-between">
+          <Link to="/" className="inline-flex w-fit items-center">
+            <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-16 w-auto object-contain" />
+          </Link>
+
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-orange-700 shadow-sm">
+              <ShieldCheck size={18} />
+              Safer local selling
+            </div>
+            <h1 className="max-w-xl text-4xl font-black leading-tight text-gray-950">
+              Create your DealKro account and post your first ad in minutes.
+            </h1>
+            <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
+              Manage listings, chat with buyers, save favorites, and raise support tickets from one secure account.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                {...reg('email')}
-                type="email"
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="Enter your email"
-              />
-            </div>
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          <div className="grid grid-cols-3 gap-3 text-sm font-semibold text-gray-700">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">Free ad posting</div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">Buyer chats</div>
+            <div className="rounded-2xl bg-white p-4 shadow-sm">Support desk</div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                {...reg('password')}
-                type="password"
-                className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                placeholder="Enter your password"
-              />
-            </div>
-            {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-emerald-600 hover:text-emerald-500">
-              Sign in
-            </Link>
-          </p>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 
 export default Register;
-
