@@ -34,6 +34,7 @@ const Gallery = ({ images = [], title }) => {
   const [active, setActive] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const list = images.length ? images : [{ url: placeholderImage }];
+  const hasMultipleImages = list.length > 1;
   const activeImage = getImageUrl(list[active]);
 
   const prev = () => setActive((index) => (index - 1 + list.length) % list.length);
@@ -42,9 +43,9 @@ const Gallery = ({ images = [], title }) => {
   return (
     <>
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="grid bg-white md:grid-cols-[96px_minmax(0,1fr)]">
-          {list.length > 1 && (
-            <div className="hidden max-h-[560px] flex-col gap-2 overflow-y-auto border-r border-gray-200 bg-white p-3 md:flex">
+        <div className={`grid bg-white ${hasMultipleImages ? 'md:grid-cols-[92px_minmax(0,1fr)]' : 'grid-cols-1'}`}>
+          {hasMultipleImages && (
+            <div className="hidden max-h-[620px] flex-col gap-2 overflow-y-auto border-r border-gray-200 bg-white p-3 md:flex">
               {list.map((image, index) => (
                 <button
                   key={`${getImageUrl(image)}-side-${index}`}
@@ -68,24 +69,24 @@ const Gallery = ({ images = [], title }) => {
             </div>
           )}
 
-          <div className="relative flex h-[340px] items-center justify-center bg-[#111111] sm:h-[460px] lg:h-[560px]">
+          <div className="relative flex aspect-[4/3] max-h-[620px] min-h-[280px] w-full items-center justify-center bg-[#111111] sm:min-h-[420px] lg:aspect-[16/11] lg:min-h-[520px]">
             <img
               src={activeImage}
               alt={title}
-              className="h-full w-full cursor-zoom-in object-contain p-2 sm:p-4"
+              className="block h-full max-h-full w-full max-w-full cursor-zoom-in object-contain p-2 sm:p-4"
               onClick={() => setZoomed(true)}
               onError={(event) => {
                 event.currentTarget.src = placeholderImage;
               }}
             />
 
-            {list.length > 1 && (
+            {hasMultipleImages && (
               <>
                 <button
                   type="button"
                   onClick={prev}
                   aria-label="Previous image"
-                  className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow transition hover:bg-white"
+                  className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow transition hover:bg-white sm:left-3 sm:h-11 sm:w-11"
                 >
                   <ChevronLeft size={24} />
                 </button>
@@ -93,7 +94,7 @@ const Gallery = ({ images = [], title }) => {
                   type="button"
                   onClick={next}
                   aria-label="Next image"
-                  className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow transition hover:bg-white"
+                  className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow transition hover:bg-white sm:right-3 sm:h-11 sm:w-11"
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -111,7 +112,7 @@ const Gallery = ({ images = [], title }) => {
           </div>
         </div>
 
-        {list.length > 1 && (
+        {hasMultipleImages && (
           <div className="flex gap-2 overflow-x-auto border-t border-gray-200 p-3 md:hidden">
             {list.map((image, index) => (
               <button
