@@ -15,6 +15,8 @@ import AdminLayout from './components/AdminLayout';
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import AdminLogin from './pages/AdminLogin';
 import Register from './pages/Register';
 import CreateProduct from './pages/CreateProduct';
@@ -69,6 +71,8 @@ const AppContent = () => {
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/register" element={<Register />} />
 
         <Route 

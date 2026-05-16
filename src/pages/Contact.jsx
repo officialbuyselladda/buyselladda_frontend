@@ -41,7 +41,7 @@ const Contact = () => {
                   <Mail className="w-12 h-12 text-emerald-600 mt-1 flex-shrink-0" />
                   <div>
                     <h4 className="font-bold text-gray-900 text-lg mb-1">Email Us</h4>
-                    <p className="text-gray-600">support@dealkro.com</p>
+                    <p className="text-gray-600">support@buyselladda.com</p>
                     <p className="text-sm text-gray-500">Best for technical issues</p>
                   </div>
                 </div>

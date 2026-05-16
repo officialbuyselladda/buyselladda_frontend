@@ -95,17 +95,24 @@ api.get('/notifications/admin/list?limit=10').then(res => res.data.data?.notific
           flex-shrink: 0;
         }
         .brand-icon {
-          width: 36px; height: 36px;
+          width: 38px; height: 38px;
           border-radius: 11px;
-          background: linear-gradient(135deg, #10b981, #059669);
+          background: #fff;
+          border: 1px solid #f0f0f0;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 3px 10px rgba(16,185,129,0.3);
-          font-size: 16px; font-weight: 800; color: #fff;
-          letter-spacing: -0.5px;
+          overflow: hidden;
         }
+        .brand-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .brand-stack { display: flex; flex-direction: column; line-height: 1.05; }
         .brand-text {
           font-size: 17px; font-weight: 800;
           color: #111827; letter-spacing: -0.03em;
+          white-space: nowrap;
+        }
+        .brand-tagline {
+          margin-top: 3px;
+          font-size: 10px; font-weight: 700;
+          color: #6b7280;
           white-space: nowrap;
         }
         .brand-badge {
@@ -311,7 +318,7 @@ api.get('/notifications/admin/list?limit=10').then(res => res.data.data?.notific
         @media (max-width: 640px) {
           .search-form { display: none; }
           .brand-badge { display: none; }
-          .brand-text { display: none; }
+          .brand-stack { display: none; }
           .navbar-inner { padding: 0 16px; }
           .profile-name { display: none; }
         }
@@ -325,8 +332,11 @@ api.get('/notifications/admin/list?limit=10').then(res => res.data.data?.notific
 
           {/* Brand */}
           <Link to="/admin" className="navbar-brand">
-            <div className="brand-icon">D</div>
-            <span className="brand-text">Dealkro</span>
+            <div className="brand-icon"><img src="/logo-1.png" alt="BuySellAdda" /></div>
+            <span className="brand-stack">
+              <span className="brand-text">BuySellAdda</span>
+              <span className="brand-tagline">Har Deal, Ek Nayi Shuruaat</span>
+            </span>
             {/* <span className="brand-badge">Pro</span> */}
           </Link>
 

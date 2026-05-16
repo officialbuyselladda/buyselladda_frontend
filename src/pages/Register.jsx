@@ -35,13 +35,14 @@ const Register = () => {
           <div className="mx-auto w-full max-w-sm">
             <div className="mb-8 text-center">
               <Link to="/" className="inline-flex justify-center lg:hidden">
-                <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-20 w-auto object-contain" />
+                <img src="/logo-1.png" alt="BuySellAdda" className="h-20 w-auto object-contain" />
               </Link>
+              <p className="mt-3 text-sm font-bold text-gray-600 lg:hidden">Har Deal, Ek Nayi Shuruaat</p>
             </div>
 
             <div className="mb-8">
               <h2 className="text-3xl font-black text-gray-950">Create account</h2>
-              <p className="mt-2 text-sm text-gray-600">Join DealKro and start buying or selling near you.</p>
+              <p className="mt-2 text-sm text-gray-600">Join BuySellAdda and start buying or selling near you.</p>
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
@@ -91,7 +92,7 @@ const Register = () => {
               </div>
 
               <p className="text-xs leading-6 text-gray-500">
-                By creating an account, you agree to DealKro's{' '}
+                By creating an account, you agree to BuySellAdda's{' '}
                 <Link to="/terms" className="font-bold text-gray-700 hover:text-orange-600">Terms of Use</Link>
                 {' '}and confirm that you have read our{' '}
                 <Link to="/privacy" className="font-bold text-gray-700 hover:text-orange-600">Privacy Policy</Link>.
@@ -116,8 +117,9 @@ const Register = () => {
         </section>
 
         <section className="hidden bg-gradient-to-br from-orange-50 via-white to-emerald-50 p-10 lg:flex lg:flex-col lg:justify-between">
-          <Link to="/" className="inline-flex w-fit items-center">
-            <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-16 w-auto object-contain" />
+          <Link to="/" className="inline-flex w-fit flex-col items-start">
+            <img src="/logo-1.png" alt="BuySellAdda" className="h-16 w-auto object-contain" />
+            <span className="mt-2 text-sm font-bold text-gray-700">Har Deal, Ek Nayi Shuruaat</span>
           </Link>
 
           <div>
@@ -126,7 +128,7 @@ const Register = () => {
               Safer local selling
             </div>
             <h1 className="max-w-xl text-4xl font-black leading-tight text-gray-950">
-              Create your DealKro account and post your first ad in minutes.
+              Create your BuySellAdda account and post your first ad in minutes.
             </h1>
             <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
               Manage listings, chat with buyers, save favorites, and raise support tickets from one secure account.

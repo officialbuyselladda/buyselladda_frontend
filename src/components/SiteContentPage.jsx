@@ -14,11 +14,11 @@ const fallbackPages = {
   },
   terms: {
     title: 'Terms of Use',
-    subtitle: 'By using DealKro, you agree to these terms. Please read carefully.',
+    subtitle: 'By using BuySellAdda, you agree to these terms. Please read carefully.',
     accent: 'emerald',
     updatedText: 'January 1, 2025',
     sections: [
-      { heading: '1. Acceptance of Terms', body: 'These Terms govern your use of DealKro platform. Continued use means acceptance.' },
+      { heading: '1. Acceptance of Terms', body: 'These Terms govern your use of BuySellAdda platform. Continued use means acceptance.' },
       { heading: '2. User Conduct', body: 'No spam, illegal content, scams. Respect other users.' },
     ],
   },

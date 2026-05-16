@@ -153,7 +153,7 @@ const ReportProblem = () => {
                     value={formData.adUrl}
                     onChange={(e) => setFormData({...formData, adUrl: e.target.value})}
                     className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-orange-500 shadow-sm transition-all"
-                    placeholder="https://dealkro.com/ads/abc123 or ad ID"
+                    placeholder="https://buyselladda.com/ads/abc123 or ad ID"
                   />
                 </div>
 

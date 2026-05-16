@@ -31,8 +31,9 @@ const Login = () => {
     <main className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
       <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl lg:grid-cols-[minmax(0,1fr)_460px]">
         <section className="hidden bg-gradient-to-br from-orange-50 via-white to-emerald-50 p-10 lg:flex lg:flex-col lg:justify-between">
-          <Link to="/" className="inline-flex w-fit items-center">
-            <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-16 w-auto object-contain" />
+          <Link to="/" className="inline-flex w-fit flex-col items-start">
+            <img src="/logo-1.png" alt="BuySellAdda" className="h-16 w-auto object-contain" />
+            <span className="mt-2 text-sm font-bold text-gray-700">Har Deal, Ek Nayi Shuruaat</span>
           </Link>
 
           <div>
@@ -44,7 +45,7 @@ const Login = () => {
               Sign in to manage your ads, chats, favorites, and support tickets.
             </h1>
             <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
-              Buy and sell near you with safer conversations, verified activity, and a smoother DealKro experience.
+              Buy and sell near you with safer conversations, verified activity, and a smoother BuySellAdda experience.
             </p>
           </div>
 
@@ -59,13 +60,14 @@ const Login = () => {
           <div className="mx-auto w-full max-w-sm">
             <div className="mb-8 text-center lg:hidden">
               <Link to="/" className="inline-flex justify-center">
-                <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-20 w-auto object-contain" />
+                <img src="/logo-1.png" alt="BuySellAdda" className="h-20 w-auto object-contain" />
               </Link>
+              <p className="mt-3 text-sm font-bold text-gray-600">Har Deal, Ek Nayi Shuruaat</p>
             </div>
 
             <div className="mb-8">
               <h2 className="text-3xl font-black text-gray-950">Welcome back</h2>
-              <p className="mt-2 text-sm text-gray-600">Login to continue to your DealKro account.</p>
+              <p className="mt-2 text-sm text-gray-600">Login to continue to your BuySellAdda account.</p>
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
@@ -85,7 +87,12 @@ const Login = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">Password</label>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label className="block text-sm font-bold text-gray-700">Password</label>
+                  <Link to="/forgot-password" className="text-xs font-bold text-orange-600 hover:text-orange-700">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <input
@@ -116,7 +123,7 @@ const Login = () => {
             </p>
 
             <p className="mt-8 border-t border-gray-100 pt-5 text-center text-xs leading-6 text-gray-500">
-              By signing in, you agree to DealKro's{' '}
+              By signing in, you agree to BuySellAdda's{' '}
               <Link to="/terms" className="font-bold text-gray-700 hover:text-orange-600">Terms of Use</Link>
               {' '}and acknowledge our{' '}
               <Link to="/privacy" className="font-bold text-gray-700 hover:text-orange-600">Privacy Policy</Link>.

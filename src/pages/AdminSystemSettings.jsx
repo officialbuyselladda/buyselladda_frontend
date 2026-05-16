@@ -14,9 +14,9 @@ const pageLabels = {
 
 const emptyContent = {
   footer: {
-    brandName: '',
-    logoUrl: '',
-    tagline: '',
+    brandName: 'BuySellAdda',
+    logoUrl: '/logo-1.png',
+    tagline: 'Har Deal, Ek Nayi Shuruaat',
     trustTitle: '',
     trustSubtitle: '',
     bannerButtonText: '',

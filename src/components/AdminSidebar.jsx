@@ -60,13 +60,13 @@ const AdminSidebar = () => {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100 flex-shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
-          <Shield size={18} className="text-white" />
+        <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <img src="/logo-1.png" alt="BuySellAdda" className="h-full w-full object-contain" />
         </div>
         {!isCollapsed && (
           <div>
-            <p className="text-sm font-bold text-gray-900 leading-none">DealKro</p>
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">Admin Panel</p>
+            <p className="text-sm font-bold text-gray-900 leading-none">BuySellAdda</p>
+            <p className="text-[10px] font-semibold text-gray-400 mt-0.5">Har Deal, Ek Nayi Shuruaat</p>
           </div>
         )}
       </div>

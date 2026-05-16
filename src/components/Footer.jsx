@@ -5,14 +5,14 @@ import { contentApi } from '../services/api';
 import { cn } from '../utils';
 
 const fallbackFooter = {
-  brandName: 'DealKro',
-  logoUrl: 'https://i.ibb.co/d4v1q3jZ/logo.jpg',
-  tagline: 'Buy and sell locally.\nQuick, easy, safe.',
+  brandName: 'BuySellAdda',
+  logoUrl: '/logo-1.png',
+  tagline: 'Har Deal, Ek Nayi Shuruaat.\nBuy and sell locally with confidence.',
   trustTitle: 'Trusted by 10M+ users',
   trustSubtitle: "India's #1 buying & selling platform",
   bannerButtonText: 'Post Your Ad',
   bannerButtonPath: '/create-product',
-  copyrightText: 'DealKro. All rights reserved',
+  copyrightText: 'BuySellAdda. All rights reserved',
   columns: [
     { title: 'Buy & Sell', links: [{ label: 'Post Free Ad', path: '/create-product' }, { label: 'My Ads', path: '/my-products' }, { label: 'Profile', path: '/profile' }] },
     { title: 'Browse', links: [{ label: 'All Categories', path: '/categories' }, { label: 'Search', path: '/search' }, { label: 'Favorites', path: '/favorites' }] },

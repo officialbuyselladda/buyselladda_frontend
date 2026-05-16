@@ -133,6 +133,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = async (token, password) => {
+    try {
+      const { data } = await api.put(`/auth/reset-password/${token}`, { password });
+      if (data.success) {
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        setUser(data.data.user);
+        toast.success(data.message || 'Password reset successful');
+        return { success: true };
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Password reset failed');
+      return { success: false };
+    }
+  };
+
 const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -145,6 +161,7 @@ const logout = () => {
     login,
     adminLogin,
     register,
+    resetPassword,
     logout,
     loading,
     isAuthenticated: !!user,

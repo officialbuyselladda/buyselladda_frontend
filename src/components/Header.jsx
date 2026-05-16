@@ -67,8 +67,12 @@ const Header = () => {
     return (
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center">
-          <Link to="/admin/dashboard">
-            <img src="https://i.ibb.co/d4v1q3jZ/logo.jpg" alt="DealKro" className="h-14 w-auto object-contain" />
+          <Link to="/admin/dashboard" className="flex items-center gap-3">
+            <img src="/logo-1.png" alt="BuySellAdda" className="h-12 w-auto object-contain" />
+            <div className="hidden sm:block leading-tight">
+              <p className="text-sm font-black text-gray-950">BuySellAdda</p>
+              <p className="text-[11px] font-semibold text-gray-500">Har Deal, Ek Nayi Shuruaat</p>
+            </div>
           </Link>
           <span className="ml-3 text-xs font-bold text-gray-400 tracking-widest uppercase">Admin</span>
         </div>
@@ -86,12 +90,16 @@ const Header = () => {
           <div className="flex items-center h-14 sm:h-16 gap-2 sm:gap-3">
 
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0">
+            <Link to="/" className="flex flex-shrink-0 items-center gap-2">
               <img
-                src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
-                alt="DealKro"
+                src="/logo-1.png"
+                alt="BuySellAdda"
                 className="h-10 sm:h-12 w-auto object-contain"
               />
+              <div className="hidden lg:block leading-tight">
+                <p className="text-sm font-black text-gray-950">BuySellAdda</p>
+                <p className="text-[11px] font-semibold text-gray-500">Har Deal, Ek Nayi Shuruaat</p>
+              </div>
             </Link>
 
             {/* ── Search Bar (hidden on xs, shown md+) ── */}

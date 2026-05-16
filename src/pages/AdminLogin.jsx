@@ -49,12 +49,13 @@ export default function AdminLogin() {
       <div className="max-w-md w-full space-y-8 bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/50">
         <div className="text-center">
           <img
-            src="https://i.ibb.co/d4v1q3jZ/logo.jpg"
-            alt="DealKro Logo"
+            src="/logo-1.png"
+            alt="BuySellAdda Logo"
             className="mx-auto h-24 w-auto object-contain mb-6"
           />
+          <p className="mb-3 text-sm font-bold text-gray-600">Har Deal, Ek Nayi Shuruaat</p>
           <h2 className="mt-2 text-4xl font-bold bg-gradient-to-r from-gray-900 via-emerald-700 to-blue-600 bg-clip-text text-transparent">
-            Admin Panel
+            BuySellAdda Admin Panel
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Sign in to manage the platform
@@ -73,7 +74,7 @@ export default function AdminLogin() {
                 {...register('email')}
                 type="email"
                 className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:ring-3 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gradient-to-r from-slate-50 to-gray-50"
-                placeholder="admin@dealkro.com"
+                placeholder="admin@buyselladda.com"
               />
             </div>
             {errors.email && <p className="mt-2 text-sm text-red-600 flex items-center gap-1"><Mail className="h-4 w-4" />{errors.email.message}</p>}
