@@ -5,13 +5,13 @@ import AdminNavbar from "./AdminNavbar";
 
 const AdminLayout = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="flex min-h-screen overflow-x-hidden bg-gray-50">
 
       {/* Sidebar */}
       <AdminSidebar />
 
       {/* Right Side */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
 
         {/* Header with Navbar */}
         <AdminNavbar />
@@ -19,9 +19,9 @@ const AdminLayout = () => {
         {/* Page Content */}
         <main
           data-scroll-container="page"
-          className="flex-1 ml-0 lg:ml-64 p-4 lg:p-8 overflow-y-auto"
+          className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-8"
         >
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto w-full max-w-7xl">
             <Outlet />
           </div>
         </main>

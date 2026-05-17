@@ -81,6 +81,12 @@ export const contentApi = {
   updateAdminContent: (payload) => api.put('/admin/content', payload).then((res) => res.data.data),
 };
 
+export const appConfigApi = {
+  getPublicConfig: () => api.get('/app-config').then((res) => res.data.data),
+  getAdminConfig: () => api.get('/app-config/admin').then((res) => res.data.data),
+  updateAdminConfig: (payload) => api.put('/app-config/admin', payload).then((res) => res.data.data),
+};
+
 export default api;
 
 

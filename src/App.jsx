@@ -11,6 +11,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import AdminLayout from './components/AdminLayout';
+import AdminPermissionRoute from './components/AdminPermissionRoute';
 
 // Pages
 import Home from './pages/Home';
@@ -29,6 +30,8 @@ import ChatRoom from './pages/ChatRoom';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminUsers from './pages/AdminUsers';
+import AdminUserLimits from './pages/AdminUserLimits';
+import AdminRolePermissions from './pages/AdminRolePermissions';
 import AdminChats from './pages/AdminChats';
 import AdminReports from './pages/AdminReports';
 import AdminAnalytics from './pages/AdminAnalytics';
@@ -39,6 +42,7 @@ import AdminNotifications from './pages/AdminNotifications';
 import AdminModeration from './pages/AdminModeration';
 import AdminSystemSettings from './pages/AdminSystemSettings';
 import AdminSupportTickets from './pages/AdminSupportTickets';
+import AdminAppControl from './pages/AdminAppControl';
 
 import Categories from './pages/Categories';
 import Favorites from './pages/Favorites';
@@ -52,6 +56,10 @@ import Contact from './pages/Contact';
 import Safety from './pages/Safety';
 import ReportProblem from './pages/ReportProblem';
 import Support from './pages/Support';
+
+const AdminPage = ({ permission, children }) => (
+  <AdminPermissionRoute permission={permission}>{children}</AdminPermissionRoute>
+);
 
 
 // 🔥 Wrapper (Header/Footer control)
@@ -143,19 +151,22 @@ const AppContent = () => {
             </AdminRoute>
           }
         >
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="chats" element={<AdminChats />} />
-          <Route path="reports" element={<AdminReports />} />
-          <Route path="analytics" element={<AdminAnalytics />} />
-          <Route path="categories" element={<AdminCategories />} />
-          <Route path="favorites" element={<AdminFavorites />} />
-          <Route path="notifications" element={<AdminNotifications />} />
-          <Route path="support-tickets" element={<AdminSupportTickets />} />
-          <Route path="moderation" element={<AdminModeration />} />
-          <Route path="settings" element={<AdminSettings />} />
-          <Route path="system-settings" element={<AdminSystemSettings />} />
+          <Route path="dashboard" element={<AdminPage permission="dashboard"><AdminDashboard /></AdminPage>} />
+          <Route path="products" element={<AdminPage permission="products"><AdminProducts /></AdminPage>} />
+          <Route path="users" element={<AdminPage permission="users"><AdminUsers /></AdminPage>} />
+          <Route path="user-limits" element={<AdminPage permission="userLimits"><AdminUserLimits /></AdminPage>} />
+          <Route path="role-permissions" element={<AdminPage permission="adminRoles"><AdminRolePermissions /></AdminPage>} />
+          <Route path="chats" element={<AdminPage permission="chats"><AdminChats /></AdminPage>} />
+          <Route path="reports" element={<AdminPage permission="reports"><AdminReports /></AdminPage>} />
+          <Route path="analytics" element={<AdminPage permission="analytics"><AdminAnalytics /></AdminPage>} />
+          <Route path="categories" element={<AdminPage permission="categories"><AdminCategories /></AdminPage>} />
+          <Route path="favorites" element={<AdminPage permission="favorites"><AdminFavorites /></AdminPage>} />
+          <Route path="notifications" element={<AdminPage permission="notifications"><AdminNotifications /></AdminPage>} />
+          <Route path="support-tickets" element={<AdminPage permission="supportTickets"><AdminSupportTickets /></AdminPage>} />
+          <Route path="moderation" element={<AdminPage permission="moderation"><AdminModeration /></AdminPage>} />
+          <Route path="settings" element={<AdminPage permission="settings"><AdminSettings /></AdminPage>} />
+          <Route path="system-settings" element={<AdminPage permission="systemSettings"><AdminSystemSettings /></AdminPage>} />
+          <Route path="app-control" element={<AdminPage permission="appControl"><AdminAppControl /></AdminPage>} />
 
 
           {/* ❗ Admin fallback (IMPORTANT) */}

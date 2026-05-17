@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { hasAdminPermission } from '../utils/adminPermissions';
 import {
   Shield, LayoutDashboard, Package, Users, MessagesSquare,
   Flag, BarChart3, Folder, Heart, Bell, ShieldAlert,
-  LogOut, ChevronLeft, ChevronRight, User, Settings, FileText, LifeBuoy
+  LogOut, ChevronLeft, ChevronRight, User, Settings, FileText, LifeBuoy, Gauge, Smartphone
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -18,34 +19,37 @@ const AdminSidebar = () => {
     {
       label: 'Overview',
       items: [
-        { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+        { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' },
+        { path: '/admin/analytics', label: 'Analytics', icon: BarChart3, permission: 'analytics' },
       ],
     },
     {
       label: 'Management',
       items: [
-        { path: '/admin/products', label: 'Products (Ads)', icon: Package, badge: '12', badgeColor: 'green' },
-        { path: '/admin/users', label: 'Users', icon: Users },
-        { path: '/admin/chats', label: 'Chats', icon: MessagesSquare },
-        { path: '/admin/reports', label: 'Reports', icon: Flag, badge: '3', badgeColor: 'red' },
-        { path: '/admin/support-tickets', label: 'Support Tickets', icon: LifeBuoy },
-        { path: '/admin/categories', label: 'Categories', icon: Folder },
+        { path: '/admin/products', label: 'Products (Ads)', icon: Package, badge: '12', badgeColor: 'green', permission: 'products' },
+        { path: '/admin/users', label: 'Users', icon: Users, permission: 'users' },
+        { path: '/admin/user-limits', label: 'Ad Limits', icon: Gauge, permission: 'userLimits' },
+        { path: '/admin/chats', label: 'Chats', icon: MessagesSquare, permission: 'chats' },
+        { path: '/admin/reports', label: 'Reports', icon: Flag, badge: '3', badgeColor: 'red', permission: 'reports' },
+        { path: '/admin/support-tickets', label: 'Support Tickets', icon: LifeBuoy, permission: 'supportTickets' },
+        { path: '/admin/categories', label: 'Categories', icon: Folder, permission: 'categories' },
       ],
     },
     {
       label: 'Engage',
       items: [
-        { path: '/admin/favorites', label: 'Favorites', icon: Heart },
-        { path: '/admin/notifications', label: 'Notifications', icon: Bell },
-        { path: '/admin/moderation', label: 'Moderation', icon: ShieldAlert },
+        { path: '/admin/favorites', label: 'Favorites', icon: Heart, permission: 'favorites' },
+        { path: '/admin/notifications', label: 'Notifications', icon: Bell, permission: 'notifications' },
+        { path: '/admin/moderation', label: 'Moderation', icon: ShieldAlert, permission: 'moderation' },
       ],
     },
     {
       label: 'System',
       items: [
-        { path: '/admin/settings', label: 'Settings', icon: Settings },
-        { path: '/admin/system-settings', label: 'Website Content', icon: FileText },
+        { path: '/admin/settings', label: 'Settings', icon: Settings, permission: 'settings' },
+        { path: '/admin/system-settings', label: 'Website Content', icon: FileText, permission: 'systemSettings' },
+        { path: '/admin/app-control', label: 'Deal App Control', icon: Smartphone, permission: 'appControl' },
+        { path: '/admin/role-permissions', label: 'Role Permissions', icon: ShieldAlert, permission: 'adminRoles' },
       ],
     },
   ];
@@ -73,7 +77,11 @@ const AdminSidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5 scrollbar-thin scrollbar-thumb-gray-200">
-        {navSections.map((section, si) => (
+        {navSections.map((section, si) => {
+          const visibleItems = section.items.filter((item) => hasAdminPermission(user, item.permission));
+          if (!visibleItems.length) return null;
+
+          return (
           <div key={si} className={si > 0 ? 'mt-2' : ''}>
             {!isCollapsed && (
               <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-2 pt-3 pb-1">
@@ -81,7 +89,7 @@ const AdminSidebar = () => {
               </p>
             )}
             {si > 0 && isCollapsed && <div className="h-px bg-gray-100 mx-2 my-2" />}
-            {section.items.map((item) => {
+            {visibleItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
@@ -125,7 +133,8 @@ const AdminSidebar = () => {
               );
             })}
           </div>
-        ))}
+        );
+        })}
       </nav>
 
       {/* User Info */}

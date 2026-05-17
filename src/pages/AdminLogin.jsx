@@ -7,6 +7,7 @@ import * as yup from 'yup';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { getFirstAllowedAdminPath } from '../utils/adminPermissions';
 
 const schema = yup.object({
   email: yup.string().email('Valid email required').required('Email is required'),
@@ -27,7 +28,7 @@ export default function AdminLogin() {
   useEffect(() => {
     if (!authLoading && user && user.role === 'admin' && !loginSuccess) {
       toast.success('Welcome back to Admin Panel');
-      navigate('/admin/dashboard', { replace: true });
+      navigate(getFirstAllowedAdminPath(user), { replace: true });
     }
   }, [user, authLoading, navigate, loginSuccess]);
 
@@ -39,7 +40,8 @@ export default function AdminLogin() {
       setLoginSuccess(true);
       // Small delay to allow state to update properly
       setTimeout(() => {
-        navigate('/admin/dashboard', { replace: true });
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        navigate(getFirstAllowedAdminPath(storedUser), { replace: true });
       }, 150);
     }
   };
