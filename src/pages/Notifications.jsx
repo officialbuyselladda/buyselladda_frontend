@@ -6,6 +6,12 @@ import { Bell, CheckCircle, AlertCircle, Mail, ChevronRight } from 'lucide-react
 import { cn } from '../utils';
 import { toast } from 'react-hot-toast';
 
+const BRAND_NAME = 'BuySellAdda';
+const OFFICIAL_NOTIFICATION_TYPES = new Set(['product_status', 'system', 'promotion']);
+
+const normalizeOfficialText = (text) => String(text || '').replace(/\badmin\b/gi, BRAND_NAME);
+const isOfficialNotification = (notification) => OFFICIAL_NOTIFICATION_TYPES.has(notification?.type);
+
 const Notifications = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -147,13 +153,22 @@ const Notifications = () => {
                   </div>
                   
                   <div className="flex-1 min-w-0">
+                    {isOfficialNotification(notification) && (
+                      <p className="mb-1 text-xs font-black uppercase tracking-wide text-orange-600">
+                        {BRAND_NAME}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-gray-900 text-lg line-clamp-1">{notification.title}</h4>
+                      <h4 className="font-semibold text-gray-900 text-lg line-clamp-1">
+                        {isOfficialNotification(notification)
+                          ? normalizeOfficialText(notification.title || `${BRAND_NAME} ki taraf se message aaya`)
+                          : normalizeOfficialText(notification.title)}
+                      </h4>
                       {!notification.isRead && (
                         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                       )}
                     </div>
-                    <p className="text-gray-600 mb-2 line-clamp-2">{notification.message}</p>
+                    <p className="text-gray-600 mb-2 line-clamp-2">{normalizeOfficialText(notification.message)}</p>
                     
                     {notification.relatedProduct && (
                       <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 p-2 bg-gray-50 rounded-lg">

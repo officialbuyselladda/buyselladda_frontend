@@ -1,12 +1,31 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { hasAdminPermission } from '../utils/adminPermissions';
+import { getAdminNavSections } from '../utils/adminPermissions';
 import {
   Shield, LayoutDashboard, Package, Users, MessagesSquare,
   Flag, BarChart3, Folder, Heart, Bell, ShieldAlert,
   LogOut, ChevronLeft, ChevronRight, User, Settings, FileText, LifeBuoy, Gauge, Smartphone
 } from 'lucide-react';
+
+const adminIconMap = {
+  dashboard: LayoutDashboard,
+  analytics: BarChart3,
+  products: Package,
+  users: Users,
+  userLimits: Gauge,
+  chats: MessagesSquare,
+  reports: Flag,
+  supportTickets: LifeBuoy,
+  categories: Folder,
+  favorites: Heart,
+  notifications: Bell,
+  moderation: ShieldAlert,
+  settings: Settings,
+  systemSettings: FileText,
+  appControl: Smartphone,
+  adminRoles: ShieldAlert,
+};
 
 const AdminSidebar = () => {
   const { user, logout } = useAuth();
@@ -15,44 +34,7 @@ const AdminSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navSections = [
-    {
-      label: 'Overview',
-      items: [
-        { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard' },
-        { path: '/admin/analytics', label: 'Analytics', icon: BarChart3, permission: 'analytics' },
-      ],
-    },
-    {
-      label: 'Management',
-      items: [
-        { path: '/admin/products', label: 'Products (Ads)', icon: Package, badge: '12', badgeColor: 'green', permission: 'products' },
-        { path: '/admin/users', label: 'Users', icon: Users, permission: 'users' },
-        { path: '/admin/user-limits', label: 'Ad Limits', icon: Gauge, permission: 'userLimits' },
-        { path: '/admin/chats', label: 'Chats', icon: MessagesSquare, permission: 'chats' },
-        { path: '/admin/reports', label: 'Reports', icon: Flag, badge: '3', badgeColor: 'red', permission: 'reports' },
-        { path: '/admin/support-tickets', label: 'Support Tickets', icon: LifeBuoy, permission: 'supportTickets' },
-        { path: '/admin/categories', label: 'Categories', icon: Folder, permission: 'categories' },
-      ],
-    },
-    {
-      label: 'Engage',
-      items: [
-        { path: '/admin/favorites', label: 'Favorites', icon: Heart, permission: 'favorites' },
-        { path: '/admin/notifications', label: 'Notifications', icon: Bell, permission: 'notifications' },
-        { path: '/admin/moderation', label: 'Moderation', icon: ShieldAlert, permission: 'moderation' },
-      ],
-    },
-    {
-      label: 'System',
-      items: [
-        { path: '/admin/settings', label: 'Settings', icon: Settings, permission: 'settings' },
-        { path: '/admin/system-settings', label: 'Website Content', icon: FileText, permission: 'systemSettings' },
-        { path: '/admin/app-control', label: 'Deal App Control', icon: Smartphone, permission: 'appControl' },
-        { path: '/admin/role-permissions', label: 'Role Permissions', icon: ShieldAlert, permission: 'adminRoles' },
-      ],
-    },
-  ];
+  const navSections = getAdminNavSections(user, adminIconMap);
 
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -78,9 +60,6 @@ const AdminSidebar = () => {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5 scrollbar-thin scrollbar-thumb-gray-200">
         {navSections.map((section, si) => {
-          const visibleItems = section.items.filter((item) => hasAdminPermission(user, item.permission));
-          if (!visibleItems.length) return null;
-
           return (
           <div key={si} className={si > 0 ? 'mt-2' : ''}>
             {!isCollapsed && (
@@ -89,8 +68,9 @@ const AdminSidebar = () => {
               </p>
             )}
             {si > 0 && isCollapsed && <div className="h-px bg-gray-100 mx-2 my-2" />}
-            {visibleItems.map((item) => {
+            {section.items.map((item) => {
               const isActive = location.pathname === item.path;
+              const Icon = item.icon || ShieldAlert;
               return (
                 <Link
                   key={item.path}
@@ -105,22 +85,13 @@ const AdminSidebar = () => {
                   <div className={`w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0 transition-all ${
                     isActive ? 'bg-emerald-100' : 'group-hover:bg-gray-100'
                   }`}>
-                    <item.icon size={16} />
+                    <Icon size={16} />
                   </div>
                   {!isCollapsed && (
                     <>
                       <span className={`text-[13.5px] font-medium flex-1 ${isActive ? 'font-semibold' : ''}`}>
                         {item.label}
                       </span>
-                      {item.badge && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                          item.badgeColor === 'red'
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-emerald-100 text-emerald-700'
-                        }`}>
-                          {item.badge}
-                        </span>
-                      )}
                     </>
                   )}
                   {/* Tooltip when collapsed */}

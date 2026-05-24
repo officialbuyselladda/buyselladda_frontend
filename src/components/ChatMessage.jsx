@@ -1,48 +1,186 @@
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { CheckCheck, User } from 'lucide-react';
-import { cn } from '../utils';
+
+const getMessageDate = (message) => {
+  const value = message?.createdAt || message?.updatedAt;
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatMessageTime = (date) => {
+  if (!date) return 'Just now';
+  return format(date, 'h:mm a');
+};
+
+const formatMessageTitle = (date) => {
+  if (!date) return 'Sending now';
+  return format(date, 'EEEE, d MMM yyyy, h:mm a');
+};
 
 const ChatMessage = ({ message, isOwn }) => {
   const senderName = message.sender?.name || 'User';
   const avatarUrl = message.sender?.avatar?.url;
+  const messageDate = getMessageDate(message);
 
   return (
-    <div className={cn('group flex items-end gap-2', isOwn ? 'justify-end' : 'justify-start')}>
-      {!isOwn && (
-        <div className="mb-5 flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600">
-          {avatarUrl ? <img src={avatarUrl} alt={senderName} className="h-full w-full object-cover" /> : <User size={15} />}
-        </div>
-      )}
+    <>
+      <style>{chatMsgStyles}</style>
 
-      <div
-        className={cn(
-          'max-w-[78%] px-4 py-2.5 shadow-sm sm:max-w-md lg:max-w-lg',
-          isOwn
-            ? 'rounded-3xl rounded-br-md bg-emerald-600 text-white'
-            : 'rounded-3xl rounded-bl-md border border-gray-100 bg-white text-gray-800'
-        )}
-      >
-        {message.text && (
-          <p className="whitespace-pre-wrap break-words text-[14.5px] leading-relaxed">{message.text}</p>
+      <div className={`cm-row ${isOwn ? 'cm-row--own' : 'cm-row--other'}`}>
+
+        {/* Avatar (other side only) */}
+        {!isOwn && (
+          <div className="cm-avatar" title={senderName}>
+            {avatarUrl
+              ? <img src={avatarUrl} alt={senderName} className="cm-avatar__img" />
+              : <User size={14} />
+            }
+          </div>
         )}
 
-        <div
-          className={cn(
-            'mt-1.5 flex items-center justify-end gap-1.5 text-[11px]',
-            isOwn ? 'text-white/75' : 'text-gray-400'
+        {/* Bubble */}
+        <div className={`cm-bubble ${isOwn ? 'cm-bubble--own' : 'cm-bubble--other'}`}>
+          {message.text && (
+            <p className="cm-bubble__text">{message.text}</p>
           )}
-        >
-          <span>{formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}</span>
-          {isOwn && (
-            <span className="inline-flex items-center gap-1">
-              <CheckCheck size={13} />
-              {message.pending ? 'Sending' : message.read ? 'Seen' : 'Sent'}
+
+          <div className="cm-bubble__meta">
+            <span className="cm-bubble__time" title={formatMessageTitle(messageDate)}>
+              {formatMessageTime(messageDate)}
             </span>
-          )}
+            {isOwn && (
+              <span className="cm-bubble__status">
+                <CheckCheck size={12} />
+                {message.pending ? 'Sending' : message.read ? 'Seen' : 'Sent'}
+              </span>
+            )}
+          </div>
         </div>
+
       </div>
-    </div>
+    </>
   );
 };
+
+/* ═══════════════════════════════════════════
+   STYLES
+═══════════════════════════════════════════ */
+const chatMsgStyles = `
+  :root {
+    --cm-own-bg: #d4571a;
+    --cm-own-bg-2: #c04d16;
+    --cm-own-text: #ffffff;
+    --cm-own-meta: rgba(255,255,255,0.72);
+    --cm-other-bg: #ffffff;
+    --cm-other-border: #edeae5;
+    --cm-other-text: #0f0e0c;
+    --cm-other-meta: #9c9890;
+    --cm-avatar-bg: #f5f4f1;
+    --cm-avatar-border: #edeae5;
+    --cm-avatar-color: #9c9890;
+    --cm-shadow-own: 0 2px 10px rgba(212,87,26,0.22);
+    --cm-shadow-other: 0 1px 4px rgba(0,0,0,0.06);
+    --cm-t: 0.16s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── Row ── */
+  .cm-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 1px 0;
+    animation: cm-fade-in 0.2s ease;
+  }
+  @keyframes cm-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cm-row--own   { justify-content: flex-end; }
+  .cm-row--other { justify-content: flex-start; }
+
+  /* ── Avatar ── */
+  .cm-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--cm-avatar-bg);
+    border: 1.5px solid var(--cm-avatar-border);
+    color: var(--cm-avatar-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .cm-avatar__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* ── Bubble ── */
+  .cm-bubble {
+    max-width: 78%;
+    padding: 10px 14px 8px;
+    border-radius: 18px;
+    box-shadow: var(--cm-shadow-other);
+    position: relative;
+    transition: box-shadow var(--cm-t);
+  }
+  @media (min-width: 640px)  { .cm-bubble { max-width: 440px; } }
+  @media (min-width: 1024px) { .cm-bubble { max-width: 520px; } }
+
+  /* Own bubble */
+  .cm-bubble--own {
+    background: linear-gradient(135deg, var(--cm-own-bg) 0%, var(--cm-own-bg-2) 100%);
+    color: var(--cm-own-text);
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: var(--cm-shadow-own);
+  }
+
+  /* Other bubble */
+  .cm-bubble--other {
+    background: var(--cm-other-bg);
+    color: var(--cm-other-text);
+    border: 1px solid var(--cm-other-border);
+    border-radius: 18px 18px 18px 4px;
+  }
+
+  /* ── Text ── */
+  .cm-bubble__text {
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+  }
+
+  /* ── Meta ── */
+  .cm-bubble__meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .cm-bubble__time {
+    font-size: 10.5px;
+    font-weight: 500;
+  }
+  .cm-bubble--own   .cm-bubble__time { color: var(--cm-own-meta); }
+  .cm-bubble--other .cm-bubble__time { color: var(--cm-other-meta); }
+
+  .cm-bubble__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--cm-own-meta);
+  }
+`;
 
 export default ChatMessage;

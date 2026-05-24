@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { LocationProvider } from './context/LocationContext';
 
 import Header from './components/Header';
@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import AdminLayout from './components/AdminLayout';
 import AdminPermissionRoute from './components/AdminPermissionRoute';
+import { getFirstAllowedAdminPath } from './utils/adminPermissions';
 
 // Pages
 import Home from './pages/Home';
@@ -61,18 +62,22 @@ const AdminPage = ({ permission, children }) => (
   <AdminPermissionRoute permission={permission}>{children}</AdminPermissionRoute>
 );
 
+const AdminLandingRedirect = () => {
+  const { user } = useAuth();
+  return <Navigate to={getFirstAllowedAdminPath(user)} replace />;
+};
+
 
 // 🔥 Wrapper (Header/Footer control)
 const AppContent = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
-  const isChatRoomRoute = /^\/chats\/[^/]+/.test(location.pathname);
 
   return (
     <div className="min-h-screen bg-gray-50">
 
       {/* ❗ Admin me header hide */}
-      {!isAdminRoute && !isChatRoomRoute && <Header />}
+      {!isAdminRoute && <Header />}
 
       <Routes>
 
@@ -151,6 +156,7 @@ const AppContent = () => {
             </AdminRoute>
           }
         >
+          <Route index element={<AdminLandingRedirect />} />
           <Route path="dashboard" element={<AdminPage permission="dashboard"><AdminDashboard /></AdminPage>} />
           <Route path="products" element={<AdminPage permission="products"><AdminProducts /></AdminPage>} />
           <Route path="users" element={<AdminPage permission="users"><AdminUsers /></AdminPage>} />
@@ -170,7 +176,7 @@ const AppContent = () => {
 
 
           {/* ❗ Admin fallback (IMPORTANT) */}
-          <Route path="*" element={<div className="p-10 text-xl font-semibold">Admin Page Not Found</div>} />
+          <Route path="*" element={<AdminLandingRedirect />} />
 
         </Route>
 
@@ -208,7 +214,7 @@ const AppContent = () => {
       </Routes>
 
 {/* ❗ Admin me footer hide */}
-      {!isAdminRoute && !isChatRoomRoute && <Footer />}
+      {!isAdminRoute && <Footer />}
 
       {/* Scroll to top button - visible everywhere */}
       <ScrollToTop />

@@ -194,13 +194,20 @@ const AdminProducts = () => {
                         <p className="text-sm text-gray-500">{product.sellerEmail}</p>
                       </td>
                       <td className="p-6">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          product.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                          product.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {PRODUCT_STATUS[product.status] || product.status}
-                        </span>
+                        <div className="space-y-1">
+                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                            product.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                            product.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {PRODUCT_STATUS[product.status] || product.status}
+                          </span>
+                          {product.status === 'approved' && product.approvalSource && (
+                            <p className="text-[11px] font-semibold text-gray-400">
+                              {product.approvalSource === 'auto' ? 'Auto-approved' : 'Admin approved'}
+                            </p>
+                          )}
+                        </div>
                       </td>
                       <td className="p-6 text-sm text-gray-500">
                         {new Date(product.createdAt).toLocaleDateString()}

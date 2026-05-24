@@ -127,7 +127,7 @@ const AdminDashboard = () => {
   if (error) {
     return (
       <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center">
-        <p className="font-bold text-red-700">Dashboard data load nahi ho paya.</p>
+        <p className="font-bold text-red-700">Dashboard data could not be loaded.</p>
       </div>
     );
   }

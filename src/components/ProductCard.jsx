@@ -1,6 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, MapPin, Tag, MessageCircle, Heart, User } from 'lucide-react';
-import { OLXColors } from '../utils/olxTheme';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -9,6 +8,7 @@ import { getImageUrl, placeholderImage } from '../utils/image';
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
   const isNew =
     product.createdAt &&
     Date.parse(product.createdAt) > Date.now() - 24 * 60 * 60 * 1000;
@@ -22,132 +22,422 @@ const ProductCard = ({ product }) => {
     return true;
   };
 
-  const handleFavorite = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const handleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (requireLogin()) return;
-
     try {
       const { data } = await api.post('/favorites/toggle', { productId: product._id });
       toast.success(data.message || 'Favorite updated');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not update favorite');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update favorite');
     }
   };
 
-  const handleChat = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const handleChat = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (requireLogin()) return;
-
     try {
       const { data } = await api.post(`/products/${product._id}/contact`);
       navigate(`/chats/${data.data.chat._id}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not start chat');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not start chat');
     }
   };
 
   return (
-    <Link
-      to={`/products/${product._id}`}
-      className="group block bg-white border border-gray-200 hover:border-orange-400 hover:shadow-lg rounded-xl transition-all duration-300 overflow-hidden h-full flex flex-col"
-    >
+    <>
+      <style>{cardStyles}</style>
 
-      {/* 🔥 IMAGE */}
-      <div className="relative w-full h-44 bg-gray-100 overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={product.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(event) => {
-            event.currentTarget.src = placeholderImage;
-          }}
-        />
+      <Link to={`/products/${product._id}`} className="pc-card">
 
-        {/* NEW TAG */}
-        {isNew && (
-            <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
-              NEW
+        {/* ── Image ── */}
+        <div className="pc-img-wrap">
+          <img
+            src={imageUrl}
+            alt={product.title}
+            className="pc-img"
+            onError={(e) => { e.currentTarget.src = placeholderImage; }}
+          />
+
+          {isNew && <span className="pc-new-badge">NEW</span>}
+
+          {product.status !== 'approved' && (
+            <span className="pc-status-badge">
+              {product.status === 'pending' ? 'Pending' : 'Rejected'}
             </span>
           )}
-      </div>
 
-      {/* 🔥 CONTENT */}
-      <div className="p-3 flex flex-col flex-grow">
-
-        {/* PRICE */}
-        <div className="flex items-center justify-between">
-          <h3
-            className="font-bold text-xl"
-            style={{ color: OLXColors.orange }}
-          >
-            ₹{product.price?.toLocaleString()}
-          </h3>
-
-          <div className="flex items-center space-x-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-            <Tag size={12} />
-            <span>{product.category}</span>
+          {/* Hover overlay actions */}
+          <div className="pc-overlay">
+            <button
+              onClick={handleFavorite}
+              className="pc-overlay-btn pc-overlay-btn--heart"
+              aria-label="Save to favourites"
+            >
+              <Heart size={16} />
+            </button>
           </div>
         </div>
 
-        {/* TITLE */}
-        <p className="text-sm text-gray-700 mt-1 line-clamp-2 min-h-[40px]">
-          {product.title}
-        </p>
+        {/* ── Body ── */}
+        <div className="pc-body">
 
-        {/* SELLER */}
-        <div className="flex items-center space-x-2 text-xs text-gray-500 mt-2">
-          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-            <User size={12} />
+          {/* Price + Category */}
+          <div className="pc-top">
+            <span className="pc-price">₹{product.price?.toLocaleString('en-IN')}</span>
+            {product.category && (
+              <span className="pc-cat">
+                <Tag size={10} />
+                {product.category}
+              </span>
+            )}
           </div>
-          <span>{product.user?.name || 'Seller'}</span>
-        </div>
 
-        {/* VIEWS + CONDITION */}
-        <div className="flex justify-between text-xs text-gray-400 mt-2">
-          <div className="flex items-center gap-1">
-            <Eye size={14} />
-            <span>{product.views || 0}</span>
+          {/* Title */}
+          <p className="pc-title">{product.title}</p>
+
+          {/* Seller */}
+          <div className="pc-seller">
+            <div className="pc-seller__avatar">
+              <User size={11} />
+            </div>
+            <span className="pc-seller__name">{product.user?.name || 'Seller'}</span>
           </div>
-          <span>{product.condition || "Used"}</span>
-        </div>
 
-        {/* LOCATION */}
-        <div className="flex items-center text-xs text-gray-500 mt-2">
-          <MapPin size={14} />
-          <span className="truncate ml-1">
-            {product.location || "India"}
-          </span>
-        </div>
-
-        {/* STATUS */}
-        {product.status !== 'approved' && (
-          <div className="mt-2 p-1 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700 text-center">
-            {product.status === 'pending' ? 'Pending Approval' : 'Rejected'}
+          {/* Meta row */}
+          <div className="pc-meta">
+            <span className="pc-meta__views">
+              <Eye size={12} />
+              {product.views || 0}
+            </span>
+            {product.condition && (
+              <span className="pc-meta__condition">{product.condition}</span>
+            )}
           </div>
-        )}
 
-        {/* 🔥 ACTION BUTTONS */}
-        <div className="flex gap-2 mt-auto pt-3">
-          <button
-            onClick={handleFavorite}
-            className="flex-1 py-2 border rounded-lg hover:bg-gray-100 text-sm flex items-center justify-center gap-1"
-          >
-            <Heart size={16} />
-          </button>
+          {/* Location */}
+          {product.location && (
+            <div className="pc-location">
+              <MapPin size={12} />
+              <span>{product.location}</span>
+            </div>
+          )}
 
-          <button
-            onClick={handleChat}
-            className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm flex items-center justify-center gap-1"
-          >
-            <MessageCircle size={16} />
-            Chat
-          </button>
+          {/* Actions */}
+          <div className="pc-actions">
+            <button onClick={handleFavorite} className="pc-btn pc-btn--fav" aria-label="Favourite">
+              <Heart size={14} />
+            </button>
+            <button onClick={handleChat} className="pc-btn pc-btn--chat">
+              <MessageCircle size={14} />
+              Chat
+            </button>
+          </div>
+
         </div>
-      </div>
-    </Link>
+      </Link>
+    </>
   );
 };
+
+/* ═══════════════════════════════════════════
+   STYLES
+═══════════════════════════════════════════ */
+const cardStyles = `
+  :root {
+    --pc-bg: #ffffff;
+    --pc-bg-2: #faf9f7;
+    --pc-border: #edeae5;
+    --pc-accent: #d4571a;
+    --pc-accent-hover: #b84816;
+    --pc-accent-light: #fff4ef;
+    --pc-text: #0f0e0c;
+    --pc-text-2: #6b6860;
+    --pc-text-3: #9c9890;
+    --pc-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --pc-shadow-hover: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+    --pc-radius: 13px;
+    --pc-radius-sm: 7px;
+    --pc-radius-full: 999px;
+    --pc-t: 0.18s cubic-bezier(0.4,0,0.2,1);
+    --pc-font-display: 'Georgia','Times New Roman',serif;
+  }
+
+  /* ── Card ── */
+  .pc-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--pc-bg);
+    border: 1px solid var(--pc-border);
+    border-radius: var(--pc-radius);
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: var(--pc-shadow);
+    transition: box-shadow var(--pc-t), transform var(--pc-t), border-color var(--pc-t);
+    position: relative;
+  }
+  .pc-card:hover {
+    box-shadow: var(--pc-shadow-hover);
+    transform: translateY(-3px);
+    border-color: #d4cfc7;
+  }
+
+  /* ── Image ── */
+  .pc-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--pc-bg-2);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .pc-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.36s ease;
+  }
+  .pc-card:hover .pc-img { transform: scale(1.06); }
+
+  /* NEW badge */
+  .pc-new-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: var(--pc-accent);
+    padding: 3px 8px;
+    border-radius: var(--pc-radius-full);
+    box-shadow: 0 2px 6px rgba(212,87,26,0.4);
+    z-index: 2;
+  }
+
+  /* Status badge */
+  .pc-status-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: #92400e;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    padding: 3px 8px;
+    border-radius: var(--pc-radius-full);
+    z-index: 2;
+  }
+
+  /* Hover overlay */
+  .pc-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.18) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity var(--pc-t);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 8px;
+    z-index: 1;
+  }
+  .pc-card:hover .pc-overlay { opacity: 1; }
+
+  .pc-overlay-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--pc-t), transform var(--pc-t);
+  }
+  .pc-overlay-btn--heart {
+    background: rgba(255,255,255,0.92);
+    color: var(--pc-accent);
+    backdrop-filter: blur(4px);
+  }
+  .pc-overlay-btn--heart:hover {
+    background: #fff;
+    transform: scale(1.12);
+  }
+
+  /* ── Body ── */
+  .pc-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 11px 13px 13px;
+    gap: 5px;
+  }
+
+  /* Price + Category */
+  .pc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .pc-price {
+    font-family: var(--pc-font-display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--pc-accent);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .pc-cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--pc-accent);
+    background: var(--pc-accent-light);
+    border: 1px solid #fddcc8;
+    padding: 2px 7px;
+    border-radius: var(--pc-radius-full);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
+    flex-shrink: 0;
+    text-transform: capitalize;
+  }
+
+  /* Title */
+  .pc-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--pc-text);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+  }
+
+  /* Seller */
+  .pc-seller {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 1px;
+  }
+  .pc-seller__avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--pc-bg-2);
+    border: 1px solid var(--pc-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pc-text-3);
+    flex-shrink: 0;
+  }
+  .pc-seller__name {
+    font-size: 11.5px;
+    color: var(--pc-text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* Meta */
+  .pc-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .pc-meta__views {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: var(--pc-text-3);
+    font-weight: 500;
+  }
+  .pc-meta__condition {
+    font-size: 10.5px;
+    color: var(--pc-text-3);
+    background: var(--pc-bg-2);
+    border: 1px solid var(--pc-border);
+    padding: 1px 7px;
+    border-radius: var(--pc-radius-full);
+    text-transform: capitalize;
+    font-weight: 500;
+  }
+
+  /* Location */
+  .pc-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--pc-text-3);
+    overflow: hidden;
+  }
+  .pc-location svg { flex-shrink: 0; color: var(--pc-accent); opacity: 0.7; }
+  .pc-location span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* Actions */
+  .pc-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 10px;
+  }
+  .pc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: var(--pc-radius-sm);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: background var(--pc-t), color var(--pc-t), border-color var(--pc-t), transform var(--pc-t);
+  }
+  .pc-btn:hover { transform: translateY(-1px); }
+
+  .pc-btn--fav {
+    width: 34px;
+    flex-shrink: 0;
+    padding: 0;
+    background: var(--pc-bg-2);
+    color: var(--pc-text-2);
+    border-color: var(--pc-border);
+  }
+  .pc-btn--fav:hover { background: #fff1f1; color: #ef4444; border-color: #fecaca; }
+
+  .pc-btn--chat {
+    flex: 1;
+    background: var(--pc-accent);
+    color: #fff;
+    border-color: var(--pc-accent);
+    box-shadow: 0 2px 8px rgba(212,87,26,0.22);
+  }
+  .pc-btn--chat:hover { background: var(--pc-accent-hover); border-color: var(--pc-accent-hover); box-shadow: 0 3px 12px rgba(212,87,26,0.32); }
+`;
 
 export default ProductCard;

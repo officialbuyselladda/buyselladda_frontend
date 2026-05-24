@@ -19,7 +19,7 @@ const AdminPermissionRoute = ({ permission, children }) => {
     <div className="rounded-2xl border border-red-100 bg-red-50 p-8 text-center">
       <ShieldAlert className="mx-auto mb-3 h-12 w-12 text-red-500" />
       <h1 className="text-xl font-bold text-red-700">Permission Required</h1>
-      <p className="mt-2 text-sm font-semibold text-red-600">Aapke account ko is admin section ka access nahi diya gaya hai.</p>
+      <p className="mt-2 text-sm font-semibold text-red-600">Your account does not have access to this admin section.</p>
     </div>
   );
 };

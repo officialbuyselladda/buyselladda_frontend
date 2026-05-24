@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { clearLocationCache, getLocationFromCache, setLocationCache } from '../utils';
-import { reverseGeocode } from '../utils/geocode';
+import { forwardGeocode, reverseGeocode } from '../utils/geocode';
 
 const LocationContext = createContext();
 
@@ -15,15 +15,36 @@ export const useLocation = () => {
 };
 
 export const LocationProvider = ({ children }) => {
-const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingAddress, setLoadingAddress] = useState(false);
 
-  const getLocation = () => {
+  const fetchAddress = useCallback(async (lat, lng) => {
+    if (!lat || !lng) return;
+    setLoadingAddress(true);
+    try {
+      const address = await reverseGeocode(lat, lng);
+      const fallbackAddress = `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+      const resolvedAddress = address || fallbackAddress;
+      setUserAddress(resolvedAddress);
+      setLocationCache({ lat, lng, address: resolvedAddress, provider: 'openstreetmap' });
+    } catch (error) {
+      console.error('Address fetch failed:', error);
+    } finally {
+      setLoadingAddress(false);
+    }
+  }, []);
+
+  const getLocation = ({ refresh = false } = {}) => {
     const cachedLocation = getLocationFromCache();
-    if (cachedLocation) {
+    if (cachedLocation && !refresh) {
       setUserLocation(cachedLocation);
+      if (cachedLocation.address) {
+        setUserAddress(cachedLocation.address);
+      } else {
+        fetchAddress(cachedLocation.lat, cachedLocation.lng);
+      }
       return;
     }
 
@@ -37,9 +58,9 @@ const [userLocation, setUserLocation] = useState(null);
       (position) => {
         const location = { lat: position.coords.latitude, lng: position.coords.longitude };
         setUserLocation(location);
-        setLocationCache({ ...location });
+        setUserAddress(null);
+        setLocationCache({ ...location, source: 'current' });
         setLoadingLocation(false);
-        // Fetch address
         fetchAddress(location.lat, location.lng);
       },
       (error) => {
@@ -50,7 +71,20 @@ const [userLocation, setUserLocation] = useState(null);
     );
   };
 
-  // Load cached on mount
+  const setManualLocation = useCallback(async (query) => {
+    const result = await forwardGeocode(query);
+    if (!result?.lat || !result?.lng) {
+      return { success: false, message: 'Location not found. Try city, area, or pincode.' };
+    }
+
+    const location = { lat: result.lat, lng: result.lng };
+    const address = result.address || query.trim();
+    setUserLocation(location);
+    setUserAddress(address);
+    setLocationCache({ ...location, address, provider: 'openstreetmap', source: 'manual' });
+    return { success: true, location, address };
+  }, []);
+
   useEffect(() => {
     const cached = getLocationFromCache();
     if (cached) {
@@ -61,26 +95,11 @@ const [userLocation, setUserLocation] = useState(null);
     }
   }, []);
 
-  // Fetch address when location changes
   useEffect(() => {
-    if (userLocation && !userAddress) {
+    if (userLocation?.lat && userLocation?.lng && !userAddress) {
       fetchAddress(userLocation.lat, userLocation.lng);
     }
-  }, [userLocation]);
-
-  const fetchAddress = async (lat, lng) => {
-    setLoadingAddress(true);
-    try {
-      const address = await reverseGeocode(lat, lng);
-      setUserAddress(address);
-      // Update cache with address
-      setLocationCache({ lat, lng, address });
-    } catch (error) {
-      console.error('Address fetch failed:', error);
-    } finally {
-      setLoadingAddress(false);
-    }
-  };
+  }, [fetchAddress, userLocation, userAddress]);
 
   const value = {
     userLocation,
@@ -88,6 +107,7 @@ const [userLocation, setUserLocation] = useState(null);
     loadingLocation,
     loadingAddress,
     getLocation,
+    setManualLocation,
     clearLocation: () => {
       setUserLocation(null);
       setUserAddress(null);

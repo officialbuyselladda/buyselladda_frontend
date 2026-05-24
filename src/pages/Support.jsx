@@ -31,6 +31,7 @@ const statusStyles = {
 };
 
 const labelize = (value) => String(value || '').replace(/_/g, ' ');
+const getSupportSenderName = (message) => message?.senderRole === 'admin' ? 'BuySellAdda' : 'You';
 
 const Support = () => {
   const { user } = useAuth();
@@ -85,7 +86,7 @@ const Support = () => {
             </div>
             <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">Create a support ticket</h1>
             <p className="mt-2 max-w-2xl text-gray-600">
-              Share your issue with our team. You can track status and admin replies from this page.
+              Share your issue with our team. You can track status and BuySellAdda replies from this page.
             </p>
           </div>
           <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
@@ -192,7 +193,7 @@ const Support = () => {
                 What happens next
               </h2>
               <div className="mt-4 space-y-3 text-sm text-gray-600">
-                <p className="flex gap-2"><CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" /> Your ticket goes to the admin support queue.</p>
+                <p className="flex gap-2"><CheckCircle2 className="h-5 w-5 flex-shrink-0 text-emerald-600" /> Your ticket goes to the BuySellAdda support queue.</p>
                 <p className="flex gap-2"><Clock className="h-5 w-5 flex-shrink-0 text-amber-600" /> Team updates status as open, in progress, waiting, or resolved.</p>
                 <p className="flex gap-2"><AlertCircle className="h-5 w-5 flex-shrink-0 text-orange-600" /> Keep your ticket number for follow-up.</p>
               </div>
@@ -226,6 +227,9 @@ const Support = () => {
                   </div>
                   {ticket.messages?.length > 0 && (
                     <p className="mt-3 line-clamp-2 text-sm text-gray-600">
+                      <span className="font-bold text-gray-800">
+                        {getSupportSenderName(ticket.messages[ticket.messages.length - 1])}:
+                      </span>{' '}
                       {ticket.messages[ticket.messages.length - 1].message}
                     </p>
                   )}

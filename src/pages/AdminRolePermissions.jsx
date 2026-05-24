@@ -14,7 +14,12 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
-import { ADMIN_PERMISSIONS } from '../utils/adminPermissions';
+import {
+  ADMIN_PERMISSION_BY_KEY,
+  ADMIN_PERMISSION_SECTIONS,
+  ADMIN_PERMISSIONS,
+  getAdminPermissionLabel,
+} from '../utils/adminPermissions';
 
 const emptyForm = {
   name: '',
@@ -160,6 +165,7 @@ const AdminRolePermissions = () => {
 
   const admins = roleData.admins || [];
   const fullAccess = form.adminPermissions.includes('all');
+  const selectedPermissionCount = form.adminPermissions.filter((permission) => permission !== 'all').length;
 
   return (
     <div className="space-y-7">
@@ -255,7 +261,7 @@ const AdminRolePermissions = () => {
                             <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">All modules</span>
                           ) : permissions.slice(0, 5).map((permission) => (
                             <span key={permission} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                              {ADMIN_PERMISSIONS.find((item) => item.key === permission)?.label || permission}
+                              {getAdminPermissionLabel(permission)}
                             </span>
                           ))}
                           {!isFullAccess && permissions.length > 5 && (
@@ -363,7 +369,7 @@ const AdminRolePermissions = () => {
             <div className="mt-6">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h3 className="font-bold text-gray-900">Module Permissions</h3>
-                <span className="text-sm font-semibold text-gray-500">{fullAccess ? 'Full platform control' : `${form.adminPermissions.length} selected`}</span>
+                <span className="text-sm font-semibold text-gray-500">{fullAccess ? 'Full platform control' : `${selectedPermissionCount} selected`}</span>
               </div>
 
               <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
@@ -374,15 +380,35 @@ const AdminRolePermissions = () => {
                 />
               </div>
 
-              <div className={`grid grid-cols-1 gap-3 md:grid-cols-2 ${fullAccess ? 'opacity-50' : ''}`}>
-                {ADMIN_PERMISSIONS.map((permission) => (
-                  <PermissionCheckbox
-                    key={permission.key}
-                    permission={permission}
-                    checked={fullAccess || form.adminPermissions.includes(permission.key)}
-                    onChange={(checked) => togglePermission(permission.key, checked)}
-                  />
-                ))}
+              <div className={`space-y-4 ${fullAccess ? 'opacity-50' : ''}`}>
+                {ADMIN_PERMISSION_SECTIONS.map((section) => {
+                  const sectionPermissions = ADMIN_PERMISSIONS.filter((permission) => permission.section === section);
+                  const sectionSelected = sectionPermissions.filter((permission) => form.adminPermissions.includes(permission.key)).length;
+
+                  return (
+                    <section key={section} className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <h4 className="font-bold text-gray-900">{section}</h4>
+                          <p className="text-sm text-gray-500">Controls linked admin pages and their API access.</p>
+                        </div>
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-500">
+                          {fullAccess ? sectionPermissions.length : sectionSelected}/{sectionPermissions.length}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {sectionPermissions.map((permission) => (
+                          <PermissionCheckbox
+                            key={permission.key}
+                            permission={ADMIN_PERMISSION_BY_KEY[permission.key] || permission}
+                            checked={fullAccess || form.adminPermissions.includes(permission.key)}
+                            onChange={(checked) => togglePermission(permission.key, checked)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
               </div>
             </div>
 
