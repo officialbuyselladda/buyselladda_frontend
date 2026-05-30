@@ -359,12 +359,17 @@ const homeStyles = `
   }
 
   .home-page {
+    width: 100%;
+    max-width: 100vw;
     min-height: 100vh;
     background: var(--h-bg);
     padding: 20px 0 60px;
+    overflow-x: clip;
   }
 
   .home-container {
+    width: 100%;
+    min-width: 0;
     max-width: 1600px;
     margin: 0 auto;
     padding: 0 16px;
@@ -380,6 +385,7 @@ const homeStyles = `
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
     border-radius: var(--h-radius);
     padding: 12px 16px;
     border: 1px solid transparent;
@@ -436,7 +442,15 @@ const homeStyles = `
     padding: 10px 14px;
   }
   .home-banner__search-icon { color: var(--h-accent); flex-shrink: 0; }
-  .home-banner__search-text { flex: 1; font-size: 13px; color: var(--h-text-2); }
+  .home-banner__search-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--h-text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .home-banner__search-text strong { color: var(--h-accent); font-weight: 700; }
   .home-banner__clear {
     width: 24px;
@@ -472,7 +486,15 @@ const homeStyles = `
     justify-content: center;
     flex-shrink: 0;
   }
-  .home-banner__loc-text { flex: 1; font-size: 13px; color: var(--h-text-2); }
+  .home-banner__loc-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--h-text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .home-banner__loc-text strong { color: var(--h-text); font-weight: 600; }
   .home-banner__loc-change {
     font-size: 12.5px;
@@ -619,6 +641,8 @@ const homeStyles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
     padding: 0 2px;
   }
   .home-results-count { font-size: 13.5px; color: var(--h-text-2); display: flex; align-items: center; gap: 4px; }
@@ -633,7 +657,12 @@ const homeStyles = `
     padding: 4px 12px;
     border-radius: var(--h-radius-full);
     text-transform: capitalize;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 48%;
+    flex-shrink: 1;
   }
 
   /* Loading dots */
@@ -659,18 +688,21 @@ const homeStyles = `
   /* ── Product Grid ── */
   .home-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    min-width: 0;
   }
-  @media (min-width: 480px)  { .home-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-  @media (min-width: 640px)  { .home-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 900px)  { .home-grid { grid-template-columns: repeat(4, 1fr); } }
-  @media (min-width: 1200px) { .home-grid { grid-template-columns: repeat(5, 1fr); } }
-  @media (min-width: 1500px) { .home-grid { grid-template-columns: repeat(6, 1fr); } }
+  @media (min-width: 480px)  { .home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+  @media (min-width: 640px)  { .home-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 900px)  { .home-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (min-width: 1200px) { .home-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+  @media (min-width: 1500px) { .home-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+  @media (max-width: 359px)  { .home-grid { grid-template-columns: 1fr; } }
 
   .home-grid--more { margin-top: 0; }
 
   .home-grid__item {
+    min-width: 0;
     opacity: 0;
     animation: home-fade-in 0.32s ease-out forwards;
   }
@@ -770,6 +802,29 @@ const homeStyles = `
     color: var(--h-text-3);
     font-weight: 500;
     white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .home-page {
+      padding-top: 12px;
+    }
+    .home-banner {
+      padding: 11px 12px;
+    }
+    .home-banner--location {
+      align-items: flex-start;
+    }
+    .home-banner__actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+    .home-banner__btn {
+      min-width: 72px;
+      padding: 8px 12px;
+    }
+    .home-results-header {
+      align-items: flex-start;
+    }
   }
 `;
 

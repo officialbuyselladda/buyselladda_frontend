@@ -169,6 +169,7 @@ const cardStyles = `
   .pc-card {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     height: 100%;
     background: var(--pc-bg);
     border: 1px solid var(--pc-border);
@@ -274,6 +275,7 @@ const cardStyles = `
   .pc-body {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     flex: 1;
     padding: 11px 13px 13px;
     gap: 5px;
@@ -284,6 +286,7 @@ const cardStyles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+    min-width: 0;
     gap: 6px;
   }
   .pc-price {
@@ -294,6 +297,9 @@ const cardStyles = `
     letter-spacing: -0.02em;
     line-height: 1;
     white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .pc-cat {
     display: inline-flex;
@@ -401,6 +407,7 @@ const cardStyles = `
   /* Actions */
   .pc-actions {
     display: flex;
+    min-width: 0;
     gap: 6px;
     margin-top: auto;
     padding-top: 10px;
@@ -431,6 +438,7 @@ const cardStyles = `
   .pc-btn--fav:hover { background: #fff1f1; color: #ef4444; border-color: #fecaca; }
 
   .pc-btn--chat {
+    min-width: 0;
     flex: 1;
     background: var(--pc-accent);
     color: #fff;
@@ -438,6 +446,49 @@ const cardStyles = `
     box-shadow: 0 2px 8px rgba(212,87,26,0.22);
   }
   .pc-btn--chat:hover { background: var(--pc-accent-hover); border-color: var(--pc-accent-hover); box-shadow: 0 3px 12px rgba(212,87,26,0.32); }
+
+  @media (max-width: 420px) {
+    .pc-body {
+      padding: 9px 9px 10px;
+      gap: 4px;
+    }
+    .pc-price {
+      font-size: 15px;
+    }
+    .pc-cat {
+      max-width: 58px;
+      padding: 2px 5px;
+      font-size: 9px;
+    }
+    .pc-title {
+      font-size: 12px;
+      min-height: 34px;
+    }
+    .pc-seller__name,
+    .pc-location {
+      font-size: 10.5px;
+    }
+    .pc-meta__condition {
+      max-width: 62px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 1px 5px;
+      font-size: 9.5px;
+    }
+    .pc-actions {
+      gap: 5px;
+      padding-top: 8px;
+    }
+    .pc-btn {
+      min-height: 32px;
+      padding: 6px 7px;
+      font-size: 11px;
+    }
+    .pc-btn--fav {
+      width: 32px;
+    }
+  }
 `;
 
 export default ProductCard;
