@@ -58,7 +58,9 @@ export const PRODUCT_STATUS = {
   pending: 'Pending',
   approved: 'Approved',
   rejected: 'Rejected',
-  suspicious: 'Suspicious'
+  suspicious: 'Suspicious',
+  paused: 'Paused',
+  sold: 'Sold'
 };
 
 export const getLocationFromCache = () => {

@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import ImageUploader from '../components/ImageUploader';
-import { CONDITIONS, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
+import { CONDITIONS, CATEGORIES, getCategoryLabel, getCategoryValue, useCategories } from '../utils';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,7 @@ const schema = yup.object({
   description: yup.string().min(10).required('Description is required'),
   price: yup.number().min(1).required('Price is required'),
   category: yup.string().required('Category is required'),
+  subCategory: yup.string().nullable(),
   condition: yup.string().required('Condition is required'),
   location: yup.string().min(2).required('Location is required'),
 });
@@ -24,7 +25,8 @@ const CreateProduct = () => {
   const navigate = useNavigate();
   const { id: editProductId } = useParams();
   const { user } = useAuth();
-  const { options: categoryOptions } = useCategoryOptions();
+  const { data: categoryTree = [] } = useCategories();
+  const categoryOptions = categoryTree.length ? categoryTree : CATEGORIES;
   const categoryOptionsKey = useMemo(
     () => categoryOptions.map((category) => `${getCategoryValue(category)}:${getCategoryLabel(category)}`).join('|'),
     [categoryOptions]
@@ -37,9 +39,14 @@ const CreateProduct = () => {
   const [loadingProduct, setLoadingProduct] = useState(Boolean(editProductId));
   const isEditMode = Boolean(editProductId);
 
-  const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, setValue, reset, watch } = useForm({
     resolver: yupResolver(schema)
   });
+  const selectedCategory = watch('category');
+  const selectedParent = categoryTree.find((category) => (
+    getCategoryValue(category) === selectedCategory || getCategoryLabel(category) === selectedCategory
+  ));
+  const subCategoryOptions = selectedParent?.children || [];
 
   useEffect(() => {
     if (!editProductId) return;
@@ -57,6 +64,7 @@ const CreateProduct = () => {
           description: product.description || '',
           price: product.price || '',
           category: matchedCategory ? getCategoryValue(matchedCategory) : product.category || '',
+          subCategory: product.subCategory || '',
           condition: product.condition || 'Used',
           location: product.location || '',
         });
@@ -230,6 +238,10 @@ const onSubmit = async (data) => {
                 </label>
                 <select
                   {...register('category')}
+                  onChange={(event) => {
+                    setValue('category', event.target.value, { shouldValidate: true });
+                    setValue('subCategory', '');
+                  }}
                   className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Select category</option>
@@ -239,6 +251,23 @@ const onSubmit = async (data) => {
                 </select>
                 {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>}
               </div>
+            </div>
+
+            {/* Condition & Location */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Sub Category
+              </label>
+              <select
+                {...register('subCategory')}
+                className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">Select sub category if needed</option>
+                {subCategoryOptions.map(cat => (
+                  <option key={`sub-${cat._id || getCategoryValue(cat)}`} value={getCategoryValue(cat)}>{getCategoryLabel(cat)}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">Only sub categories configured under the selected main category are shown.</p>
             </div>
 
             {/* Condition & Location */}
@@ -305,4 +334,3 @@ const onSubmit = async (data) => {
 };
 
 export default CreateProduct;
-

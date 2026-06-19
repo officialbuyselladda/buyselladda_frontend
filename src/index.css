@@ -3,6 +3,17 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+html.site-dark { color-scheme: dark; background: #111827; }
+html.site-dark body, html.site-dark #root { background: #111827; color: #f3f4f6; }
+html.site-dark .home-page { --h-bg: #111827; --h-surface: #1f2937; --h-border: #374151; --h-text: #f9fafb; --h-text-2: #d1d5db; --h-text-3: #9ca3af; }
+html.site-dark .hdr { --hdr-bg: #111827; --hdr-bg-sub: #1f2937; --hdr-border: #374151; --hdr-text: #f9fafb; --hdr-text-2: #d1d5db; --hdr-text-3: #9ca3af; }
+html.site-dark .hdr-search__input, html.site-dark .hdr-search__cat, html.site-dark .home-filters input, html.site-dark .home-filters select { background: #1f2937 !important; color: #f9fafb !important; }
+html.site-dark .bg-white { background-color: #1f2937 !important; }
+html.site-dark .bg-gray-50 { background-color: #111827 !important; }
+html.site-dark .text-gray-900 { color: #f9fafb !important; }
+html.site-dark .text-gray-700, html.site-dark .text-gray-600, html.site-dark .text-gray-500 { color: #d1d5db !important; }
+html.site-dark input, html.site-dark textarea, html.site-dark select { color: #f9fafb; background-color: #1f2937; }
+
 @layer base {
   :root {
     --text: #1f2937;

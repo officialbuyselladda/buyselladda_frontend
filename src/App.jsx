@@ -19,6 +19,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import AdminLogin from './pages/AdminLogin';
 import Register from './pages/Register';
 import CreateProduct from './pages/CreateProduct';
@@ -86,6 +87,7 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/register" element={<Register />} />
 
         <Route 

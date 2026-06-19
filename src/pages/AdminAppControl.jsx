@@ -54,6 +54,11 @@ const defaultConfig = {
     updateMessage: 'Please update the app to continue.',
     playStoreUrl: '',
     appStoreUrl: '',
+    autoApproveAds: true,
+    autoApproveAfterMinutes: 10,
+    freeMonthlyPostLimit: 3,
+    dealerMonthlyPostLimit: 30,
+    boostedSearchEnabled: true,
   },
   contact: {
     supportEmail: 'support@buyselladda.com',
@@ -251,9 +256,14 @@ const AdminAppControl = () => {
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <Toggle label="Maintenance Mode" checked={config.controls.maintenanceMode} onChange={(value) => updateSection('controls', 'maintenanceMode', value)} helper="App can show maintenance message before users continue." />
                 <Toggle label="Force Update" checked={config.controls.forceUpdate} onChange={(value) => updateSection('controls', 'forceUpdate', value)} helper="Use minimum version and update message for old builds." />
+                <Toggle label="Auto Approve Ads" checked={config.controls.autoApproveAds} onChange={(value) => updateSection('controls', 'autoApproveAds', value)} helper="Eligible pending ads can go live automatically after the review window." />
+                <Toggle label="Boosted Ads On Top" checked={config.controls.boostedSearchEnabled} onChange={(value) => updateSection('controls', 'boostedSearchEnabled', value)} helper="Subscription boosted posts appear first in search and category results." />
                 <TextArea label="Maintenance Message" value={config.controls.maintenanceMessage} onChange={(value) => updateSection('controls', 'maintenanceMessage', value)} />
                 <TextArea label="Update Message" value={config.controls.updateMessage} onChange={(value) => updateSection('controls', 'updateMessage', value)} />
                 <TextInput label="Minimum Version" value={config.controls.minimumVersion} onChange={(value) => updateSection('controls', 'minimumVersion', value)} />
+                <TextInput label="Auto Approve After Minutes" type="number" value={config.controls.autoApproveAfterMinutes} onChange={(value) => updateSection('controls', 'autoApproveAfterMinutes', Number(value) || 1)} />
+                <TextInput label="Free Monthly Post Limit" type="number" value={config.controls.freeMonthlyPostLimit} onChange={(value) => updateSection('controls', 'freeMonthlyPostLimit', Number(value) || 0)} />
+                <TextInput label="Dealer Monthly Post Limit" type="number" value={config.controls.dealerMonthlyPostLimit} onChange={(value) => updateSection('controls', 'dealerMonthlyPostLimit', Number(value) || 0)} />
                 <TextInput label="Play Store URL" value={config.controls.playStoreUrl} onChange={(value) => updateSection('controls', 'playStoreUrl', value)} />
                 <TextInput label="App Store URL" value={config.controls.appStoreUrl} onChange={(value) => updateSection('controls', 'appStoreUrl', value)} />
               </div>

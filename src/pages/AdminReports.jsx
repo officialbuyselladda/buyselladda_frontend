@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { CheckCircle, Flag, Package, Search, XCircle } from 'lucide-react';
+import { CheckCircle, Download, Flag, Package, Search, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const AdminReports = () => {
@@ -33,6 +33,11 @@ const AdminReports = () => {
     },
   });
 
+  const exportReports = (format) => {
+    const params = new URLSearchParams(filters);
+    window.open(`/api/admin/reports/export/${format}?${params.toString()}`, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -40,6 +45,16 @@ const AdminReports = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Reports & Review Queue</h1>
           <p className="text-gray-600">{data.total} listings needing admin attention</p>
+        </div>
+        <div className="ml-auto flex gap-2">
+          <button onClick={() => exportReports('csv')} className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50">
+            <Download size={16} />
+            CSV
+          </button>
+          <button onClick={() => exportReports('pdf')} className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50">
+            <Download size={16} />
+            PDF
+          </button>
         </div>
       </div>
 

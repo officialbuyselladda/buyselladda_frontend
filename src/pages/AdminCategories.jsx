@@ -4,7 +4,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { Edit, Folder, Plus, Search, Trash2, X } from 'lucide-react';
 
-const emptyForm = { name: '', description: '', parent: '', icon: '📦', isActive: true, sortOrder: 0 };
+const emptyForm = { name: '', description: '', parent: '', icon: '📦', image: '', isActive: true, sortOrder: 0 };
 
 const AdminCategories = () => {
   const queryClient = useQueryClient();
@@ -48,6 +48,7 @@ const AdminCategories = () => {
         description: form.description.trim(),
         parent: form.parent || null,
         icon: form.icon.trim(),
+        image: form.image.trim(),
         isActive: Boolean(form.isActive),
         sortOrder: Number(form.sortOrder) || 0,
       };
@@ -92,6 +93,7 @@ const AdminCategories = () => {
       description: category.description || '',
       parent: category.parent?._id || category.parent || '',
       icon: category.icon || '📦',
+      image: category.image || '',
       isActive: category.isActive !== false,
       sortOrder: category.sortOrder || 0,
     });
@@ -175,7 +177,7 @@ const AdminCategories = () => {
                     <td className="p-5">
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-xl">
-                          {category.icon || '📦'}
+                          {category.image ? <img src={category.image} alt="" className="h-full w-full rounded-xl object-cover" /> : (category.icon || '📦')}
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900">{category.name}</p>
@@ -272,6 +274,15 @@ const AdminCategories = () => {
                     className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
                     placeholder="📱"
                     maxLength={10}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-semibold text-gray-700">Icon Image URL</span>
+                  <input
+                    value={form.image}
+                    onChange={(event) => setForm({ ...form, image: event.target.value })}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="https://example.com/category-icon.png"
                   />
                 </label>
                 <label className="block">

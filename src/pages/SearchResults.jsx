@@ -16,7 +16,8 @@ const SearchResults = () => {
     category: searchParams.get('category') || '',
     minPrice: '',
     maxPrice: '',
-    location: ''
+    location: '',
+    sortBy: 'latest'
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -55,7 +56,7 @@ const SearchResults = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ category: '', minPrice: '', maxPrice: '', location: '' });
+    setFilters({ category: '', minPrice: '', maxPrice: '', location: '', sortBy: 'latest' });
   };
 
   const loadMore = () => {
@@ -102,6 +103,19 @@ const SearchResults = () => {
         <div className={`${showFilters ? 'block' : 'hidden'} lg:block bg-white rounded-2xl border p-6 mb-8 sticky top-24`}>
             <h3 className="font-bold text-lg mb-6 text-gray-900">Filters</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sort by</label>
+                <select
+                  value={filters.sortBy}
+                  onChange={(e) => updateFilter('sortBy', e.target.value)}
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="latest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="price_low">Price low to high</option>
+                  <option value="price_high">Price high to low</option>
+                </select>
+              </div>
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>

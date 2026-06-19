@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, ShieldCheck, User } from 'lucide-react';
+import { Lock, Mail, Phone, ShieldCheck, Store, User } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 const schema = yup.object({
   name: yup.string().min(2, 'Name must be at least 2 characters').max(30).required('Name is required'),
   email: yup.string().email('Valid email required').required('Email is required'),
+  phone: yup.string().matches(/^[6-9]\d{9}$/, 'Enter a valid 10 digit mobile number').required('Phone number is required'),
+  userType: yup.string().oneOf(['normal', 'dealer']).required(),
   password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
 });
 
@@ -23,7 +25,7 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     setLoading(true);
-    const result = await register(data.name, data.email, data.password);
+    const result = await register(data.name, data.email, data.password, data.phone, data.userType);
     setLoading(false);
     if (result.success) navigate('/login');
   };
@@ -59,6 +61,37 @@ const Register = () => {
                   />
                 </div>
                 {errors.name && <p className="mt-1 text-sm font-medium text-red-600">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">10 digit phone number</label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    {...reg('phone')}
+                    type="tel"
+                    maxLength={10}
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                    placeholder="9876543210"
+                    autoComplete="tel"
+                  />
+                </div>
+                {errors.phone && <p className="mt-1 text-sm font-medium text-red-600">{errors.phone.message}</p>}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">Account type</label>
+                <div className="relative">
+                  <Store className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <select
+                    {...reg('userType')}
+                    defaultValue="normal"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                  >
+                    <option value="normal">Normal user</option>
+                    <option value="dealer">Dealer</option>
+                  </select>
+                </div>
               </div>
 
               <div>

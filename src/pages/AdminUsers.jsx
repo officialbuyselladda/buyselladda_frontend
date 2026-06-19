@@ -7,11 +7,13 @@ import {
   Edit3,
   Eye,
   Mail,
+  MailCheck,
   MapPin,
   Phone,
   Plus,
   Search,
   Shield,
+  Send,
   Trash2,
   User,
   Users,
@@ -120,6 +122,24 @@ const AdminUsers = () => {
     onError: (error) => toast.error(error.response?.data?.message || 'Action failed'),
   });
 
+  const verifyEmailMutation = useMutation({
+    mutationFn: (userId) => api.put(`/admin/users/${userId}/verify-email`),
+    onSuccess: () => {
+      toast.success('User email verified');
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['adminUserDetail'] });
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not verify email'),
+  });
+
+  const resendVerificationMutation = useMutation({
+    mutationFn: (userId) => api.post(`/admin/users/${userId}/resend-verification`),
+    onSuccess: (response) => {
+      toast.success(response.data?.message || 'Verification link sent');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not send verification email'),
+  });
+
   const openAdd = () => {
     setForm(emptyForm);
     setModalMode('add');
@@ -221,6 +241,7 @@ const AdminUsers = () => {
                   <th className="p-5">Contact</th>
                   <th className="p-5">Role</th>
                   <th className="p-5">Status</th>
+                  <th className="p-5">Email</th>
                   <th className="p-5">Ads</th>
                   <th className="p-5">Joined</th>
                   <th className="p-5">Actions</th>
@@ -254,6 +275,11 @@ const AdminUsers = () => {
                         {user.isBlocked ? 'Blocked' : 'Active'}
                       </span>
                     </td>
+                    <td className="p-5">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${user.isEmailVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {user.isEmailVerified ? 'Verified' : 'Unverified'}
+                      </span>
+                    </td>
                     <td className="p-5 font-semibold">{user.productCount || 0}</td>
                     <td className="p-5 text-sm text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td className="p-5">
@@ -267,6 +293,16 @@ const AdminUsers = () => {
                         <button onClick={() => blockMutation.mutate(user._id)} className="rounded-lg p-2 text-amber-600 hover:bg-amber-50" title={user.isBlocked ? 'Unblock' : 'Block'}>
                           {user.isBlocked ? <CheckCircle2 size={17} /> : <Ban size={17} />}
                         </button>
+                        {!user.isEmailVerified && user.role !== 'admin' && (
+                          <>
+                            <button onClick={() => verifyEmailMutation.mutate(user._id)} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50" title="Verify email manually">
+                              <MailCheck size={17} />
+                            </button>
+                            <button onClick={() => resendVerificationMutation.mutate(user._id)} className="rounded-lg p-2 text-blue-600 hover:bg-blue-50" title="Resend verification link">
+                              <Send size={17} />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => {
                             if (confirm('Delete this user? Admin accounts cannot be deleted.')) deleteMutation.mutate(user._id);
@@ -399,6 +435,23 @@ const AdminUsers = () => {
                     <p className="flex items-center gap-2 text-gray-700"><Phone size={16} /> {selectedUser.phone || 'No phone'}</p>
                     <p className="flex items-center gap-2 text-gray-700"><MapPin size={16} /> {selectedUser.location || 'No location'}</p>
                     <p className="flex items-center gap-2 text-gray-700"><Shield size={16} /> {selectedUser.role}</p>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${selectedUser.isEmailVerified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      Email {selectedUser.isEmailVerified ? 'verified' : 'not verified'}
+                    </span>
+                    {!selectedUser.isEmailVerified && selectedUser.role !== 'admin' && (
+                      <>
+                        <button onClick={() => verifyEmailMutation.mutate(selectedUser._id)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700">
+                          <MailCheck size={16} />
+                          Verify Email
+                        </button>
+                        <button onClick={() => resendVerificationMutation.mutate(selectedUser._id)} className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">
+                          <Send size={16} />
+                          Resend Link
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

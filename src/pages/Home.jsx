@@ -18,6 +18,7 @@ import {
   MonitorSmartphone,
   Search,
   Shirt,
+  SlidersHorizontal,
   X,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -87,6 +88,9 @@ const Home = () => {
   const filters = useMemo(() => ({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
+    minPrice: searchParams.get('minPrice') || '',
+    maxPrice: searchParams.get('maxPrice') || '',
+    sortBy: searchParams.get('sortBy') || 'latest',
   }), [searchParams]);
 
   /* ── Fetch ── */
@@ -98,6 +102,9 @@ const Home = () => {
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
+      if (filters.minPrice) params.append('minPrice', filters.minPrice);
+      if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+      if (filters.sortBy) params.append('sortBy', filters.sortBy);
       if (userLocation?.lat && userLocation?.lng) {
         params.append('lat', String(userLocation.lat));
         params.append('lng', String(userLocation.lng));
@@ -251,6 +258,25 @@ const Home = () => {
           </div>
 
           {/* ── Results Header ── */}
+          <div className="home-filters" aria-label="Listing filters">
+            <span className="home-filters__label"><SlidersHorizontal size={16} /> Filters</span>
+            <input type="number" min="0" inputMode="numeric" placeholder="Min price" value={filters.minPrice} onChange={(event) => updateFilter('minPrice', event.target.value)} />
+            <input type="number" min="0" inputMode="numeric" placeholder="Max price" value={filters.maxPrice} onChange={(event) => updateFilter('maxPrice', event.target.value)} />
+            <select value={filters.sortBy} onChange={(event) => updateFilter('sortBy', event.target.value)}>
+              <option value="latest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="price_low">Price: low to high</option>
+              <option value="price_high">Price: high to low</option>
+            </select>
+            {(filters.minPrice || filters.maxPrice || filters.sortBy !== 'latest') && (
+              <button type="button" onClick={() => {
+                const params = new URLSearchParams(searchParams);
+                ['minPrice', 'maxPrice', 'sortBy'].forEach((key) => params.delete(key));
+                setSearchParams(params);
+              }}>Reset</button>
+            )}
+          </div>
+
           <div className="home-results-header">
             <div className="home-results-count">
               {loading ? (
@@ -637,6 +663,22 @@ const homeStyles = `
   }
 
   /* ── Results Header ── */
+  .home-filters {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 14px 0 4px;
+    border: 1px solid var(--h-border);
+    border-radius: 12px;
+    background: var(--h-surface);
+    padding: 10px;
+  }
+  .home-filters__label { display: inline-flex; align-items: center; gap: 6px; color: var(--h-text); font-size: 13px; font-weight: 800; }
+  .home-filters input, .home-filters select { min-height: 38px; border: 1px solid var(--h-border); border-radius: 9px; background: #fff; padding: 0 11px; color: #111827; font-size: 13px; }
+  .home-filters input { width: 130px; }
+  .home-filters select { margin-left: auto; }
+  .home-filters button { border: 0; background: transparent; color: var(--h-accent); font-size: 12px; font-weight: 800; cursor: pointer; }
+
   .home-results-header {
     display: flex;
     align-items: center;
@@ -805,6 +847,9 @@ const homeStyles = `
   }
 
   @media (max-width: 640px) {
+    .home-filters { display: grid; grid-template-columns: 1fr 1fr; }
+    .home-filters__label { grid-column: 1 / -1; }
+    .home-filters input, .home-filters select { width: 100%; min-width: 0; margin-left: 0; }
     .home-page {
       padding-top: 12px;
     }

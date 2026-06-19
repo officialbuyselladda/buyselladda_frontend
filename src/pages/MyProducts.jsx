@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Trash2, Edit3, Eye, Clock, Package, Plus } from 'lucide-react';
+import { Trash2, Edit3, Eye, Clock, Package, Plus, BadgeCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { PRODUCT_STATUS } from '../utils';
 import toast from 'react-hot-toast';
@@ -73,6 +73,15 @@ const MyProducts = () => {
       queryClient.invalidateQueries({ queryKey: ['myProducts'] });
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Delete failed'),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ productId, status }) => api.put(`/products/${productId}`, { status }),
+    onSuccess: (_, variables) => {
+      toast.success(variables.status === 'sold' ? 'Marked as sold' : 'Status updated');
+      queryClient.invalidateQueries({ queryKey: ['myProducts'] });
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Status update failed'),
   });
 
   const handleDelete = (productId) => {
@@ -230,6 +239,17 @@ const MyProducts = () => {
                             <Edit3 size={14} />
                             Edit
                           </Link>
+                          {status !== 'sold' && (
+                            <button
+                              onClick={() => statusMutation.mutate({ productId: product._id, status: 'sold' })}
+                              disabled={statusMutation.isPending}
+                              className="mp-action-btn mp-action-btn--sold"
+                              title="Mark as sold"
+                            >
+                              <BadgeCheck size={14} />
+                              Sold
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(product._id)}
                             disabled={deleteMutation.isPending}
@@ -681,6 +701,13 @@ const mpStyles = `
     border-color: var(--mp-red-border);
   }
   .mp-action-btn--delete:hover { background: #fee2e2; border-color: #fca5a5; }
+
+  .mp-action-btn--sold {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+  }
+  .mp-action-btn--sold:hover { background: #dbeafe; border-color: #93c5fd; }
 
   /* ── Pagination ── */
   .mp-pagination {

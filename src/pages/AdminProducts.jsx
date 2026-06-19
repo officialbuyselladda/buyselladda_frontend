@@ -3,15 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Search, Filter, Package, Eye, Trash2, CheckCircle2, XCircle, Clock, Edit3, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { CONDITIONS, PRODUCT_STATUS } from '../utils';
 import toast from 'react-hot-toast';
+import Modal from '../components/Modal';
 
 const AdminProducts = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ status: 'all', search: '', page: 1, limit: 10 });
   const [selectedProducts, setSelectedProducts] = useState([]); 
+  const [detailProduct, setDetailProduct] = useState(null);
 
   const { data: productsData = { products: [], total: 0, page: 1, pages: 1 }, isLoading, error } = useQuery({
     queryKey: ['adminProducts', filters],
@@ -181,9 +182,9 @@ const AdminProducts = () => {
                         />
                       </td>
                       <td className="p-6 max-w-md">
-                        <Link to={`/products/${product._id}`} className="font-semibold text-gray-900 hover:text-primary-600 line-clamp-2">
+                        <button type="button" onClick={() => setDetailProduct(product)} className="font-semibold text-left text-gray-900 hover:text-primary-600 line-clamp-2">
                           {product.title}
-                        </Link>
+                        </button>
                         <p className="text-sm text-gray-500 mt-1">₹{product.price?.toLocaleString()}</p>
                       </td>
                       <td className="p-6">
@@ -214,13 +215,14 @@ const AdminProducts = () => {
                       </td>
                       <td className="p-6">
                         <div className="flex gap-2">
-                          <Link 
-                            to={`/products/${product._id}`}
+                          <button
+                            type="button"
+                            onClick={() => setDetailProduct(product)}
                             className="p-2 hover:bg-gray-100 rounded-xl"
-                            title="View"
+                            title="View full ad details"
                           >
                             <Eye size={18} />
-                          </Link>
+                          </button>
                           {product.status === 'pending' && (
                             <>
                               <button 
@@ -277,6 +279,33 @@ const AdminProducts = () => {
           </div>
         )}
       </div>
+      <Modal isOpen={Boolean(detailProduct)} onClose={() => setDetailProduct(null)} title="Ad review details">
+        {detailProduct && (
+          <div className="space-y-4 text-sm text-gray-700">
+            <div className="grid grid-cols-2 gap-2">
+              {(detailProduct.images || []).map((image, index) => (
+                <img key={image.public_id || image.url || index} src={image.url} alt="" className="h-28 w-full rounded-xl object-cover" />
+              ))}
+            </div>
+            <div><p className="text-lg font-bold text-gray-900">{detailProduct.title}</p><p className="font-semibold text-emerald-700">₹{Number(detailProduct.price || 0).toLocaleString('en-IN')}</p></div>
+            <p className="whitespace-pre-wrap">{detailProduct.description || 'No description provided.'}</p>
+            <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-3">
+              <p><strong>Category:</strong><br />{detailProduct.category || '-'}</p>
+              <p><strong>Sub category:</strong><br />{detailProduct.subCategory || '-'}</p>
+              <p><strong>Condition:</strong><br />{detailProduct.condition || '-'}</p>
+              <p><strong>Location:</strong><br />{detailProduct.location || '-'}</p>
+              <p><strong>Seller:</strong><br />{detailProduct.sellerName || detailProduct.user?.name || '-'}</p>
+              <p><strong>Status:</strong><br />{PRODUCT_STATUS[detailProduct.status] || detailProduct.status}</p>
+            </div>
+            {detailProduct.status === 'pending' && (
+              <div className="flex gap-3">
+                <button type="button" onClick={() => { handleApprove(detailProduct._id); setDetailProduct(null); }} className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white">Approve</button>
+                <button type="button" onClick={() => { handleReject(detailProduct._id); setDetailProduct(null); }} className="flex-1 rounded-xl bg-red-600 px-4 py-3 font-semibold text-white">Reject</button>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

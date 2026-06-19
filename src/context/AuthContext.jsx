@@ -120,9 +120,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, phone, userType = 'normal') => {
     try {
-      const { data } = await api.post('/auth/register', { name, email, password });
+      const { data } = await api.post('/auth/register', { name, email, password, phone, userType });
       if (data.success) {
         toast.success(data.message);
         return { success: true };
@@ -149,6 +149,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const verifyEmail = useCallback(async (token) => {
+    try {
+      const { data } = await api.get(`/auth/verify-email/${token}`);
+      if (data.success) {
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        setUser(data.data.user);
+        toast.success(data.message || 'Email verified');
+        return { success: true };
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Email verification failed');
+      return { success: false };
+    }
+  }, []);
+
 const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -162,6 +178,7 @@ const logout = () => {
     adminLogin,
     register,
     resetPassword,
+    verifyEmail,
     logout,
     loading,
     isAuthenticated: !!user,

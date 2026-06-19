@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useContext, useRef, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
 import api from '../services/api';
@@ -9,7 +10,7 @@ import { searchLocations } from '../utils/geocode';
 import { getImageUrl } from '../utils/image';
 import {
   Search, Menu, ChevronDown, MapPin, LogOut, Shield, LocateFixed,
-  MessageCircle, Plus, X, User, Bell, ChevronRight, Home, Package
+  MessageCircle, Plus, X, User, Bell, ChevronRight, Home, Package, Moon, Sun
 } from 'lucide-react';
 
 /* ── Utility: close on outside click ── */
@@ -31,6 +32,8 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationCtx = useContext(LocationContext);
+  const queryClient = useQueryClient();
+  const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || '/';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -44,6 +47,7 @@ const Header = () => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [settingLocation, setSettingLocation] = useState(false);
   const [searchMenuOpen, setSearchMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('siteTheme') === 'dark');
   const [productSuggestions, setProductSuggestions] = useState([]);
   const [loadingSearchSuggestions, setLoadingSearchSuggestions] = useState(false);
   const { options: categoryOptions } = useCategoryOptions();
@@ -57,6 +61,30 @@ const Header = () => {
     enabled: Boolean(user?._id && user?.role === 'user'),
     refetchInterval: 15000,
   });
+  const { data: unreadMessageCount = 0 } = useQuery({
+    queryKey: ['headerUnreadMessages', user?._id],
+    queryFn: async () => {
+      const res = await api.get('/chats');
+      const chats = Array.isArray(res.data?.data) ? res.data.data : [];
+      return chats.reduce((total, chat) => total + Number(chat.unreadCount || 0), 0);
+    },
+    enabled: Boolean(user?._id && user?.role === 'user'),
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    if (!user?._id || user.role !== 'user') return undefined;
+    const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+    socket.emit('join_user', user._id);
+    const refreshCounts = () => {
+      queryClient.invalidateQueries({ queryKey: ['notificationUnreadCount', user._id] });
+      queryClient.invalidateQueries({ queryKey: ['headerUnreadMessages', user._id] });
+    };
+    socket.on('notification', refreshCounts);
+    socket.on('notification:new', refreshCounts);
+    socket.on('chat_updated', refreshCounts);
+    return () => socket.disconnect();
+  }, [queryClient, socketUrl, user?._id, user?.role]);
 
   const userMenuRef = useRef(null);
   const locationMenuRef = useRef(null);
@@ -66,6 +94,11 @@ const Header = () => {
   useOutsideClick(searchRef, () => {
     if (!mobileOpen) setSearchMenuOpen(false);
   });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('site-dark', isDark);
+    localStorage.setItem('siteTheme', isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   const isAdminPath = location.pathname.startsWith('/admin') && !location.pathname.endsWith('/admin/login');
 
@@ -359,6 +392,9 @@ const Header = () => {
 
             {/* Right Actions */}
             <div className="hdr-actions">
+              <button type="button" onClick={() => setIsDark((value) => !value)} className="hdr-icon-btn" title={isDark ? 'Use light theme' : 'Use dark theme'}>
+                {isDark ? <Sun size={19} /> : <Moon size={19} />}
+              </button>
 
               {/* Location */}
               <div className="hdr-location-wrap" ref={locationMenuRef}>
@@ -460,6 +496,9 @@ const Header = () => {
                   </Link>
                   <Link to="/chats" className="hdr-icon-btn" title="Messages">
                     <MessageCircle size={19} />
+                    {unreadMessageCount > 0 && (
+                      <span className="hdr-badge">{unreadMessageCount > 9 ? '9+' : unreadMessageCount}</span>
+                    )}
                   </Link>
                 </>
               )}
