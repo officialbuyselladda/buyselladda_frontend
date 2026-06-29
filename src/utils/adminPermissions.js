@@ -14,6 +14,10 @@ export const ADMIN_PERMISSIONS = [
   { key: 'settings', label: 'Settings', section: 'System', path: '/admin/settings', description: 'Manage admin profile and password settings' },
   { key: 'systemSettings', label: 'Website Content', section: 'System', path: '/admin/system-settings', description: 'Edit footer, policy pages, and public website content' },
   { key: 'appControl', label: 'Deal App Control', section: 'System', path: '/admin/app-control', description: 'Manage mobile app branding, splash, version, and runtime controls' },
+  { key: 'homeControl', label: 'Home Control', section: 'System', path: '/admin/home-control', description: 'Control home screen hero, quick actions, and visible app sections' },
+  { key: 'featureControl', label: 'Feature Flags', section: 'System', path: '/admin/feature-control', description: 'Enable, disable, and limit app marketplace features' },
+  { key: 'trustSafety', label: 'Trust & Safety', section: 'System', path: '/admin/trust-safety', description: 'Manage posting rules, fraud warning, and review controls' },
+  { key: 'growthControl', label: 'Growth Control', section: 'System', path: '/admin/growth-control', description: 'Manage offers, campaigns, boosted ads, and banners' },
   { key: 'adminRoles', label: 'Employee Permissions', section: 'System', path: '/admin/role-permissions', description: 'Create employee admin accounts and assign module permissions' },
 ];
 

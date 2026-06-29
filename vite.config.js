@@ -5,22 +5,26 @@ export default ({ mode }) => {
   // Load env variables properly
   const env = loadEnv(mode, process.cwd(), '')
 
+  const apiTarget = env.VITE_API_URL && env.VITE_API_URL.startsWith('http')
+    ? env.VITE_API_URL.replace(/\/api\/?$/, '')
+    : 'http://localhost:5003'
+
   return defineConfig({
     // Safe base URL
     base: env.VITE_BASE_URL || '/',
 
     plugins: [react()],
 
-server: {
+    server: {
       port: env.VITE_PORT || 5173,
       proxy: {
         '/api': {
-          target: 'http://localhost:5000',
+          target: apiTarget,
           changeOrigin: true,
           secure: false,
         },
         '/socket.io': {
-          target: 'http://localhost:5000',
+          target: apiTarget,
           ws: true,
           secure: false,
         }

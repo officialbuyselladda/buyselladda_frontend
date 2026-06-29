@@ -17,6 +17,7 @@ const Categories = () => {
   const [page, setPage] = useState(1);
 
   const categorySlug = searchParams.get('category') || searchParams.get('slug');
+  const subCategorySlug = searchParams.get('subCategory') || '';
 
   useEffect(() => {
     fetchCategories();
@@ -25,9 +26,9 @@ const Categories = () => {
   useEffect(() => {
     if (categorySlug) {
       setSelectedCategory(categorySlug);
-      fetchCategoryProducts(categorySlug, 1);
+      fetchCategoryProducts(categorySlug, subCategorySlug, 1);
     }
-  }, [categorySlug]);
+  }, [categorySlug, subCategorySlug]);
 
   const fetchCategories = async () => {
     try {
@@ -41,10 +42,11 @@ const Categories = () => {
     }
   };
 
-  const fetchCategoryProducts = async (slug, currentPage = 1) => {
+  const fetchCategoryProducts = async (slug, subSlug = '', currentPage = 1) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({ category: slug, page: currentPage, limit: 20 });
+      if (subSlug) params.set('subCategory', subSlug);
       const { data } = await api.get(`/products?${params}`);
       if (currentPage === 1) {
         setProducts(data.data.products || []);
@@ -60,11 +62,11 @@ const Categories = () => {
   };
 
   const handleCategoryClick = (slug) => {
-    navigate(`/categories?slug=${slug}`);
+    navigate(`/categories?category=${encodeURIComponent(slug)}`);
   };
 
   const loadMore = () => {
-    fetchCategoryProducts(selectedCategory, page + 1);
+    fetchCategoryProducts(selectedCategory, subCategorySlug, page + 1);
   };
 
   const allCategories = flattenCategories(categories);
@@ -124,6 +126,8 @@ const Categories = () => {
   }
 
   const category = allCategories.find(c => c.slug === selectedCategory || c.name === selectedCategory) || {};
+  const selectedSubCategory = category.children?.find((c) => c.slug === subCategorySlug || c.name === subCategorySlug) || null;
+  const headingCategory = selectedSubCategory || category;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,7 +137,7 @@ const Categories = () => {
           <ol className="flex items-center space-x-2 text-sm text-gray-500">
             <li><a href="/" className="hover:text-primary-600">Home</a></li>
             <li><span className="w-6 h-6 flex items-center justify-center text-gray-400">/</span></li>
-            <li className="font-medium text-gray-900 capitalize">{category.name}</li>
+            <li className="font-medium text-gray-900 capitalize">{headingCategory.name}</li>
           </ol>
         </nav>
 
@@ -148,10 +152,10 @@ const Categories = () => {
                 {category.children?.map((sub) => (
                   <button
                     key={sub._id}
-                    onClick={() => navigate(`/categories?slug=${sub.slug}`)}
+                    onClick={() => navigate(`/categories?category=${encodeURIComponent(category.slug || category.name)}&subCategory=${encodeURIComponent(sub.slug || sub.name)}`)}
                     className={cn(
                       "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all group",
-                      selectedCategory === sub.slug
+                      subCategorySlug === sub.slug || subCategorySlug === sub.name
                         ? "bg-primary-50 border-2 border-primary-200 text-primary-700"
                         : "hover:bg-gray-50 border border-gray-100"
                     )}
@@ -177,8 +181,8 @@ const Categories = () => {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                 <div>
-                  <h1 className="text-3xl font-black text-gray-900 capitalize">{category.name}</h1>
-                  <p className="text-gray-600 mt-1">Browse {category.productsCount || 0}+ listings in this category</p>
+                  <h1 className="text-3xl font-black text-gray-900 capitalize">{headingCategory.name}</h1>
+                  <p className="text-gray-600 mt-1">Browse {headingCategory.productsCount || 0}+ listings in this category</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -208,7 +212,7 @@ const Categories = () => {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">No listings yet</h3>
                 <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                  Be the first to post in <span className="font-semibold text-gray-900 capitalize">{category.name}</span>
+                  Be the first to post in <span className="font-semibold text-gray-900 capitalize">{headingCategory.name}</span>
                 </p>
                 <button onClick={() => navigate('/create-product')} className="px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-lg">
                   Post Free Ad

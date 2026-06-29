@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 
 const ForgotPassword = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState('email');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (event) => {
+  const handleEmailSubmit = async (event) => {
     event.preventDefault();
     if (!email.trim()) {
       toast.error('Please enter your email address');
@@ -17,10 +20,35 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/forgot-password', { email });
-      toast.success(data.message || 'If this email exists, password reset instructions will be sent.');
+      const { data } = await api.post('/auth/forgot-password', { email: email.trim().toLowerCase() });
+      setStep('otp');
+      toast.success(data.message || 'If this email exists, a password reset OTP has been sent.');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Unable to send reset instructions');
+      toast.error(error.response?.data?.message || 'Unable to send reset OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async (event) => {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(otp.trim())) {
+      toast.error('Please enter the 6 digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/verify-reset-otp', {
+        email: email.trim().toLowerCase(),
+        otp: otp.trim(),
+      });
+      const resetToken = data.data?.resetToken;
+      if (!resetToken) throw new Error('Reset token missing');
+      toast.success(data.message || 'OTP verified');
+      navigate(`/reset-password/${resetToken}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid or expired OTP');
     } finally {
       setLoading(false);
     }
@@ -44,7 +72,7 @@ const ForgotPassword = () => {
               Recover access to your BuySellAdda account smoothly.
             </h1>
             <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
-              Enter your registered email and follow the reset instructions to get back to your ads, chats, and favorites.
+              Enter your registered email, verify the OTP sent to your inbox, and create a fresh password safely.
             </p>
           </div>
 
@@ -66,32 +94,71 @@ const ForgotPassword = () => {
 
             <div className="mb-8">
               <h2 className="text-3xl font-black text-gray-950">Forgot password?</h2>
-              <p className="mt-2 text-sm text-gray-600">Enter your email to recover your BuySellAdda account.</p>
+              <p className="mt-2 text-sm text-gray-600">
+                {step === 'email'
+                  ? 'Enter your email to receive a reset OTP.'
+                  : `Enter the OTP sent to ${email.trim().toLowerCase()}.`}
+              </p>
             </div>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">Email address</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                  <input
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    type="email"
-                    className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                  />
-                </div>
+            {step === 'otp' && (
+              <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+                <span className="font-semibold">OTP sent. Check inbox or spam folder, then continue here.</span>
               </div>
+            )}
+
+            <form className="space-y-5" onSubmit={step === 'email' ? handleEmailSubmit : handleOtpSubmit}>
+              {step === 'email' ? (
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-gray-700">Email address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <input
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      type="email"
+                      className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-gray-700">Reset OTP</label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                    <input
+                      value={otp}
+                      onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                      inputMode="numeric"
+                      className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-center text-xl font-black tracking-[0.35em] text-gray-900 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                      placeholder="000000"
+                      autoComplete="one-time-code"
+                    />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={loading}
                 className="flex w-full items-center justify-center rounded-xl bg-orange-600 px-5 py-3.5 text-sm font-black text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? 'Sending...' : 'Send reset instructions'}
+                {loading ? 'Please wait...' : step === 'email' ? 'Send reset OTP' : 'Verify OTP'}
               </button>
+
+              {step === 'otp' && (
+                <button
+                  type="button"
+                  onClick={handleEmailSubmit}
+                  disabled={loading}
+                  className="w-full rounded-xl border border-gray-200 px-5 py-3.5 text-sm font-black text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Resend OTP
+                </button>
+              )}
             </form>
 
             <Link to="/login" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-orange-600 hover:text-orange-700">

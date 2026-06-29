@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { cn, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
+import { cn, getCategoryLabel, getCategoryValue, useCategories, useCategoryOptions } from '../utils';
 import api from '../services/api';
 import { useLocation } from '../context/LocationContext';
 import {
@@ -52,16 +52,17 @@ const getCategoryIconElement = (label) => {
   return <Grid3X3 {...iconProps} />;
 };
 
-const CategoryPill = ({ label, active, onClick }) => {
+const CategoryPill = ({ label, image, active, onClick, children = [] }) => {
   return (
   <button
     onClick={onClick}
     className={`home-cat-pill ${active ? 'home-cat-pill--active' : ''}`}
   >
     <span className="home-cat-pill__icon">
-      {getCategoryIconElement(label)}
+      {image ? <img src={image} alt="" /> : getCategoryIconElement(label)}
     </span>
     <span className="home-cat-pill__label">{label}</span>
+    {children.length > 0 && <span className="home-cat-pill__count">{children.length} sub</span>}
   </button>
   );
 };
@@ -82,16 +83,36 @@ const Home = () => {
 
   const { userLocation, userAddress, loadingLocation, loadingAddress, getLocation, clearLocation } = useLocation();
   const { options: allCategories } = useCategoryOptions();
+  const { data: categoryTree = [] } = useCategories();
   const observerRef = useRef(null);
   const sentinelRef = useRef(null);
 
   const filters = useMemo(() => ({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
+    subCategory: searchParams.get('subCategory') || '',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
     sortBy: searchParams.get('sortBy') || 'latest',
   }), [searchParams]);
+
+  const visibleCategories = useMemo(() => (
+    categoryTree.length ? categoryTree : allCategories
+  ), [allCategories, categoryTree]);
+
+  const categorySlides = useMemo(() => (
+    (categoryTree || []).flatMap((category) => {
+      if (category.meta?.showOnHome === false) return [];
+      const slides = Array.isArray(category.meta?.carouselImages) ? category.meta.carouselImages : [];
+      return slides
+        .filter((slide) => slide?.image)
+        .map((slide, index) => ({
+          ...slide,
+          category,
+          id: `${category._id || category.slug || category.name}-${index}`,
+        }));
+    })
+  ), [categoryTree]);
 
   /* ── Fetch ── */
   const fetchProducts = useCallback(async (currentPage = 1, append = false) => {
@@ -102,6 +123,7 @@ const Home = () => {
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
+      if (filters.subCategory) params.append('subCategory', filters.subCategory);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
@@ -159,6 +181,14 @@ const Home = () => {
   const updateFilter = (key, value) => {
     const params = new URLSearchParams(searchParams);
     value ? params.set(key, value) : params.delete(key);
+    if (key === 'category') params.delete('subCategory');
+    setSearchParams(params);
+  };
+
+  const selectSubCategory = (categoryValue, subCategoryValue) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('category', categoryValue);
+    params.set('subCategory', subCategoryValue);
     setSearchParams(params);
   };
 
@@ -242,20 +272,68 @@ const Home = () => {
                 active={!filters.category}
                 onClick={() => updateFilter('category', '')}
               />
-              {allCategories.map(cat => {
+              {visibleCategories.map(cat => {
                 const slug = getCategoryValue(cat);
                 const name = getCategoryLabel(cat);
                 return (
-                  <CategoryPill
-                    key={cat._id || slug}
-                    label={name}
-                    active={filters.category === slug}
-                    onClick={() => updateFilter('category', filters.category === slug ? '' : slug)}
-                  />
+                  <div key={cat._id || slug} className="home-cat-group">
+                    <CategoryPill
+                      label={name}
+                      image={cat.image}
+                      active={filters.category === slug && !filters.subCategory}
+                      children={cat.children || []}
+                      onClick={() => updateFilter('category', filters.category === slug ? '' : slug)}
+                    />
+                    {Array.isArray(cat.children) && cat.children.length > 0 && (
+                      <div className="home-subcats">
+                        {cat.children.slice(0, 5).map((child) => {
+                          const childValue = getCategoryValue(child);
+                          return (
+                            <button
+                              key={child._id || childValue}
+                              type="button"
+                              className={`home-subcat ${filters.subCategory === childValue ? 'home-subcat--active' : ''}`}
+                              onClick={() => selectSubCategory(slug, childValue)}
+                            >
+                              {getCategoryLabel(child)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
           </div>
+
+          {categorySlides.length > 0 && (
+            <div className="home-category-carousel">
+              <div className="home-category-carousel__scroll">
+                {categorySlides.map((slide) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    className="home-category-slide"
+                    onClick={() => {
+                      if (slide.link) {
+                        setSearchParams(new URLSearchParams(slide.link.startsWith('?') ? slide.link.slice(1) : slide.link.replace(/^\//, '')));
+                        return;
+                      }
+                      updateFilter('category', getCategoryValue(slide.category));
+                    }}
+                  >
+                    <img src={slide.image} alt="" />
+                    <span className="home-category-slide__shade" />
+                    <span className="home-category-slide__copy">
+                      <strong>{slide.title || slide.category?.meta?.carouselTitle || slide.category?.name}</strong>
+                      <small>{slide.subtitle || slide.category?.meta?.carouselSubtitle || slide.category?.description}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Results Header ── */}
           <div className="home-filters" aria-label="Listing filters">
@@ -292,8 +370,8 @@ const Home = () => {
                 </>
               )}
             </div>
-            {filters.category && (
-              <span className="home-results-cat">{filters.category}</span>
+            {(filters.category || filters.subCategory) && (
+              <span className="home-results-cat">{filters.subCategory || filters.category}</span>
             )}
           </div>
 
@@ -309,7 +387,7 @@ const Home = () => {
               </div>
               <p className="home-empty__title">No listings found</p>
               <p className="home-empty__sub">Try a different search or category</p>
-              {(filters.search || filters.category) && (
+              {(filters.search || filters.category || filters.subCategory) && (
                 <button
                   onClick={() => setSearchParams({})}
                   className="home-empty__clear-btn"
@@ -566,9 +644,18 @@ const homeStyles = `
   }
   .home-cats__scroll::-webkit-scrollbar { display: none; }
 
+  .home-cat-group {
+    display: flex;
+    width: 112px;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 7px;
+    scroll-snap-align: start;
+  }
+
   .home-cat-pill {
     display: flex;
-    width: 96px;
+    width: 100%;
     min-height: 92px;
     flex-shrink: 0;
     flex-direction: column;
@@ -582,7 +669,6 @@ const homeStyles = `
     color: var(--h-text-2);
     cursor: pointer;
     transition: background var(--h-t), color var(--h-t), border-color var(--h-t), box-shadow var(--h-t), transform var(--h-t);
-    scroll-snap-align: start;
     touch-action: pan-x;
   }
   .home-cat-pill:hover {
@@ -611,7 +697,14 @@ const homeStyles = `
     border-radius: 16px;
     background: #faf9f7;
     color: var(--h-accent);
+    overflow: hidden;
     transition: background var(--h-t), color var(--h-t), transform var(--h-t);
+  }
+  .home-cat-pill__icon img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
   }
   .home-cat-pill:hover .home-cat-pill__icon,
   .home-cat-pill--active .home-cat-pill__icon {
@@ -631,6 +724,108 @@ const homeStyles = `
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+  .home-cat-pill__count {
+    margin-top: -3px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    color: #64748b;
+    font-size: 9px;
+    font-weight: 800;
+  }
+  .home-subcats {
+    display: flex;
+    max-width: 112px;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .home-subcats::-webkit-scrollbar { display: none; }
+  .home-subcat {
+    max-width: 94px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid var(--h-border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--h-text-2);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .home-subcat--active {
+    background: var(--h-accent);
+    border-color: var(--h-accent);
+    color: #fff;
+  }
+  .home-category-carousel { overflow: hidden; }
+  .home-category-carousel__scroll {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .home-category-carousel__scroll::-webkit-scrollbar { display: none; }
+  .home-category-slide {
+    position: relative;
+    display: block;
+    width: min(78vw, 420px);
+    aspect-ratio: 2.4 / 1;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 14px;
+    background: #111827;
+    box-shadow: var(--h-shadow);
+    cursor: pointer;
+    padding: 0;
+    scroll-snap-align: start;
+  }
+  .home-category-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .home-category-slide__shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(15,14,12,0.76), rgba(15,14,12,0.18) 70%, rgba(15,14,12,0));
+  }
+  .home-category-slide__copy {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #fff;
+    text-align: left;
+  }
+  .home-category-slide__copy strong,
+  .home-category-slide__copy small {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+  }
+  .home-category-slide__copy strong {
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.1;
+    -webkit-line-clamp: 1;
+  }
+  .home-category-slide__copy small {
+    color: rgba(255,255,255,0.86);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+  }
   @media (max-width: 640px) {
     .home-cats {
       margin-left: -16px;
@@ -647,11 +842,12 @@ const homeStyles = `
       scroll-padding-right: 16px;
     }
     .home-cat-pill {
-      width: 84px;
       min-height: 86px;
       border-radius: 13px;
       padding: 9px 7px;
     }
+    .home-cat-group { width: 92px; }
+    .home-subcats { max-width: 92px; }
     .home-cat-pill__icon {
       width: 42px;
       height: 42px;
@@ -660,6 +856,11 @@ const homeStyles = `
     .home-cat-pill__label {
       font-size: 10.5px;
     }
+    .home-category-slide {
+      width: 84vw;
+      aspect-ratio: 2 / 1;
+    }
+    .home-category-slide__copy strong { font-size: 15px; }
   }
 
   /* ── Results Header ── */

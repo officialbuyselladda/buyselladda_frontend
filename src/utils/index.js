@@ -28,27 +28,37 @@ export const CATEGORIES = [
   'Others'
 ];
 
-export const flattenCategories = (categories = []) => {
+export const flattenCategories = (categories = [], depth = 0, parent = null) => {
   const result = [];
-  const walk = (items) => {
+  const walk = (items, level, parentItem) => {
     (items || []).forEach((item) => {
       if (!item) return;
-      result.push(item);
-      if (item.children?.length) walk(item.children);
+      const normalized = {
+        ...item,
+        __depth: level,
+        __parentName: parentItem?.name || null,
+        __parentSlug: parentItem?.slug || null,
+      };
+      result.push(normalized);
+      if (item.children?.length) walk(item.children, level + 1, item);
     });
   };
-  walk(categories);
+  walk(categories, depth, parent);
   return result;
 };
 
 export const getCategoryValue = (category) => category?.slug || category?.name || category;
 export const getCategoryLabel = (category) => category?.name || category;
+export const getCategoryOptionLabel = (category) => {
+  const label = getCategoryLabel(category);
+  return category?.__depth > 0 && category?.__parentName ? `${category.__parentName} / ${label}` : label;
+};
 
 export const useCategoryOptions = () => {
   const query = useCategories();
   const dynamicCategories = flattenCategories(query.data || []);
   const options = dynamicCategories.length ? dynamicCategories : CATEGORIES;
-  return { ...query, options };
+  return { ...query, tree: query.data || [], options };
 };
 
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, Bell, User, ChevronDown, LogOut, Settings, Sun, Moon, X } from 'lucide-react';
+import { Search, Bell, User, ChevronDown, LogOut, Settings, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 
@@ -10,7 +10,6 @@ const AdminNavbar = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
 
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -24,18 +23,6 @@ const AdminNavbar = () => {
 api.get('/notifications/admin/list?limit=10').then(res => res.data.data?.notifications || []),
     staleTime: 5 * 60 * 1000,
   });
-
-  // Theme
-  useEffect(() => {
-    const saved = localStorage.getItem('adminTheme') === 'dark';
-    setIsDark(saved);
-    document.documentElement.classList.toggle('dark', saved);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('adminTheme', isDark ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -363,18 +350,6 @@ api.get('/notifications/admin/list?limit=10').then(res => res.data.data?.notific
 
           {/* Right */}
           <div className="navbar-right">
-
-            {/* Theme toggle */}
-            <button
-              className="icon-btn"
-              onClick={() => setIsDark(!isDark)}
-              title={isDark ? 'Light mode' : 'Dark mode'}
-            >
-              {isDark
-                ? <Sun size={18} style={{ color: '#f59e0b' }} />
-                : <Moon size={18} />
-              }
-            </button>
 
             {/* Notifications */}
             <div style={{ position: 'relative' }} ref={notifRef}>

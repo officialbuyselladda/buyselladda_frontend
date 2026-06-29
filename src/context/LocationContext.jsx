@@ -21,7 +21,7 @@ export const LocationProvider = ({ children }) => {
   const [loadingAddress, setLoadingAddress] = useState(false);
 
   const fetchAddress = useCallback(async (lat, lng) => {
-    if (!lat || !lng) return;
+    if (!lat || !lng) return null;
     setLoadingAddress(true);
     try {
       const address = await reverseGeocode(lat, lng);
@@ -29,46 +29,61 @@ export const LocationProvider = ({ children }) => {
       const resolvedAddress = address || fallbackAddress;
       setUserAddress(resolvedAddress);
       setLocationCache({ lat, lng, address: resolvedAddress, provider: 'openstreetmap' });
+      return resolvedAddress;
     } catch (error) {
       console.error('Address fetch failed:', error);
+      return null;
     } finally {
       setLoadingAddress(false);
     }
   }, []);
 
   const getLocation = ({ refresh = false } = {}) => {
-    const cachedLocation = getLocationFromCache();
-    if (cachedLocation && !refresh) {
-      setUserLocation(cachedLocation);
-      if (cachedLocation.address) {
-        setUserAddress(cachedLocation.address);
-      } else {
-        fetchAddress(cachedLocation.lat, cachedLocation.lng);
+    return new Promise((resolve, reject) => {
+      const cachedLocation = getLocationFromCache();
+      if (cachedLocation && !refresh) {
+        setUserLocation(cachedLocation);
+        if (cachedLocation.address) {
+          setUserAddress(cachedLocation.address);
+          resolve({ location: cachedLocation, address: cachedLocation.address });
+        } else {
+          fetchAddress(cachedLocation.lat, cachedLocation.lng)
+            .then((address) => resolve({ location: cachedLocation, address }))
+            .catch((error) => reject(error));
+        }
+        return;
       }
-      return;
-    }
 
-    if (!navigator.geolocation) {
-      alert('Geolocation not supported.');
-      return;
-    }
-    
-    setLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const location = { lat: position.coords.latitude, lng: position.coords.longitude };
-        setUserLocation(location);
-        setUserAddress(null);
-        setLocationCache({ ...location, source: 'current' });
-        setLoadingLocation(false);
-        fetchAddress(location.lat, location.lng);
-      },
-      (error) => {
-        console.error('Location error:', error);
-        setLoadingLocation(false);
-      },
-      { enableHighAccuracy: true, maximumAge: 24 * 60 * 60 * 1000 }
-    );
+      if (!navigator.geolocation) {
+        alert('Geolocation not supported.');
+        reject(new Error('Geolocation not supported')); 
+        return;
+      }
+      
+      setLoadingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const location = { lat: position.coords.latitude, lng: position.coords.longitude };
+          setUserLocation(location);
+          setUserAddress(null);
+          setLocationCache({ ...location, source: 'current' });
+          try {
+            const address = await fetchAddress(location.lat, location.lng);
+            resolve({ location, address });
+          } catch (error) {
+            resolve({ location, address: null });
+          } finally {
+            setLoadingLocation(false);
+          }
+        },
+        (error) => {
+          console.error('Location error:', error);
+          setLoadingLocation(false);
+          reject(error);
+        },
+        { enableHighAccuracy: true, maximumAge: 24 * 60 * 60 * 1000 }
+      );
+    });
   };
 
   const setManualLocation = useCallback(async (query) => {

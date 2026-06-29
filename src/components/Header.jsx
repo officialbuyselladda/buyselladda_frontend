@@ -5,12 +5,12 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
 import api from '../services/api';
-import { cn, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
+import { getCategoryLabel, getCategoryOptionLabel, getCategoryValue, useCategoryOptions } from '../utils';
 import { searchLocations } from '../utils/geocode';
 import { getImageUrl } from '../utils/image';
 import {
   Search, Menu, ChevronDown, MapPin, LogOut, Shield, LocateFixed,
-  MessageCircle, Plus, X, User, Bell, ChevronRight, Home, Package, Moon, Sun
+  MessageCircle, Heart, Plus, X, User, Bell, ChevronRight, Home, Package
 } from 'lucide-react';
 
 /* ── Utility: close on outside click ── */
@@ -47,10 +47,10 @@ const Header = () => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [settingLocation, setSettingLocation] = useState(false);
   const [searchMenuOpen, setSearchMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('siteTheme') === 'dark');
   const [productSuggestions, setProductSuggestions] = useState([]);
   const [loadingSearchSuggestions, setLoadingSearchSuggestions] = useState(false);
-  const { options: categoryOptions } = useCategoryOptions();
+  const { options: categoryOptions, tree: categoryTree = [] } = useCategoryOptions();
+  const rootCategoryOptions = categoryTree.length ? categoryTree : categoryOptions;
 
   const { data: unreadNotificationCount = 0 } = useQuery({
     queryKey: ['notificationUnreadCount', user?._id],
@@ -70,6 +70,16 @@ const Header = () => {
     },
     enabled: Boolean(user?._id && user?.role === 'user'),
     refetchInterval: 15000,
+  });
+
+  const { data: favoritesCount = 0 } = useQuery({
+    queryKey: ['headerFavoritesCount', user?._id],
+    queryFn: async () => {
+      const res = await api.get('/favorites?page=1&limit=1');
+      return res.data?.data?.total || 0;
+    },
+    enabled: Boolean(user?._id && user?.role === 'user'),
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
@@ -95,10 +105,6 @@ const Header = () => {
     if (!mobileOpen) setSearchMenuOpen(false);
   });
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('site-dark', isDark);
-    localStorage.setItem('siteTheme', isDark ? 'dark' : 'light');
-  }, [isDark]);
 
   const isAdminPath = location.pathname.startsWith('/admin') && !location.pathname.endsWith('/admin/login');
 
@@ -305,7 +311,7 @@ const Header = () => {
                   <option value="">All Categories</option>
                   {categoryOptions.map((cat) => (
                     <option key={cat._id || getCategoryValue(cat)} value={getCategoryValue(cat)}>
-                      {getCategoryLabel(cat)}
+                      {getCategoryOptionLabel(cat)}
                     </option>
                   ))}
                 </select>
@@ -351,7 +357,7 @@ const Header = () => {
                           className="hdr-search-category"
                         >
                           <Package size={15} />
-                          <span>{getCategoryLabel(cat)}</span>
+                          <span>{getCategoryOptionLabel(cat)}</span>
                           <ChevronRight size={14} />
                         </button>
                       ))}
@@ -392,11 +398,7 @@ const Header = () => {
 
             {/* Right Actions */}
             <div className="hdr-actions">
-              <button type="button" onClick={() => setIsDark((value) => !value)} className="hdr-icon-btn" title={isDark ? 'Use light theme' : 'Use dark theme'}>
-                {isDark ? <Sun size={19} /> : <Moon size={19} />}
-              </button>
-
-              {/* Location */}
+                {/* Location */}
               <div className="hdr-location-wrap" ref={locationMenuRef}>
                 <button
                   type="button"
@@ -485,23 +487,41 @@ const Header = () => {
                 </Link>
               )}
 
-              {/* Notifications + Chat */}
-              {user?.role === 'user' && (
-                <>
+              {/* Favorites + Chat + Notifications */}
+              <>
+                <Link
+                  to={user?.role === 'user' ? '/favorites' : '/login'}
+                  className="hdr-icon-btn"
+                  title="Favorites"
+                  onClick={(e) => { if (!user?.role) { e.preventDefault(); navigate('/login'); } }}
+                >
+                  <Heart size={19} />
+                  {favoritesCount > 0 && (
+                    <span className="hdr-badge">{favoritesCount > 9 ? '9+' : favoritesCount}</span>
+                  )}
+                </Link>
+
+                <Link
+                  to={user?.role === 'user' ? '/chats' : '/login'}
+                  className="hdr-icon-btn"
+                  title="Messages"
+                  onClick={(e) => { if (!user?.role) { e.preventDefault(); navigate('/login'); } }}
+                >
+                  <MessageCircle size={19} />
+                  {unreadMessageCount > 0 && (
+                    <span className="hdr-badge">{unreadMessageCount > 9 ? '9+' : unreadMessageCount}</span>
+                  )}
+                </Link>
+
+                {user?.role === 'user' && (
                   <Link to="/notifications" className="hdr-icon-btn" title="Notifications">
                     <Bell size={19} />
                     {unreadNotificationCount > 0 && (
                       <span className="hdr-badge">{unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}</span>
                     )}
                   </Link>
-                  <Link to="/chats" className="hdr-icon-btn" title="Messages">
-                    <MessageCircle size={19} />
-                    {unreadMessageCount > 0 && (
-                      <span className="hdr-badge">{unreadMessageCount > 9 ? '9+' : unreadMessageCount}</span>
-                    )}
-                  </Link>
-                </>
-              )}
+                )}
+              </>
 
               {/* Admin Panel */}
               {user?.role === 'admin' && (
@@ -553,8 +573,11 @@ const Header = () => {
                 </div>
               ) : (
                 <div className="hdr-auth">
-                  <Link to="/login" className="hdr-auth__login">Login</Link>
-                  <Link to="/register" className="hdr-auth__signup">Sign Up</Link>
+                  <Link to="/login" className="hdr-auth__icon" title="Login / Sign Up">
+                    <div className="hdr-auth__icon-circle">
+                      <User size={16} />
+                    </div>
+                  </Link>
                 </div>
               )}
 
@@ -576,14 +599,41 @@ const Header = () => {
             <nav className="hdr-subnav__links">
               {[
                 { label: 'All Ads', to: '/' },
-                ...categoryOptions.slice(0, 6).map((cat) => ({
+                ...rootCategoryOptions.slice(0, 6).map((cat) => ({
                   label: getCategoryLabel(cat),
                   to: `/?category=${encodeURIComponent(getCategoryValue(cat))}`,
+                  children: cat.children || [],
+                  value: getCategoryValue(cat),
                 })),
               ].map((item) => {
                 const isActive = item.to === '/'
                   ? !location.search
                   : location.search.includes(item.to.split('?')[1] || '__none__');
+                if (item.children?.length) {
+                  return (
+                    <div key={item.label} className="hdr-cat-menu">
+                      <Link
+                        to={item.to}
+                        className={`hdr-subnav__link ${isActive ? 'hdr-subnav__link--active' : ''}`}
+                      >
+                        {item.label}
+                        <ChevronDown size={11} />
+                      </Link>
+                      <div className="hdr-cat-menu__panel">
+                        {item.children.slice(0, 8).map((child) => (
+                          <Link
+                            key={child._id || getCategoryValue(child)}
+                            to={`/?category=${encodeURIComponent(item.value)}&subCategory=${encodeURIComponent(getCategoryValue(child))}`}
+                            className="hdr-cat-menu__item"
+                          >
+                            {getCategoryLabel(child)}
+                            <ChevronRight size={12} />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <Link
                     key={item.label}
@@ -596,21 +646,31 @@ const Header = () => {
               })}
 
               {/* More dropdown */}
-              {categoryOptions.length > 6 && (
+              {rootCategoryOptions.length > 6 && (
                 <div className="hdr-more">
                   <button className="hdr-more__trigger">
                     More <ChevronDown size={12} />
                   </button>
                   <div className="hdr-more__menu">
-                    {categoryOptions.slice(6).map((cat) => (
-                      <Link
-                        key={cat._id || getCategoryValue(cat)}
-                        to={`/?category=${encodeURIComponent(getCategoryValue(cat))}`}
-                        className="hdr-more__item"
-                      >
-                        {getCategoryLabel(cat)}
-                        <ChevronRight size={13} />
-                      </Link>
+                    {rootCategoryOptions.slice(6).map((cat) => (
+                      <div key={cat._id || getCategoryValue(cat)} className="hdr-more__group">
+                        <Link
+                          to={`/?category=${encodeURIComponent(getCategoryValue(cat))}`}
+                          className="hdr-more__item"
+                        >
+                          {getCategoryLabel(cat)}
+                          <ChevronRight size={13} />
+                        </Link>
+                        {(cat.children || []).slice(0, 6).map((child) => (
+                          <Link
+                            key={child._id || getCategoryValue(child)}
+                            to={`/?category=${encodeURIComponent(getCategoryValue(cat))}&subCategory=${encodeURIComponent(getCategoryValue(child))}`}
+                            className="hdr-more__item hdr-more__item--child"
+                          >
+                            {getCategoryLabel(child)}
+                          </Link>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -663,7 +723,7 @@ const Header = () => {
                           className="hdr-search-category"
                         >
                           <Package size={15} />
-                          <span>{getCategoryLabel(cat)}</span>
+                          <span>{getCategoryOptionLabel(cat)}</span>
                           <ChevronRight size={14} />
                         </button>
                       ))}
@@ -765,7 +825,7 @@ const Header = () => {
               <div className="hdr-drawer__grid">
                 {[
                   { label: 'All Ads', to: '/' },
-                  ...categoryOptions.slice(0, 5).map((cat) => ({
+                  ...rootCategoryOptions.slice(0, 5).map((cat) => ({
                     label: getCategoryLabel(cat),
                     to: `/?category=${encodeURIComponent(getCategoryValue(cat))}`,
                   })),
@@ -794,16 +854,28 @@ const Header = () => {
               </button>
               {mobileCatOpen && (
                 <div className="hdr-drawer__cat-list">
-                  {categoryOptions.map((cat) => (
-                    <Link
-                      key={cat._id || getCategoryValue(cat)}
-                      to={`/?category=${encodeURIComponent(getCategoryValue(cat))}`}
-                      onClick={() => setMobileOpen(false)}
-                      className="hdr-drawer__cat-item"
-                    >
-                      {getCategoryLabel(cat)}
-                      <ChevronRight size={13} />
-                    </Link>
+                  {rootCategoryOptions.map((cat) => (
+                    <div key={cat._id || getCategoryValue(cat)} className="hdr-drawer__cat-group">
+                      <Link
+                        to={`/?category=${encodeURIComponent(getCategoryValue(cat))}`}
+                        onClick={() => setMobileOpen(false)}
+                        className="hdr-drawer__cat-item"
+                      >
+                        {getCategoryLabel(cat)}
+                        <ChevronRight size={13} />
+                      </Link>
+                      {(cat.children || []).map((child) => (
+                        <Link
+                          key={child._id || getCategoryValue(child)}
+                          to={`/?category=${encodeURIComponent(getCategoryValue(cat))}&subCategory=${encodeURIComponent(getCategoryValue(child))}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="hdr-drawer__cat-item hdr-drawer__cat-item--child"
+                        >
+                          {getCategoryLabel(child)}
+                          <ChevronRight size={13} />
+                        </Link>
+                      ))}
+                    </div>
                   ))}
                 </div>
               )}
@@ -1618,6 +1690,29 @@ const headerStyles = `
       display: none;
     }
   }
+  .hdr-auth__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hdr-text-2);
+    text-decoration: none;
+  }
+  .hdr-auth__icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid #f1d2b6;
+    background: #ffffff;
+    transition: background var(--hdr-t), transform var(--hdr-t), border-color var(--hdr-t);
+  }
+  .hdr-auth__icon:hover .hdr-auth__icon-circle {
+    background: #fffbf6;
+    border-color: #fddcc8;
+    transform: translateY(-1px);
+  }
   .hdr-auth__login {
     font-size: 12.5px;
     font-weight: 600;
@@ -1680,6 +1775,9 @@ const headerStyles = `
     overflow: hidden;
   }
   .hdr-subnav__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: 5px 10px;
     font-size: 12.5px;
     font-weight: 600;
@@ -1707,6 +1805,42 @@ const headerStyles = `
   .hdr-subnav__logout:hover { color: #ef4444; }
 
   /* More dropdown */
+  .hdr-cat-menu { position: relative; }
+  .hdr-cat-menu__panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 190px;
+    background: var(--hdr-bg);
+    border: 1px solid var(--hdr-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+    padding: 6px;
+    z-index: 210;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity var(--hdr-t), visibility var(--hdr-t), transform var(--hdr-t);
+  }
+  .hdr-cat-menu:hover .hdr-cat-menu__panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .hdr-cat-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--hdr-text-2);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background var(--hdr-t), color var(--hdr-t);
+  }
+  .hdr-cat-menu__item:hover { background: var(--hdr-accent-light); color: var(--hdr-accent); }
+
   .hdr-more { position: relative; }
   .hdr-more__trigger {
     display: flex;
@@ -1758,6 +1892,17 @@ const headerStyles = `
     transition: background var(--hdr-t), color var(--hdr-t);
   }
   .hdr-more__item:hover { background: var(--hdr-accent-light); color: var(--hdr-accent); }
+  .hdr-more__group + .hdr-more__group {
+    border-top: 1px solid var(--hdr-border);
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+  .hdr-more__item--child {
+    justify-content: flex-start;
+    padding-left: 22px;
+    color: var(--hdr-text-3);
+    font-size: 12.5px;
+  }
 
   /* ── Mobile Drawer ── */
   .hdr-drawer-overlay {
@@ -2032,6 +2177,16 @@ const headerStyles = `
     text-decoration: none;
     border-bottom: 1px solid var(--hdr-border);
     transition: background var(--hdr-t), color var(--hdr-t);
+  }
+  .hdr-drawer__cat-group + .hdr-drawer__cat-group {
+    border-top: 1px solid var(--hdr-border);
+    margin-top: 3px;
+    padding-top: 3px;
+  }
+  .hdr-drawer__cat-item--child {
+    padding-left: 26px;
+    color: var(--hdr-text-3);
+    font-size: 12.5px;
   }
   .hdr-drawer__cat-item:last-child { border-bottom: none; }
   .hdr-drawer__cat-item:hover { background: var(--hdr-accent-light); color: var(--hdr-accent); }

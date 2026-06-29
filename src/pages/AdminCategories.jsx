@@ -2,16 +2,29 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Edit, Folder, Plus, Search, Trash2, X } from 'lucide-react';
+import { Edit, Folder, Image as ImageIcon, Loader2, Plus, Search, Trash2, Upload, X } from 'lucide-react';
 
 const emptyForm = { name: '', description: '', parent: '', icon: '📦', image: '', isActive: true, sortOrder: 0 };
+
+const emptySlide = { image: '', title: '', subtitle: '', link: '' };
+const categoryFormDefaults = {
+  name: '',
+  description: '',
+  parent: '',
+  icon: '📦',
+  image: '',
+  isActive: true,
+  sortOrder: 0,
+  meta: { showOnHome: true, carouselTitle: '', carouselSubtitle: '', carouselImages: [] },
+};
 
 const AdminCategories = () => {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ search: '', status: 'all', page: 1, limit: 10 });
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(categoryFormDefaults);
   const [editing, setEditing] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [uploadingTarget, setUploadingTarget] = useState(null);
 
   const { data = { categories: [], total: 0, page: 1, pages: 1 }, isLoading } = useQuery({
     queryKey: ['adminCategories', filters],
@@ -38,7 +51,7 @@ const AdminCategories = () => {
   const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
-    setForm(emptyForm);
+    setForm(categoryFormDefaults);
   };
 
   const saveMutation = useMutation({
@@ -51,6 +64,20 @@ const AdminCategories = () => {
         image: form.image.trim(),
         isActive: Boolean(form.isActive),
         sortOrder: Number(form.sortOrder) || 0,
+        meta: {
+          ...(form.meta || {}),
+          showOnHome: form.meta?.showOnHome !== false,
+          carouselTitle: (form.meta?.carouselTitle || '').trim(),
+          carouselSubtitle: (form.meta?.carouselSubtitle || '').trim(),
+          carouselImages: (form.meta?.carouselImages || [])
+            .filter((slide) => slide.image?.trim())
+            .map((slide) => ({
+              image: slide.image.trim(),
+              title: (slide.title || '').trim(),
+              subtitle: (slide.subtitle || '').trim(),
+              link: (slide.link || '').trim(),
+            })),
+        },
       };
       if (editing) return api.patch(`/admin/categories/${editing._id}`, payload);
       return api.post('/admin/categories', payload);
@@ -96,8 +123,59 @@ const AdminCategories = () => {
       image: category.image || '',
       isActive: category.isActive !== false,
       sortOrder: category.sortOrder || 0,
+      meta: {
+        showOnHome: category.meta?.showOnHome !== false,
+        carouselTitle: category.meta?.carouselTitle || '',
+        carouselSubtitle: category.meta?.carouselSubtitle || '',
+        carouselImages: Array.isArray(category.meta?.carouselImages) ? category.meta.carouselImages : [],
+      },
     });
     setModalOpen(true);
+  };
+
+  const updateMeta = (patch) => setForm((prev) => ({ ...prev, meta: { ...(prev.meta || {}), ...patch } }));
+
+  const updateSlide = (index, patch) => {
+    setForm((prev) => {
+      const slides = [...(prev.meta?.carouselImages || [])];
+      slides[index] = { ...slides[index], ...patch };
+      return { ...prev, meta: { ...(prev.meta || {}), carouselImages: slides } };
+    });
+  };
+
+  const addSlide = () => updateMeta({ carouselImages: [...(form.meta?.carouselImages || []), { ...emptySlide }] });
+
+  const removeSlide = (index) => {
+    updateMeta({ carouselImages: (form.meta?.carouselImages || []).filter((_, slideIndex) => slideIndex !== index) });
+  };
+
+  const uploadImage = async (file, onUrl, target) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB');
+      return;
+    }
+
+    const imageFormData = new FormData();
+    imageFormData.append('image', file);
+    setUploadingTarget(target);
+
+    try {
+      const { data } = await api.post('/upload', imageFormData);
+      const uploaded = data.data || {};
+      const url = uploaded.url || uploaded.originalUrl || uploaded.secure_url;
+      if (!data.success || !url) throw new Error('Upload failed');
+      onUrl(url);
+      toast.success('Image uploaded');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploadingTarget(null);
+    }
   };
 
   const submitForm = (event) => {
@@ -245,7 +323,7 @@ const AdminCategories = () => {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <form onSubmit={submitForm} className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+          <form onSubmit={submitForm} className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">{editing ? 'Edit Category' : 'New Category'}</h2>
               <button type="button" onClick={closeModal} className="rounded-lg p-2 hover:bg-gray-100">
@@ -276,15 +354,36 @@ const AdminCategories = () => {
                     maxLength={10}
                   />
                 </label>
-                <label className="block">
-                  <span className="mb-1 block text-sm font-semibold text-gray-700">Icon Image URL</span>
-                  <input
-                    value={form.image}
-                    onChange={(event) => setForm({ ...form, image: event.target.value })}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="https://example.com/category-icon.png"
-                  />
-                </label>
+                <div className="block">
+                  <span className="mb-1 block text-sm font-semibold text-gray-700">Category Image</span>
+                  <div className="flex gap-3">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                      {form.image ? <img src={form.image} alt="" className="h-full w-full object-cover" /> : <ImageIcon size={22} className="text-gray-300" />}
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <input
+                        value={form.image}
+                        onChange={(event) => setForm({ ...form, image: event.target.value })}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                        placeholder="https://example.com/category-icon.png"
+                      />
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                        {uploadingTarget === 'category-image' ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                        Upload image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={Boolean(uploadingTarget)}
+                          onChange={(event) => {
+                            uploadImage(event.target.files?.[0], (url) => setForm((prev) => ({ ...prev, image: url })), 'category-image');
+                            event.target.value = '';
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Parent Category</span>
                   <select
@@ -332,6 +431,104 @@ const AdminCategories = () => {
                   />
                   <span className="font-semibold text-gray-700">Active</span>
                 </label>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-bold text-gray-900">Home Carousel</h3>
+                    <p className="text-sm text-gray-500">Slides saved here show below categories on app and website.</p>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={form.meta?.showOnHome !== false}
+                      onChange={(event) => updateMeta({ showOnHome: event.target.checked })}
+                      className="h-4 w-4 rounded"
+                    />
+                    Show on home
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-semibold text-gray-700">Carousel Title</span>
+                    <input
+                      value={form.meta?.carouselTitle || ''}
+                      onChange={(event) => updateMeta({ carouselTitle: event.target.value })}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Best electronics deals"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-sm font-semibold text-gray-700">Carousel Subtitle</span>
+                    <input
+                      value={form.meta?.carouselSubtitle || ''}
+                      onChange={(event) => updateMeta({ carouselSubtitle: event.target.value })}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Mobiles, laptops and gadgets near you"
+                    />
+                  </label>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {(form.meta?.carouselImages || []).map((slide, index) => (
+                    <div key={index} className="rounded-xl border border-gray-200 bg-white p-3">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="font-semibold text-gray-900">Slide {index + 1}</p>
+                        <button type="button" onClick={() => removeSlide(index)} className="rounded-lg p-2 text-red-600 hover:bg-red-50">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-[112px,1fr]">
+                        <div className="h-28 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                          {slide.image ? <img src={slide.image} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-gray-300"><ImageIcon size={24} /></div>}
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <input
+                            value={slide.image || ''}
+                            onChange={(event) => updateSlide(index, { image: event.target.value })}
+                            className="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 sm:col-span-2"
+                            placeholder="Slide image URL"
+                          />
+                          <input
+                            value={slide.title || ''}
+                            onChange={(event) => updateSlide(index, { title: event.target.value })}
+                            className="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="Slide title"
+                          />
+                          <input
+                            value={slide.subtitle || ''}
+                            onChange={(event) => updateSlide(index, { subtitle: event.target.value })}
+                            className="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="Slide subtitle"
+                          />
+                          <input
+                            value={slide.link || ''}
+                            onChange={(event) => updateSlide(index, { link: event.target.value })}
+                            className="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="/?category=electronics"
+                          />
+                          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                            {uploadingTarget === `slide-${index}` ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                            Upload slide
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={Boolean(uploadingTarget)}
+                              onChange={(event) => {
+                                uploadImage(event.target.files?.[0], (url) => updateSlide(index, { image: url }), `slide-${index}`);
+                                event.target.value = '';
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button type="button" onClick={addSlide} className="inline-flex items-center gap-2 rounded-xl border border-dashed border-emerald-300 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50">
+                    <Plus size={16} />
+                    Add carousel slide
+                  </button>
+                </div>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">

@@ -14,6 +14,7 @@ const ProductCard = ({ product }) => {
     Date.parse(product.createdAt) > Date.now() - 24 * 60 * 60 * 1000;
 
   const imageUrl = getImageUrl(product?.images?.[0]);
+  const categoryLabel = product.subCategory || product.category || '';
 
   const requireLogin = () => {
     if (user) return false;
@@ -87,10 +88,10 @@ const ProductCard = ({ product }) => {
           {/* Price + Category */}
           <div className="pc-top">
             <span className="pc-price">₹{product.price?.toLocaleString('en-IN')}</span>
-            {product.category && (
+            {categoryLabel && (
               <span className="pc-cat">
                 <Tag size={10} />
-                {product.category}
+                {categoryLabel}
               </span>
             )}
           </div>

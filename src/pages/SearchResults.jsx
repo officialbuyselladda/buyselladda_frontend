@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { Search, Filter, ChevronLeft, X, MapPin, Tag, DollarSign } from 'lucide-react';
-import { cn, getCategoryLabel, getCategoryValue, useCategoryOptions } from '../utils';
+import { getCategoryOptionLabel, getCategoryValue, useCategoryOptions } from '../utils';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -126,7 +126,7 @@ const SearchResults = () => {
                 >
                   <option value="">All Categories</option>
                   {categoryOptions.map(cat => (
-                    <option key={cat._id || getCategoryValue(cat)} value={getCategoryValue(cat)}>{getCategoryLabel(cat)}</option>
+                    <option key={cat._id || getCategoryValue(cat)} value={getCategoryValue(cat)}>{getCategoryOptionLabel(cat)}</option>
                   ))}
                 </select>
               </div>

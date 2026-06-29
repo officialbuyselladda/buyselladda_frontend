@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, LocateFixed } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, LocateFixed } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useLocation } from '../context/LocationContext';
 import * as yup from 'yup';
 import ImageUploader from '../components/ImageUploader';
 import { CONDITIONS, CATEGORIES, getCategoryLabel, getCategoryValue, useCategories } from '../utils';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { reverseGeocode } from '../utils/geocode';
 
 const schema = yup.object({
   title: yup.string().min(3).max(100).required('Title is required'),
   description: yup.string().min(10).required('Description is required'),
-  price: yup.number().min(1).required('Price is required'),
+  price: yup.number().typeError('Enter a valid price').min(1).max(100000000).required('Price is required'),
   category: yup.string().required('Category is required'),
   subCategory: yup.string().nullable(),
   condition: yup.string().required('Condition is required'),
@@ -36,12 +36,17 @@ const CreateProduct = () => {
   const [locationCoords, setLocationCoords] = useState(null);
   const [locating, setLocating] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [loadingProduct, setLoadingProduct] = useState(Boolean(editProductId));
   const isEditMode = Boolean(editProductId);
 
   const { register, handleSubmit, formState: { errors }, setValue, reset, watch } = useForm({
     resolver: yupResolver(schema)
   });
+  const locationFieldValue = watch('location');
+  const { userLocation, userAddress, loadingLocation, loadingAddress, getLocation } = useLocation();
   const selectedCategory = watch('category');
   const selectedParent = categoryTree.find((category) => (
     getCategoryValue(category) === selectedCategory || getCategoryLabel(category) === selectedCategory
@@ -88,39 +93,31 @@ const CreateProduct = () => {
     loadProduct();
   }, [categoryOptionsKey, editProductId, navigate, reset]);
 
-  const useExactLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Location is not supported in this browser');
-      return;
-    }
-
+  const useExactLocation = async () => {
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        setLocationCoords(coords);
-
-        const address = await reverseGeocode(coords.lat, coords.lng);
-        setValue('location', address || `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`, {
+    try {
+      const result = await getLocation({ refresh: true });
+      if (result?.location) {
+        setLocationCoords({ lat: result.location.lat, lng: result.location.lng });
+      }
+      const fallbackAddress = result?.location
+        ? `${Number(result.location.lat).toFixed(6)}, ${Number(result.location.lng).toFixed(6)}`
+        : '';
+      const resolvedAddress = result?.address || fallbackAddress;
+      if (resolvedAddress) {
+        setValue('location', resolvedAddress, {
           shouldValidate: true,
           shouldDirty: true,
         });
-        toast.success('Exact location added');
-        setLocating(false);
-      },
-      (error) => {
-        const message =
-          error.code === error.PERMISSION_DENIED
-            ? 'Please allow location permission to use exact location'
-            : 'Could not get your exact location';
-        toast.error(message);
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+        toast.success('Current location added to your ad');
+      } else {
+        toast.error('Unable to detect location. Please enter it manually.');
+      }
+    } catch (error) {
+      toast.error('Could not get your current location');
+    } finally {
+      setLocating(false);
+    }
   };
 
 const onSubmit = async (data) => {
@@ -129,10 +126,32 @@ const onSubmit = async (data) => {
         toast.error('Please upload at least one product image');
         return;
       }
+      if (images.length > 8) {
+        toast.error('You can add up to 8 photos');
+        return;
+      }
+      if (uploadingImages) {
+        toast.error('Please wait while images finish uploading');
+        return;
+      }
       setLoading(true);
+      setSubmitError('');
+      setSubmitStatus(isEditMode ? 'Preparing updated ad...' : 'Checking posting eligibility...');
+      if (!isEditMode) {
+        const eligibilityResponse = await api.get('/products/posting-eligibility');
+        const eligibility = eligibilityResponse.data?.data || eligibilityResponse.data;
+        if (eligibility?.canPost === false) {
+          throw new Error(`Posting limit reached. Daily remaining: ${eligibility.daily?.remaining ?? 0}, monthly remaining: ${eligibility.monthly?.remaining ?? 0}.`);
+        }
+      }
+      setSubmitStatus(isEditMode ? 'Sending ad for review...' : 'Creating your ad...');
+      const category = categoryOptions.find((item) => getCategoryValue(item) === data.category || getCategoryLabel(item) === data.category);
+      const subCategory = subCategoryOptions.find((item) => getCategoryValue(item) === data.subCategory || getCategoryLabel(item) === data.subCategory);
       const productData = {
         ...data,
         price: Number(data.price),
+        category: category ? getCategoryValue(category) : data.category,
+        subCategory: subCategory ? getCategoryValue(subCategory) : data.subCategory,
         images,
         ...(locationCoords && {
           locationCoords: {
@@ -149,11 +168,24 @@ const onSubmit = async (data) => {
       toast.success(response?.message || (isEditMode ? 'Your ad has been updated and sent for review.' : 'Your ad has been posted and is pending admin approval.'));
       navigate('/my-products');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create product');
+      const message = error.response?.data?.message || error.message || 'Failed to create product';
+      setSubmitError(message);
+      setSubmitStatus('');
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (editProductId) return;
+    if (!locationFieldValue && userAddress) {
+      setValue('location', userAddress, { shouldValidate: true, shouldDirty: true });
+    }
+    if (!locationCoords && userLocation) {
+      setLocationCoords({ lat: userLocation.lat, lng: userLocation.lng });
+    }
+  }, [editProductId, locationFieldValue, locationCoords, setValue, userAddress, userLocation]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -187,7 +219,16 @@ const onSubmit = async (data) => {
               <ImageUploader 
                 onImagesChange={setImages} 
                 existingImages={initialImages}
+                onUploadingChange={setUploadingImages}
+                maxImages={8}
+                maxSizeMb={5}
               />
+              {uploadingImages && (
+                <p className="mt-2 text-sm text-amber-600">
+                  Please wait while images finish uploading before posting your ad.
+                </p>
+              )}
+              <p className="mt-2 text-xs text-gray-500">Add clear real photos. Max 8 photos, 5MB each.</p>
             </div>
 
             {/* Title */}
@@ -292,6 +333,15 @@ const onSubmit = async (data) => {
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Location <span className="text-red-500">*</span>
                 </label>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900 mb-4">
+                  <div className="font-semibold">Current location for this ad</div>
+                  <p className="mt-2 text-emerald-800">
+                    {userAddress || 'No current location detected yet. Use the button below to attach your area to the ad.'}
+                  </p>
+                  {userLocation && (
+                    <p className="mt-2 text-xs text-emerald-700">Lat: {userLocation.lat.toFixed(5)}, Lng: {userLocation.lng.toFixed(5)}</p>
+                  )}
+                </div>
                 <input
                   {...register('location')}
                   className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -300,11 +350,11 @@ const onSubmit = async (data) => {
                 <button
                   type="button"
                   onClick={useExactLocation}
-                  disabled={locating}
+                  disabled={locating || loadingLocation || loadingAddress}
                   className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800 disabled:opacity-60"
                 >
                   <LocateFixed size={16} />
-                  {locating ? 'Getting exact location...' : 'Use exact location'}
+                  {locating || loadingLocation || loadingAddress ? 'Detecting location...' : 'Use current location'}
                 </button>
                 {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>}
               </div>
@@ -312,7 +362,7 @@ const onSubmit = async (data) => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploadingImages}
               className="w-full flex justify-center items-center py-4 px-6 border border-transparent rounded-xl shadow-sm text-lg font-semibold text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all duration-300"
             >
               {loading ? (
@@ -324,6 +374,14 @@ const onSubmit = async (data) => {
                 isEditMode ? 'Update Ad' : 'Post Ad Now'
               )}
             </button>
+            {(submitStatus || submitError) && (
+              <div className={`rounded-2xl border p-4 text-sm font-semibold ${submitError ? 'border-red-100 bg-red-50 text-red-700' : 'border-emerald-100 bg-emerald-50 text-emerald-800'}`}>
+                <div className="flex items-center gap-2">
+                  {!submitError && <CheckCircle2 size={17} />}
+                  <span>{submitError || submitStatus}</span>
+                </div>
+              </div>
+            )}
           </form>
           </>
           )}

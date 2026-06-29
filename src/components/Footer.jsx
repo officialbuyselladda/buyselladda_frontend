@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Facebook, Twitter, Instagram, Youtube,
   Plus, Shield, Download, Map, Link as LinkIcon,
-  ChevronRight, Smartphone, ArrowUpRight, Star,
+  ChevronRight, ArrowUpRight, Star,
   Mail, Phone, MapPin,
 } from 'lucide-react';
 import { contentApi } from '../services/api';
@@ -70,10 +70,6 @@ const fallbackFooter = {
     { label: 'Instagram', url: '#' },
     { label: 'Youtube', url: '#' },
   ],
-  appButtons: [
-    { label: 'App Store', subLabel: 'Download on iOS', url: '#' },
-    { label: 'Google Play', subLabel: 'Get it on Android', url: '#' },
-  ],
   stats: [
     { value: '10M+', label: 'Happy Users' },
     { value: '50M+', label: 'Listings Posted' },
@@ -81,7 +77,7 @@ const fallbackFooter = {
     { value: '4.9★', label: 'App Rating' },
   ],
   contact: {
-    email: 'help@buysalladda.com',
+    email: 'support@buysalladda.com',
     phone: '+91 9911356613',
     address: 'New Delhi',
   },
@@ -275,6 +271,16 @@ const Footer = () => {
                   );
                 })}
               </div>
+
+              <div className="ftr-play-store-cta">
+                <SmartLink item={{ path: '/app-testing' }} className="ftr-play-store-btn">
+                  <Download size={15} />
+                  <div className="ftr-play-store-text">
+                    <span>Play Store</span>
+                    <span className="ftr-play-store-sub">App testing — Launch soon</span>
+                  </div>
+                </SmartLink>
+              </div>
             </div>
 
             {/* Nav columns */}
@@ -300,32 +306,6 @@ const Footer = () => {
               </div>
             ))}
 
-            {/* App download */}
-            {(footer.appButtons || []).length > 0 && (
-              <div className="ftr-col ftr-app-col">
-                <h3 className="ftr-col-title">
-                  <span className="ftr-col-title-bar" />
-                  Download App
-                </h3>
-                <p className="ftr-app-sub"><Smartphone size={12} /> Buy &amp; sell on the go</p>
-                <div className="ftr-app-btns">
-                  {footer.appButtons.map((item, index) => (
-                    <SmartLink key={`${item.label}-${item.url}`} item={item} className={`ftr-app-btn ${index === 0 ? 'ftr-app-ios' : 'ftr-app-android'}`}>
-                      <svg className="ftr-app-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        {index === 0
-                          ? <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                          : <path d="M3.18 23.76c.31.17.68.19 1.01.04l12.43-6.89-2.63-2.61-10.81 9.46zm-1.7-20.3C1.22 3.83 1 4.2 1 4.68v14.64c0 .48.22.85.48 1.21l.07.06 8.2-8.2v-.2L1.55 3.4l-.07.06zM21.14 10.7l-2.39-1.32-2.93 2.92 2.93 2.93 2.41-1.33c.69-.38.69-1.02 0-1.4l-.02-.8zm-19.6 11.34l10.81-9.46-2.63-2.63L1.48 19.4l.06.64z"/>
-                        }
-                      </svg>
-                      <span className="ftr-app-text">
-                        <span className="ftr-app-store-label">{item.label}</span>
-                        <span className="ftr-app-store-sub">{item.subLabel}</span>
-                      </span>
-                    </SmartLink>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Cities */}
@@ -558,7 +538,7 @@ const footerStyles = `
   }
   .ftr-grid {
     display: grid;
-    grid-template-columns: 260px repeat(4, 1fr) 180px;
+    grid-template-columns: 260px repeat(4, 1fr);
     gap: 48px 32px;
     align-items: start;
   }
@@ -618,6 +598,39 @@ const footerStyles = `
     color: #fff;
     transform: translateY(-3px);
     box-shadow: 0 6px 16px rgba(37,99,235,.3);
+  }
+
+  .ftr-play-store-cta {
+    margin-top: 18px;
+  }
+  .ftr-play-store-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 6px 18px rgba(16,185,129,.24);
+  }
+  .ftr-play-store-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(16,185,129,.28);
+  }
+  .ftr-play-store-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    text-align: left;
+  }
+  .ftr-play-store-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,.85);
+    font-weight: 500;
   }
 
   /* ── Nav columns ──────────────────────────────────────────── */

@@ -5,7 +5,7 @@ import { getAdminNavSections } from '../utils/adminPermissions';
 import {
   Shield, LayoutDashboard, Package, Users, MessagesSquare,
   Flag, BarChart3, Folder, Heart, Bell, ShieldAlert,
-  LogOut, ChevronLeft, ChevronRight, User, Settings, FileText, LifeBuoy, Gauge, Smartphone
+  LogOut, ChevronLeft, ChevronRight, User, Settings, FileText, LifeBuoy, Gauge, Smartphone, Home, SlidersHorizontal, Megaphone
 } from 'lucide-react';
 
 const adminIconMap = {
@@ -24,6 +24,10 @@ const adminIconMap = {
   settings: Settings,
   systemSettings: FileText,
   appControl: Smartphone,
+  homeControl: Home,
+  featureControl: SlidersHorizontal,
+  trustSafety: Shield,
+  growthControl: Megaphone,
   adminRoles: ShieldAlert,
 };
 

@@ -21,6 +21,7 @@ import {
   ZoomIn,
   X,
 } from 'lucide-react';
+import { LoadScript, GoogleMap, Marker } from '@react-google-maps/api';
 import { formatDistanceToNow } from 'date-fns';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
@@ -214,6 +215,13 @@ const ProductDetail = () => {
     }
     toast.success('Phone number is visible below');
   };
+
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const locationCoords = useMemo(() => {
+    if (!product?.locationCoords?.coordinates?.length) return null;
+    const [lng, lat] = product.locationCoords.coordinates;
+    return { lat, lng };
+  }, [product]);
 
   const handleShare = async () => {
     try {
@@ -571,6 +579,24 @@ const ProductDetail = () => {
           gap: 16px;
           flex-wrap: wrap;
         }
+        .pdp-hero__location {
+          margin-top: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: var(--pdp-text-secondary);
+          background: rgba(43, 106, 77, 0.08);
+          border: 1px solid rgba(43, 106, 77, 0.16);
+          border-radius: 999px;
+          padding: 8px 12px;
+          max-width: fit-content;
+          line-height: 1.4;
+        }
+        .pdp-hero__location svg {
+          color: var(--pdp-accent);
+          flex-shrink: 0;
+        }
         .pdp-hero__title {
           font-family: var(--pdp-font-display);
           font-size: clamp(22px, 4vw, 36px);
@@ -587,6 +613,23 @@ const ProductDetail = () => {
           color: var(--pdp-accent);
           letter-spacing: -0.03em;
           font-family: var(--pdp-font-display);
+        }
+        .pdp-hero__location {
+          margin-top: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          color: var(--pdp-text-secondary);
+          background: rgba(212, 87, 26, 0.08);
+          border: 1px solid rgba(212, 87, 26, 0.18);
+          border-radius: 999px;
+          padding: 9px 14px;
+          max-width: fit-content;
+        }
+        .pdp-hero__location svg {
+          color: var(--pdp-accent);
+          flex-shrink: 0;
         }
         .pdp-hero__actions {
           display: flex;
@@ -788,6 +831,36 @@ const ProductDetail = () => {
           font-size: 11.5px;
           font-weight: 600;
           color: var(--pdp-green);
+        }
+        .pdp-map-card {
+          padding: 22px 24px;
+          margin-top: 20px;
+        }
+        .pdp-map-heading {
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--pdp-text-tertiary);
+          margin-bottom: 12px;
+        }
+        .pdp-map-frame {
+          width: 100%;
+          height: 280px;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+        .pdp-map-empty {
+          min-height: 180px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          color: var(--pdp-text-secondary);
+          background: var(--pdp-surface-2);
+          border: 1px solid var(--pdp-border);
+          border-radius: 16px;
+          padding: 24px;
         }
         .pdp-seller__location {
           display: flex;
@@ -1037,6 +1110,12 @@ const ProductDetail = () => {
                   <div>
                     <h1 className="pdp-hero__title">{product.title}</h1>
                     <p className="pdp-hero__price">{formatPrice(product.price)}</p>
+                    {product.location && (
+                      <div className="pdp-hero__location">
+                        <MapPin size={16} />
+                        <span>{product.location}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="pdp-hero__actions">
                     <button
@@ -1086,6 +1165,37 @@ const ProductDetail = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              <div className="pdp-card pdp-map-card">
+                <p className="pdp-map-heading">Location on map</p>
+                {locationCoords && googleMapsApiKey ? (
+                  <LoadScript googleMapsApiKey={googleMapsApiKey}>
+                    <GoogleMap
+                      mapContainerClassName="pdp-map-frame"
+                      center={locationCoords}
+                      zoom={13}
+                      options={{
+                        streetViewControl: false,
+                        mapTypeControl: false,
+                        fullscreenControl: false,
+                        zoomControl: true,
+                      }}
+                    >
+                      <Marker position={locationCoords} />
+                    </GoogleMap>
+                  </LoadScript>
+                ) : (
+                  <div className="pdp-map-empty">
+                    {product.location ? (
+                      <>
+                        Map coordinates are not available for this listing. The address is shown above.
+                      </>
+                    ) : (
+                      'Location information is not available for this listing.'
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Safety */}

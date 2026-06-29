@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Edit3,
   Eye,
+  KeyRound,
   Mail,
   MailCheck,
   MapPin,
@@ -31,12 +32,19 @@ const emptyForm = {
   isBlocked: false,
 };
 
+const emptyPasswordForm = {
+  password: '',
+  confirmPassword: '',
+};
+
 const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ role: 'all', status: 'all', search: '', page: 1, limit: 10 });
   const [modalMode, setModalMode] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [passwordForm, setPasswordForm] = useState(emptyPasswordForm);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedPasswordUser, setSelectedPasswordUser] = useState(null);
 
   const { data: usersData = { users: [], total: 0, page: 1, pages: 1 }, isLoading } = useQuery({
     queryKey: ['adminUsers', filters],
@@ -76,7 +84,9 @@ const AdminUsers = () => {
   const closeModal = () => {
     setModalMode(null);
     setSelectedUserId(null);
+    setSelectedPasswordUser(null);
     setForm(emptyForm);
+    setPasswordForm(emptyPasswordForm);
   };
 
   const saveMutation = useMutation({
@@ -122,6 +132,17 @@ const AdminUsers = () => {
     onError: (error) => toast.error(error.response?.data?.message || 'Action failed'),
   });
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ userId, password }) => api.put(`/admin/users/${userId}/password`, { password }),
+    onSuccess: () => {
+      toast.success('Password updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['adminUserDetail'] });
+      closeModal();
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Password update failed'),
+  });
+
   const verifyEmailMutation = useMutation({
     mutationFn: (userId) => api.put(`/admin/users/${userId}/verify-email`),
     onSuccess: () => {
@@ -155,6 +176,13 @@ const AdminUsers = () => {
     setModalMode('edit');
   };
 
+  const openPasswordReset = (user) => {
+    setSelectedUserId(user._id);
+    setSelectedPasswordUser(user);
+    setPasswordForm(emptyPasswordForm);
+    setModalMode('password');
+  };
+
   const submitForm = (event) => {
     event.preventDefault();
     if (!form.name.trim() || !form.email.trim()) {
@@ -166,6 +194,23 @@ const AdminUsers = () => {
       return;
     }
     saveMutation.mutate();
+  };
+
+  const submitPasswordReset = (event) => {
+    event.preventDefault();
+    if (!selectedUserId) {
+      toast.error('Select a user first');
+      return;
+    }
+    if (passwordForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (passwordForm.password !== passwordForm.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    resetPasswordMutation.mutate({ userId: selectedUserId, password: passwordForm.password });
   };
 
   const users = usersData.users || [];
@@ -290,6 +335,9 @@ const AdminUsers = () => {
                         <button onClick={() => openEdit(user._id)} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50" title="Edit">
                           <Edit3 size={17} />
                         </button>
+                        <button onClick={() => openPasswordReset(user)} className="rounded-lg p-2 text-purple-600 hover:bg-purple-50" title="Reset password">
+                          <KeyRound size={17} />
+                        </button>
                         <button onClick={() => blockMutation.mutate(user._id)} className="rounded-lg p-2 text-amber-600 hover:bg-amber-50" title={user.isBlocked ? 'Unblock' : 'Block'}>
                           {user.isBlocked ? <CheckCircle2 size={17} /> : <Ban size={17} />}
                         </button>
@@ -397,6 +445,59 @@ const AdminUsers = () => {
               <button type="button" onClick={closeModal} className="rounded-xl border px-5 py-2 font-semibold">Cancel</button>
               <button type="submit" disabled={saveMutation.isPending || detailLoading} className="rounded-xl bg-emerald-600 px-5 py-2 font-semibold text-white disabled:opacity-60">
                 {saveMutation.isPending ? 'Saving...' : 'Save User'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {modalMode === 'password' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <form onSubmit={submitPasswordReset} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Reset User Password</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  {selectedPasswordUser?.name || 'Selected user'} - {selectedPasswordUser?.email || ''}
+                </p>
+              </div>
+              <button type="button" onClick={closeModal} className="rounded-lg p-2 hover:bg-gray-100">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mb-5 rounded-xl border border-purple-100 bg-purple-50 p-4 text-sm font-semibold text-purple-800">
+              This will immediately replace the account password. The user will need the new password for the next login.
+            </div>
+
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-1 block text-sm font-semibold text-gray-700">New password</span>
+                <input
+                  type="password"
+                  value={passwordForm.password}
+                  onChange={(event) => setPasswordForm({ ...passwordForm, password: event.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
+                  autoComplete="new-password"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-semibold text-gray-700">Confirm password</span>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(event) => setPasswordForm({ ...passwordForm, confirmPassword: event.target.value })}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
+                  autoComplete="new-password"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={closeModal} className="rounded-xl border px-5 py-2 font-semibold">Cancel</button>
+              <button type="submit" disabled={resetPasswordMutation.isPending} className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2 font-semibold text-white disabled:opacity-60">
+                <KeyRound size={16} />
+                {resetPasswordMutation.isPending ? 'Updating...' : 'Update Password'}
               </button>
             </div>
           </form>

@@ -45,6 +45,10 @@ import AdminModeration from './pages/AdminModeration';
 import AdminSystemSettings from './pages/AdminSystemSettings';
 import AdminSupportTickets from './pages/AdminSupportTickets';
 import AdminAppControl from './pages/AdminAppControl';
+import AdminHomeControl from './pages/AdminHomeControl';
+import AdminFeatureControl from './pages/AdminFeatureControl';
+import AdminTrustSafety from './pages/AdminTrustSafety';
+import AdminGrowthControl from './pages/AdminGrowthControl';
 
 import Categories from './pages/Categories';
 import Favorites from './pages/Favorites';
@@ -58,6 +62,7 @@ import Contact from './pages/Contact';
 import Safety from './pages/Safety';
 import ReportProblem from './pages/ReportProblem';
 import Support from './pages/Support';
+import AppTesting from './pages/AppTesting';
 
 const AdminPage = ({ permission, children }) => (
   <AdminPermissionRoute permission={permission}>{children}</AdminPermissionRoute>
@@ -175,6 +180,10 @@ const AppContent = () => {
           <Route path="settings" element={<AdminPage permission="settings"><AdminSettings /></AdminPage>} />
           <Route path="system-settings" element={<AdminPage permission="systemSettings"><AdminSystemSettings /></AdminPage>} />
           <Route path="app-control" element={<AdminPage permission="appControl"><AdminAppControl /></AdminPage>} />
+          <Route path="home-control" element={<AdminPage permission="homeControl"><AdminHomeControl /></AdminPage>} />
+          <Route path="feature-control" element={<AdminPage permission="featureControl"><AdminFeatureControl /></AdminPage>} />
+          <Route path="trust-safety" element={<AdminPage permission="trustSafety"><AdminTrustSafety /></AdminPage>} />
+          <Route path="growth-control" element={<AdminPage permission="growthControl"><AdminGrowthControl /></AdminPage>} />
 
 
           {/* ❗ Admin fallback (IMPORTANT) */}
@@ -208,6 +217,7 @@ const AppContent = () => {
             <Support />
           </ProtectedRoute>
         } />
+        <Route path="/app-testing" element={<AppTesting />} />
         <Route path="/search" element={<SearchResults />} />
 
         {/* ❗ PUBLIC fallback */}
