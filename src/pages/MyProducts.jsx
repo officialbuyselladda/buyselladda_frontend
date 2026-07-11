@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Trash2, Edit3, Eye, Clock, Package, Plus, BadgeCheck } from 'lucide-react';
+import { Trash2, Edit3, Eye, Clock, Package, Plus, BadgeCheck, Search, RefreshCw, PauseCircle, PlayCircle, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { PRODUCT_STATUS } from '../utils';
 import toast from 'react-hot-toast';
@@ -29,9 +29,16 @@ const TABS = [
 
 const getProductsPayload = (response) => {
   const payload = response?.data || {};
+  const nested = payload.data && !Array.isArray(payload.data) ? payload.data : null;
   return {
-    products: Array.isArray(payload.data) ? payload.data : Array.isArray(payload.products) ? payload.products : [],
-    pagination: payload.pagination || {},
+    products: Array.isArray(nested?.data)
+      ? nested.data
+      : Array.isArray(payload.data)
+        ? payload.data
+        : Array.isArray(payload.products)
+          ? payload.products
+          : [],
+    pagination: nested?.pagination || payload.pagination || {},
   };
 };
 
@@ -45,6 +52,8 @@ const MyProducts = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
   const [page, setPage] = useState(1);
   const pageSize = 9;
 
@@ -65,6 +74,41 @@ const MyProducts = () => {
   const { products, pagination } = getProductsPayload(productsData);
   const activeTabLabel = TABS.find((tab) => tab.key === activeTab)?.label || 'All';
   const totalCount = pagination.total ?? products.length;
+  const visibleProducts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const filtered = term
+      ? products.filter((product) => [
+          product.title,
+          product.description,
+          product.category?.name || product.category,
+          product.location,
+          product.status,
+        ].filter(Boolean).join(' ').toLowerCase().includes(term))
+      : products;
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'price_low') return (Number(a.price) || 0) - (Number(b.price) || 0);
+      if (sortBy === 'price_high') return (Number(b.price) || 0) - (Number(a.price) || 0);
+      if (sortBy === 'views') return (Number(b.views) || 0) - (Number(a.views) || 0);
+      if (sortBy === 'oldest') return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+  }, [products, searchTerm, sortBy]);
+
+  const pageStats = useMemo(() => {
+    const counts = products.reduce((acc, product) => {
+      const status = product.status || 'pending';
+      acc[status] = (acc[status] || 0) + 1;
+      acc.views += Number(product.views || 0);
+      return acc;
+    }, { approved: 0, pending: 0, rejected: 0, paused: 0, sold: 0, suspicious: 0, views: 0 });
+    return [
+      { label: 'Live', value: counts.approved || 0, tone: 'green' },
+      { label: 'Pending', value: counts.pending || 0, tone: 'yellow' },
+      { label: 'Sold', value: counts.sold || 0, tone: 'blue' },
+      { label: 'Views', value: counts.views || 0, tone: 'accent' },
+    ];
+  }, [products]);
 
   const deleteMutation = useMutation({
     mutationFn: (productId) => api.delete(`/products/${productId}`),
@@ -126,6 +170,37 @@ const MyProducts = () => {
             </Link>
           </div>
 
+          <div className="mp-summary">
+            {pageStats.map((item) => (
+              <div key={item.label} className={`mp-summary__item mp-summary__item--${item.tone}`}>
+                <span>{item.label}</span>
+                <strong>{Number(item.value).toLocaleString('en-IN')}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="mp-toolbar">
+            <label className="mp-search">
+              <Search size={16} />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search your ads"
+              />
+            </label>
+            <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="mp-sort">
+              <option value="latest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="price_high">Price high to low</option>
+              <option value="price_low">Price low to high</option>
+              <option value="views">Most viewed</option>
+            </select>
+            <button type="button" onClick={() => refetch()} className="mp-refresh-btn" disabled={isFetching}>
+              <RefreshCw size={15} />
+              {isFetching ? 'Refreshing' : 'Refresh'}
+            </button>
+          </div>
+
           {/* ── Empty State ── */}
           {error ? (
             <div className="mp-empty">
@@ -151,20 +226,22 @@ const MyProducts = () => {
                 </div>
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : visibleProducts.length === 0 ? (
             <div className="mp-empty">
               <div className="mp-empty__icon">
                 <Package size={30} />
               </div>
               <p className="mp-empty__title">
-                {activeTab === 'all' ? 'No products yet' : `No ${activeTabLabel.toLowerCase()} ads`}
+                {searchTerm.trim() ? 'No matching ads' : activeTab === 'all' ? 'No products yet' : `No ${activeTabLabel.toLowerCase()} ads`}
               </p>
               <p className="mp-empty__sub">
-                {activeTab === 'all'
+                {searchTerm.trim()
+                  ? 'No ads match your current search. Try another keyword.'
+                  : activeTab === 'all'
                   ? 'Start posting your first product to buy or sell locally.'
                   : `Ads with ${activeTabLabel.toLowerCase()} status will appear here.`}
               </p>
-              {activeTab === 'all' && (
+              {activeTab === 'all' && !searchTerm.trim() && (
                 <Link to="/create-product" className="mp-empty__btn">
                   <Plus size={15} />
                   Post Your First Ad
@@ -177,7 +254,7 @@ const MyProducts = () => {
 
               {/* ── Grid ── */}
               <div className="mp-grid">
-                {products.map((product) => {
+                {visibleProducts.map((product) => {
                   const status = product.status || 'pending';
                   const statusCfg = STATUS_CONFIG[status] || { label: status, cls: 'mp-badge--gray' };
                   return (
@@ -213,7 +290,7 @@ const MyProducts = () => {
                         </div>
 
                         <div className="mp-card__info">
-                          {product.location && <span className="mp-card__location">{product.location}</span>}
+                          {product.location && <span className="mp-card__location"><MapPin size={12} /> {product.location}</span>}
                           {product.category && <span className="mp-card__cat">{product.category?.name || product.category}</span>}
                         </div>
 
@@ -239,6 +316,28 @@ const MyProducts = () => {
                             <Edit3 size={14} />
                             Edit
                           </Link>
+                          {status === 'approved' && (
+                            <button
+                              onClick={() => statusMutation.mutate({ productId: product._id, status: 'paused' })}
+                              disabled={statusMutation.isPending}
+                              className="mp-action-btn mp-action-btn--pause"
+                              title="Pause ad"
+                            >
+                              <PauseCircle size={14} />
+                              Pause
+                            </button>
+                          )}
+                          {status === 'paused' && (
+                            <button
+                              onClick={() => statusMutation.mutate({ productId: product._id, status: 'approved' })}
+                              disabled={statusMutation.isPending}
+                              className="mp-action-btn mp-action-btn--resume"
+                              title="Resume ad"
+                            >
+                              <PlayCircle size={14} />
+                              Resume
+                            </button>
+                          )}
                           {status !== 'sold' && (
                             <button
                               onClick={() => statusMutation.mutate({ productId: product._id, status: 'sold' })}
@@ -431,6 +530,106 @@ const mpStyles = `
   }
 
   /* ── Empty State ── */
+  .mp-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (min-width: 700px) { .mp-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .mp-summary__item {
+    background: var(--mp-surface);
+    border: 1px solid var(--mp-border);
+    border-radius: var(--mp-radius);
+    padding: 14px 16px;
+    box-shadow: var(--mp-shadow);
+  }
+  .mp-summary__item span {
+    display: block;
+    color: var(--mp-text-3);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .mp-summary__item strong {
+    display: block;
+    color: var(--mp-text);
+    font-family: var(--mp-font-display);
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 800;
+  }
+  .mp-summary__item--green { border-color: var(--mp-green-border); background: var(--mp-green-bg); }
+  .mp-summary__item--yellow { border-color: var(--mp-yellow-border); background: var(--mp-yellow-bg); }
+  .mp-summary__item--blue { border-color: #bfdbfe; background: #eff6ff; }
+  .mp-summary__item--accent { border-color: #fddcc8; background: var(--mp-accent-light); }
+
+  .mp-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+    background: var(--mp-surface);
+    border: 1px solid var(--mp-border);
+    border-radius: var(--mp-radius);
+    box-shadow: var(--mp-shadow);
+  }
+  @media (min-width: 760px) { .mp-toolbar { grid-template-columns: minmax(0, 1fr) 190px auto; align-items: center; } }
+
+  .mp-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    height: 42px;
+    border: 1.5px solid var(--mp-border);
+    border-radius: var(--mp-radius-sm);
+    background: var(--mp-surface-2);
+    padding: 0 12px;
+    color: var(--mp-text-3);
+  }
+  .mp-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--mp-text);
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .mp-search input::placeholder { color: var(--mp-text-3); }
+
+  .mp-sort,
+  .mp-refresh-btn {
+    height: 42px;
+    border: 1.5px solid var(--mp-border);
+    border-radius: var(--mp-radius-sm);
+    background: var(--mp-surface-2);
+    color: var(--mp-text-2);
+    font-size: 13px;
+    font-weight: 800;
+    outline: 0;
+  }
+  .mp-sort { padding: 0 12px; }
+  .mp-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 14px;
+    cursor: pointer;
+    transition: background var(--mp-t), color var(--mp-t), border-color var(--mp-t);
+  }
+  .mp-refresh-btn:hover:not(:disabled) {
+    background: var(--mp-accent-light);
+    color: var(--mp-accent);
+    border-color: #fddcc8;
+  }
+  .mp-refresh-btn:disabled { opacity: 0.62; cursor: not-allowed; }
+
   .mp-empty {
     display: flex;
     flex-direction: column;
@@ -636,6 +835,10 @@ const mpStyles = `
     margin-bottom: 14px;
   }
   .mp-card__location {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
     font-size: 12px;
     color: var(--mp-text-2);
     overflow: hidden;
@@ -659,10 +862,11 @@ const mpStyles = `
   .mp-card__actions {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
   }
   .mp-action-btn {
-    flex: 1;
+    flex: 1 1 calc(50% - 6px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -708,6 +912,20 @@ const mpStyles = `
     border-color: #bfdbfe;
   }
   .mp-action-btn--sold:hover { background: #dbeafe; border-color: #93c5fd; }
+
+  .mp-action-btn--pause {
+    background: var(--mp-yellow-bg);
+    color: var(--mp-yellow);
+    border-color: var(--mp-yellow-border);
+  }
+  .mp-action-btn--pause:hover { background: #fef3c7; border-color: #fbbf24; }
+
+  .mp-action-btn--resume {
+    background: var(--mp-green-bg);
+    color: var(--mp-green);
+    border-color: var(--mp-green-border);
+  }
+  .mp-action-btn--resume:hover { background: #dcfce7; border-color: #86efac; }
 
   /* ── Pagination ── */
   .mp-pagination {

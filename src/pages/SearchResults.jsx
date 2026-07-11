@@ -214,7 +214,10 @@ const SearchResults = () => {
               Try different keywords or check your spelling. You can also browse by category.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <button className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all">
+              <button
+                onClick={() => navigate('/categories')}
+                className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all"
+              >
                 Browse Categories
               </button>
               <button 
@@ -237,7 +240,7 @@ const SearchResults = () => {
           <div className="flex justify-center mt-12">
             <button
               onClick={loadMore}
-              className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-semibold text-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-xl hover:shadow-2xl"
+              className="px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl font-semibold text-lg hover:from-primary-700 hover:to-primary-800 transition-all shadow-xl hover:shadow-2xl"
             >
               Load More Results
             </button>

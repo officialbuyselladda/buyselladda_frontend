@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Package, MessageCircle, Edit, LogOut, Shield, Eye, Plus } from 'lucide-react';
+import { User, Package, MessageCircle, Edit, LogOut, Shield, Eye, Plus, CalendarDays, Clock3 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 
@@ -14,7 +14,29 @@ const Profile = () => {
     enabled: !!user,
   });
 
+  const { data: postingEligibility, isLoading: quotaLoading } = useQuery({
+    queryKey: ['postingEligibility', user?._id],
+    queryFn: () => api.get('/products/posting-eligibility').then(res => res.data?.data || res.data),
+    enabled: !!user,
+  });
+
   if (!user) return null;
+
+  const formatQuota = value => value === null || value === undefined ? 'Unlimited' : Number(value).toLocaleString('en-IN');
+  const dailyQuota = postingEligibility?.daily || {};
+  const monthlyQuota = postingEligibility?.monthly || {};
+  const dailyLimit = Number(dailyQuota.limit || 0);
+  const monthlyLimit = Number(monthlyQuota.limit || 0);
+  const dailyUsed = Number(dailyQuota.used || 0);
+  const monthlyUsed = Number(monthlyQuota.used || 0);
+  const dailyProgress = dailyLimit > 0 ? Math.min(100, Math.max(0, (dailyUsed / dailyLimit) * 100)) : 0;
+  const monthlyProgress = monthlyLimit > 0 ? Math.min(100, Math.max(0, (monthlyUsed / monthlyLimit) * 100)) : 0;
+  const canPost = postingEligibility?.canPost !== false;
+  const joinedDate = user.createdAt || user.created_at || user.joinedAt || user.updatedAt;
+  const joinedAt = joinedDate ? new Date(joinedDate) : null;
+  const memberSince = joinedAt && !Number.isNaN(joinedAt.getTime())
+    ? joinedAt.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+    : 'recently';
 
   return (
     <>
@@ -33,7 +55,7 @@ const Profile = () => {
               <p className="prf-hero__email">{user.email}</p>
               <div className="prf-hero__meta">
                 <span className="prf-hero__since">
-                  Member since {new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                  Member since {memberSince}
                 </span>
                 {user.phone && (
                   <span className="prf-hero__phone">📞 {user.phone}</span>
@@ -67,6 +89,41 @@ const Profile = () => {
                 <div className="prf-stat__label">{label}</div>
               </div>
             ))}
+          </div>
+
+          <div className={`prf-quota ${canPost ? '' : 'prf-quota--blocked'}`}>
+            <div className="prf-quota__head">
+              <div>
+                <p className="prf-section-label">Posting Limit</p>
+                <h2>{quotaLoading ? 'Checking ad slots...' : canPost ? 'Ads you can still post' : 'Posting limit reached'}</h2>
+              </div>
+              <Link to="/create-product" className="prf-quota__cta">
+                <Plus size={15} />
+                <span>Post Ad</span>
+              </Link>
+            </div>
+
+            <div className="prf-quota__grid">
+              <div className="prf-quota__item">
+                <div className="prf-quota__icon prf-quota__icon--daily"><Clock3 size={18} /></div>
+                <div className="prf-quota__content">
+                  <span>Today remaining</span>
+                  <strong>{quotaLoading ? '--' : formatQuota(dailyQuota.remaining)}</strong>
+                  {!postingEligibility?.unlimited && <small>{dailyUsed.toLocaleString('en-IN')} of {dailyLimit.toLocaleString('en-IN')} used</small>}
+                  <div className="prf-quota__bar"><span style={{ width: `${dailyProgress}%` }} /></div>
+                </div>
+              </div>
+
+              <div className="prf-quota__item">
+                <div className="prf-quota__icon prf-quota__icon--monthly"><CalendarDays size={18} /></div>
+                <div className="prf-quota__content">
+                  <span>This month remaining</span>
+                  <strong>{quotaLoading ? '--' : formatQuota(monthlyQuota.remaining)}</strong>
+                  {!postingEligibility?.unlimited && <small>{monthlyUsed.toLocaleString('en-IN')} of {monthlyLimit.toLocaleString('en-IN')} used</small>}
+                  <div className="prf-quota__bar"><span style={{ width: `${monthlyProgress}%` }} /></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ── Bottom Row ── */}
@@ -327,6 +384,133 @@ const profileStyles = `
   }
 
   /* ── Bottom Row ── */
+  .prf-quota {
+    background: var(--prf-surface);
+    border: 1px solid var(--prf-border);
+    border-radius: var(--prf-radius);
+    box-shadow: var(--prf-shadow);
+    padding: 20px;
+  }
+
+  .prf-quota--blocked {
+    border-color: #fecaca;
+    background: #fffafa;
+  }
+
+  .prf-quota__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .prf-quota__head .prf-section-label {
+    margin-bottom: 5px;
+    padding: 0;
+  }
+
+  .prf-quota__head h2 {
+    font-size: clamp(18px, 3vw, 22px);
+    line-height: 1.2;
+    font-weight: 800;
+    color: var(--prf-text);
+    margin: 0;
+  }
+
+  .prf-quota__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: var(--prf-radius-sm);
+    background: var(--prf-accent);
+    color: #fff;
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 800;
+    padding: 9px 12px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(212,87,26,0.2);
+  }
+
+  .prf-quota__cta:hover {
+    background: var(--prf-accent-hover);
+    color: #fff;
+  }
+
+  .prf-quota__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media (min-width: 640px) { .prf-quota__grid { grid-template-columns: 1fr 1fr; } }
+
+  .prf-quota__item {
+    display: flex;
+    gap: 12px;
+    border: 1.5px solid var(--prf-border);
+    background: var(--prf-surface-2);
+    border-radius: var(--prf-radius-sm);
+    padding: 14px;
+  }
+
+  .prf-quota__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .prf-quota__icon--daily { background: var(--prf-blue-bg); color: var(--prf-blue); }
+  .prf-quota__icon--monthly { background: var(--prf-green-bg); color: var(--prf-green); }
+
+  .prf-quota__content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .prf-quota__content > span {
+    display: block;
+    color: var(--prf-text-2);
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .prf-quota__content strong {
+    display: block;
+    color: var(--prf-text);
+    font-size: 22px;
+    line-height: 1.05;
+    font-weight: 900;
+    margin-bottom: 3px;
+  }
+
+  .prf-quota__content small {
+    display: block;
+    color: var(--prf-text-3);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .prf-quota__bar {
+    width: 100%;
+    height: 6px;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: var(--prf-radius-full);
+    background: #eee9e1;
+  }
+
+  .prf-quota__bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--prf-accent), #16a34a);
+  }
+
   .prf-bottom {
     display: grid;
     grid-template-columns: 1fr;

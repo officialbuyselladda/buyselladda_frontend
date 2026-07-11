@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AlertTriangle, User, MessageCircle, Link2, Image, Send, Shield,Mail } from 'lucide-react';
 
 import { toast } from 'react-hot-toast';
+import { contactApi } from '../services/api';
 
 const ReportProblem = () => {
   const [formData, setFormData] = useState({
@@ -28,12 +29,39 @@ const ReportProblem = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const problemLabel = problemTypes.find((t) => t.value === formData.problemType)?.label || formData.problemType;
+      const adReference = [formData.adUrl, formData.adId].filter(Boolean).join(' / ');
+
+      if (formData.screenshot) {
+        const body = new FormData();
+        body.append('type', 'report');
+        body.append('name', formData.reporterName);
+        body.append('email', formData.reporterEmail);
+        body.append('message', formData.description);
+        body.append('problemType', problemLabel);
+        body.append('adReference', adReference);
+        body.append('screenshot', formData.screenshot);
+        await contactApi.sendWithFile(body);
+      } else {
+        await contactApi.send({
+          type: 'report',
+          name: formData.reporterName,
+          email: formData.reporterEmail,
+          message: formData.description,
+          problemType: problemLabel,
+          adReference,
+        });
+      }
+
       toast.success('Report submitted! Our team will review within 24 hours.');
       setFormData({ reporterName: '', reporterEmail: '', problemType: '', description: '', adUrl: '', screenshot: null, adId: '' });
-      setLoading(false);
       setStep(1);
-    }, 2000);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not submit report. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileChange = (e) => {

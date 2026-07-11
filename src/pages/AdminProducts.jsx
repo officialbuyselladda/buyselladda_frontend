@@ -1,58 +1,132 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { Search, Filter, Package, Eye, Trash2, CheckCircle2, XCircle, Clock, Edit3, User } from 'lucide-react';
-import { CONDITIONS, PRODUCT_STATUS } from '../utils';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Eye,
+  Filter,
+  ImageOff,
+  Package,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Trash2,
+  User,
+  XCircle,
+} from 'lucide-react';
+import { PRODUCT_STATUS } from '../utils';
+import { getImageUrl, placeholderImage } from '../utils/image';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 
+const statusOptions = [
+  { value: 'all', label: 'All Status' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'suspicious', label: 'Suspicious' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'sold', label: 'Sold' },
+];
+
+const statusStyles = {
+  approved: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  pending: 'bg-amber-100 text-amber-800 border-amber-200',
+  rejected: 'bg-red-100 text-red-800 border-red-200',
+  suspicious: 'bg-rose-100 text-rose-800 border-rose-200',
+  paused: 'bg-gray-100 text-gray-700 border-gray-200',
+  sold: 'bg-blue-100 text-blue-800 border-blue-200',
+};
+
+const safeDate = (value) => {
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('en-IN') : 'Recently';
+};
+
+const priceText = (value) => `Rs ${Number(value || 0).toLocaleString('en-IN')}`;
+
 const AdminProducts = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ status: 'all', search: '', page: 1, limit: 10 });
-  const [selectedProducts, setSelectedProducts] = useState([]); 
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [detailProduct, setDetailProduct] = useState(null);
 
-  const { data: productsData = { products: [], total: 0, page: 1, pages: 1 }, isLoading, error } = useQuery({
+  const {
+    data: productsData = { products: [], total: 0, page: 1, pages: 1 },
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['adminProducts', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append('status', filters.status);
       params.append('page', filters.page.toString());
       params.append('limit', filters.limit.toString());
-      if (filters.search.trim()) params.append('search', filters.search);
-      const res = await api.get(`/admin/products?${params}`);
+      if (filters.search.trim()) params.append('search', filters.search.trim());
+      const res = await api.get(`/admin/products?${params.toString()}`);
       return res.data.data;
     },
   });
 
-  const products = productsData.products || [];
+  useEffect(() => {
+    if (error) toast.error(error.response?.data?.message || 'Failed to load products');
+  }, [error]);
 
-  if (error) toast.error('Failed to load products');
+  const products = productsData.products || [];
+  const currentIds = products.map((product) => product._id);
+  const allCurrentSelected = currentIds.length > 0 && currentIds.every((id) => selectedProducts.includes(id));
+
+  const pageStats = useMemo(() => {
+    const counts = products.reduce((acc, product) => {
+      const status = product.status || 'pending';
+      acc[status] = (acc[status] || 0) + 1;
+      acc.views += Number(product.views || 0);
+      return acc;
+    }, { pending: 0, approved: 0, rejected: 0, suspicious: 0, paused: 0, sold: 0, views: 0 });
+
+    return [
+      { label: 'Pending', value: counts.pending + counts.suspicious, icon: Clock, tone: 'amber' },
+      { label: 'Approved', value: counts.approved, icon: ShieldCheck, tone: 'emerald' },
+      { label: 'Rejected', value: counts.rejected, icon: XCircle, tone: 'red' },
+      { label: 'Views', value: counts.views, icon: Eye, tone: 'blue' },
+    ];
+  }, [products]);
+
+  const invalidateProducts = () => {
+    queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+    queryClient.invalidateQueries({ queryKey: ['adminDashboard'] });
+  };
 
   const approveMutation = useMutation({
     mutationFn: (productId) => api.put(`/admin/products/${productId}/approve`),
     onSuccess: () => {
       toast.success('Product approved');
-      queryClient.invalidateQueries(['adminProducts']);
+      invalidateProducts();
     },
+    onError: (err) => toast.error(err.response?.data?.message || 'Approve failed'),
   });
 
   const rejectMutation = useMutation({
     mutationFn: (productId) => api.put(`/admin/products/${productId}/reject`),
     onSuccess: () => {
       toast.success('Product rejected');
-      queryClient.invalidateQueries(['adminProducts']);
+      invalidateProducts();
     },
+    onError: (err) => toast.error(err.response?.data?.message || 'Reject failed'),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (productId) => api.delete(`/admin/products/${productId}`),
     onSuccess: () => {
       toast.success('Product deleted');
-      queryClient.invalidateQueries(['adminProducts']);
+      invalidateProducts();
     },
+    onError: (err) => toast.error(err.response?.data?.message || 'Delete failed'),
   });
 
   const handleApprove = (productId) => approveMutation.mutate(productId);
@@ -62,45 +136,60 @@ const AdminProducts = () => {
   };
 
   const toggleSelect = (productId) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+    setSelectedProducts((prev) => (
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
+    ));
   };
 
-  const bulkAction = (action) => {
+  const toggleSelectPage = () => {
+    setSelectedProducts((prev) => {
+      if (allCurrentSelected) return prev.filter((id) => !currentIds.includes(id));
+      return Array.from(new Set([...prev, ...currentIds]));
+    });
+  };
+
+  const bulkAction = (type) => {
     if (selectedProducts.length === 0) {
       toast.error('Select products first');
       return;
     }
-    if (confirm(`Approve ${selectedProducts.length} selected products?`)) {
-      selectedProducts.forEach(id => action(id));
-      setSelectedProducts([]);
-    }
+    const label = type === 'approve' ? 'approve' : 'reject';
+    if (!confirm(`Are you sure you want to ${label} ${selectedProducts.length} selected ads?`)) return;
+    selectedProducts.forEach((id) => {
+      if (type === 'approve') approveMutation.mutate(id);
+      else rejectMutation.mutate(id);
+    });
+    setSelectedProducts([]);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Manage Products</h1>
-            <p className="text-gray-600">{products.length} products • {filters.status} filter ({productsData.total} total)</p>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-xs font-black uppercase tracking-wide text-orange-700">
+              <Package size={14} />
+              Product Management
+            </div>
+            <h1 className="text-3xl font-black text-gray-950">Manage Ads</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              Review, approve, reject, and remove marketplace listings from one queue.
+            </p>
           </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => bulkAction(handleApprove)}
-              disabled={selectedProducts.length === 0}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => bulkAction('approve')}
+              disabled={selectedProducts.length === 0 || approveMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CheckCircle2 size={18} />
               Approve Selected
             </button>
-            <button 
-              onClick={() => bulkAction(handleReject)}
-              disabled={selectedProducts.length === 0}
-              className="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+            <button
+              onClick={() => bulkAction('reject')}
+              disabled={selectedProducts.length === 0 || rejectMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <XCircle size={18} />
               Reject Selected
@@ -108,150 +197,189 @@ const AdminProducts = () => {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-3xl shadow-lg p-6 mb-8 border border-gray-100">
-          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-  <input
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {pageStats.map(({ label, value, icon: Icon, tone }) => (
+            <div key={label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-xs font-black uppercase tracking-wide text-gray-500">{label}</span>
+                <span className={`rounded-xl p-2 ${
+                  tone === 'emerald' ? 'bg-emerald-50 text-emerald-700' :
+                  tone === 'red' ? 'bg-red-50 text-red-700' :
+                  tone === 'blue' ? 'bg-blue-50 text-blue-700' :
+                  'bg-amber-50 text-amber-700'
+                }`}>
+                  <Icon size={18} />
+                </span>
+              </div>
+              <p className="text-2xl font-black text-gray-950">{Number(value).toLocaleString('en-IN')}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mb-6 rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_190px_120px_auto] lg:items-center">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
                 type="text"
-                placeholder="Search products by title or seller..."
+                placeholder="Search by title or description"
                 value={filters.search}
-                onChange={(e) => setFilters({...filters, search: e.target.value, page: 1})}
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
+                className="w-full rounded-2xl border border-gray-200 py-3 pl-12 pr-4 text-sm font-semibold outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
               />
             </div>
+            <label className="relative">
+              <Filter className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+                className="w-full appearance-none rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm font-black text-gray-700 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
             <select
-              value={filters.status}
-              onChange={(e) => setFilters({...filters, status: e.target.value})}
-              className="px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent md:w-auto"
+              value={filters.limit}
+              onChange={(e) => setFilters({ ...filters, limit: Number(e.target.value), page: 1 })}
+              className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-gray-700 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending ({products.filter(p => p.status === 'pending').length})</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              <option value={10}>10 rows</option>
+              <option value={20}>20 rows</option>
+              <option value={50}>50 rows</option>
             </select>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-black text-gray-700 transition hover:bg-orange-50 hover:text-orange-700"
+            >
+              <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-gray-500">
+            <span>{products.length} shown on this page, {productsData.total || 0} total</span>
+            {selectedProducts.length > 0 && <span>{selectedProducts.length} selected</span>}
           </div>
         </div>
 
-        {/* Products Table */}
         {isLoading ? (
-          <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
-            <Package size={64} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">Loading products...</p>
+          <div className="rounded-3xl border border-gray-100 bg-white p-12 text-center shadow-sm">
+            <Package size={56} className="mx-auto mb-4 text-gray-300" />
+            <p className="font-bold text-gray-500">Loading products...</p>
           </div>
         ) : products.length === 0 ? (
-          <div className="bg-white rounded-3xl shadow-lg p-12 text-center border-2 border-dashed border-gray-200">
-            <Package size={64} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
+          <div className="rounded-3xl border-2 border-dashed border-gray-200 bg-white p-12 text-center shadow-sm">
+            <ImageOff size={56} className="mx-auto mb-4 text-gray-300" />
+            <h3 className="mb-2 text-2xl font-black text-gray-900">No products found</h3>
+            <p className="text-gray-500">Try adjusting your search or status filter.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+          <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1050px]">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="p-6 text-left">
-                      <input type="checkbox" className="rounded" onChange={() => {}} />
+                    <th className="p-5 text-left">
+                      <input type="checkbox" className="rounded" checked={allCurrentSelected} onChange={toggleSelectPage} />
                     </th>
-                    <th className="p-6 text-left font-semibold text-gray-900 w-12">Preview</th>
-                    <th className="p-6 text-left font-semibold text-gray-900">Product</th>
-                    <th className="p-6 text-left font-semibold text-gray-900">Seller</th>
-                    <th className="p-6 text-left font-semibold text-gray-900">Status</th>
-                    <th className="p-6 text-left font-semibold text-gray-900">Posted</th>
-                    <th className="p-6 text-left font-semibold text-gray-900">Actions</th>
+                    <th className="p-5 text-left text-sm font-black text-gray-900">Ad</th>
+                    <th className="p-5 text-left text-sm font-black text-gray-900">Seller</th>
+                    <th className="p-5 text-left text-sm font-black text-gray-900">Status</th>
+                    <th className="p-5 text-left text-sm font-black text-gray-900">Signals</th>
+                    <th className="p-5 text-left text-sm font-black text-gray-900">Posted</th>
+                    <th className="p-5 text-left text-sm font-black text-gray-900">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {products.map((product) => (
-                    <tr key={product._id} className="hover:bg-gray-50">
-                      <td className="p-6">
-                        <input 
-                          type="checkbox" 
-                          className="rounded"
-                          checked={selectedProducts.includes(product._id)}
-                          onChange={() => toggleSelect(product._id)}
-                        />
-                      </td>
-                      <td className="p-6">
-                        <img 
-                          src={product.images?.[0]?.url || '/placeholder.jpg'} 
-                          alt={product.title}
-                          className="w-16 h-16 object-cover rounded-xl"
-                        />
-                      </td>
-                      <td className="p-6 max-w-md">
-                        <button type="button" onClick={() => setDetailProduct(product)} className="font-semibold text-left text-gray-900 hover:text-primary-600 line-clamp-2">
-                          {product.title}
-                        </button>
-                        <p className="text-sm text-gray-500 mt-1">₹{product.price?.toLocaleString()}</p>
-                      </td>
-                      <td className="p-6">
-                        <div className="flex items-center gap-2">
-                          <User size={16} />
-                          <span className="font-medium">{product.sellerName}</span>
-                        </div>
-                        <p className="text-sm text-gray-500">{product.sellerEmail}</p>
-                      </td>
-                      <td className="p-6">
-                        <div className="space-y-1">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                            product.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
-                            product.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {PRODUCT_STATUS[product.status] || product.status}
+                  {products.map((product) => {
+                    const status = product.status || 'pending';
+                    return (
+                      <tr key={product._id} className="hover:bg-gray-50/80">
+                        <td className="p-5 align-top">
+                          <input
+                            type="checkbox"
+                            className="rounded"
+                            checked={selectedProducts.includes(product._id)}
+                            onChange={() => toggleSelect(product._id)}
+                          />
+                        </td>
+                        <td className="p-5 align-top">
+                          <div className="flex min-w-0 gap-4">
+                            <img
+                              src={getImageUrl(product.images?.[0])}
+                              alt={product.title || 'Product'}
+                              className="h-20 w-24 flex-shrink-0 rounded-2xl border border-gray-100 object-cover"
+                              onError={(event) => { event.currentTarget.src = placeholderImage; }}
+                            />
+                            <div className="min-w-0">
+                              <button type="button" onClick={() => setDetailProduct(product)} className="line-clamp-2 text-left font-black text-gray-950 hover:text-orange-700">
+                                {product.title || 'Untitled ad'}
+                              </button>
+                              <p className="mt-1 text-sm font-black text-emerald-700">{priceText(product.price)}</p>
+                              <p className="mt-1 line-clamp-1 text-xs font-semibold text-gray-500">
+                                {[product.category, product.subCategory, product.location].filter(Boolean).join(' | ') || 'No category/location'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-5 align-top">
+                          <div className="flex items-center gap-2 font-bold text-gray-800">
+                            <User size={16} />
+                            <span>{product.sellerName || product.user?.name || 'Unknown'}</span>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500">{product.sellerEmail || product.user?.email || '-'}</p>
+                          {product.user?.trustScore !== undefined && (
+                            <p className="mt-1 text-xs font-bold text-emerald-700">Trust {product.user.trustScore}</p>
+                          )}
+                        </td>
+                        <td className="p-5 align-top">
+                          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-black capitalize ${statusStyles[status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                            {PRODUCT_STATUS[status] || status}
                           </span>
-                          {product.status === 'approved' && product.approvalSource && (
-                            <p className="text-[11px] font-semibold text-gray-400">
+                          {status === 'approved' && product.approvalSource && (
+                            <p className="mt-1 text-[11px] font-semibold text-gray-400">
                               {product.approvalSource === 'auto' ? 'Auto-approved' : 'Admin approved'}
                             </p>
                           )}
-                        </div>
-                      </td>
-                      <td className="p-6 text-sm text-gray-500">
-                        {new Date(product.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-6">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setDetailProduct(product)}
-                            className="p-2 hover:bg-gray-100 rounded-xl"
-                            title="View full ad details"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          {product.status === 'pending' && (
-                            <>
-                              <button 
-                                onClick={() => handleApprove(product._id)}
-                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl"
-                                title="Approve"
-                              >
+                          {status === 'suspicious' && (
+                            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-rose-700">
+                              <AlertTriangle size={12} /> Needs review
+                            </p>
+                          )}
+                        </td>
+                        <td className="p-5 align-top text-sm text-gray-600">
+                          <p className="font-bold">{Number(product.views || 0).toLocaleString('en-IN')} views</p>
+                          <p className="mt-1 text-xs">{product.condition || '-'}</p>
+                        </td>
+                        <td className="p-5 align-top text-sm font-semibold text-gray-500">
+                          {safeDate(product.createdAt)}
+                        </td>
+                        <td className="p-5 align-top">
+                          <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => setDetailProduct(product)} className="rounded-xl p-2 text-gray-600 transition hover:bg-gray-100" title="Review details">
+                              <Eye size={18} />
+                            </button>
+                            {status !== 'approved' && status !== 'deleted' && (
+                              <button type="button" onClick={() => handleApprove(product._id)} className="rounded-xl p-2 text-emerald-600 transition hover:bg-emerald-50" title="Approve">
                                 <CheckCircle2 size={18} />
                               </button>
-                              <button 
-                                onClick={() => handleReject(product._id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-xl"
-                                title="Reject"
-                              >
+                            )}
+                            {status !== 'rejected' && status !== 'deleted' && (
+                              <button type="button" onClick={() => handleReject(product._id)} className="rounded-xl p-2 text-red-600 transition hover:bg-red-50" title="Reject">
                                 <XCircle size={18} />
                               </button>
-                            </>
-                          )}
-                          <button 
-                            onClick={() => handleDelete(product._id)}
-                            className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl"
-                            title="Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            )}
+                            <button type="button" onClick={() => handleDelete(product._id)} className="rounded-xl p-2 text-gray-500 transition hover:bg-gray-100" title="Delete">
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -259,19 +387,19 @@ const AdminProducts = () => {
         )}
 
         {productsData.pages > 1 && (
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <button 
-              onClick={() => setFilters(p => ({...p, page: Math.max(1, p.page - 1)}))}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm">
+            <button
+              onClick={() => setFilters((p) => ({ ...p, page: Math.max(1, p.page - 1) }))}
               disabled={filters.page <= 1}
-              className="px-3 py-1 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              className="rounded-xl border border-gray-200 bg-white px-4 py-2 font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
             >
               Previous
             </button>
-            <span>Page {filters.page} of {productsData.pages}</span>
-            <button 
-              onClick={() => setFilters(p => ({...p, page: p.page + 1}))}
+            <span className="font-bold text-gray-600">Page {filters.page} of {productsData.pages}</span>
+            <button
+              onClick={() => setFilters((p) => ({ ...p, page: Math.min(productsData.pages, p.page + 1) }))}
               disabled={filters.page >= productsData.pages}
-              className="px-3 py-1 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              className="rounded-xl border border-gray-200 bg-white px-4 py-2 font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
             >
               Next
             </button>
@@ -279,16 +407,28 @@ const AdminProducts = () => {
           </div>
         )}
       </div>
-      <Modal isOpen={Boolean(detailProduct)} onClose={() => setDetailProduct(null)} title="Ad review details">
+
+      <Modal isOpen={Boolean(detailProduct)} onClose={() => setDetailProduct(null)} title="Ad Review Details">
         {detailProduct && (
           <div className="space-y-4 text-sm text-gray-700">
             <div className="grid grid-cols-2 gap-2">
-              {(detailProduct.images || []).map((image, index) => (
-                <img key={image.public_id || image.url || index} src={image.url} alt="" className="h-28 w-full rounded-xl object-cover" />
+              {(detailProduct.images?.length ? detailProduct.images : [null]).map((image, index) => (
+                <img
+                  key={image?.public_id || image?.url || index}
+                  src={getImageUrl(image)}
+                  alt=""
+                  className="h-32 w-full rounded-xl border border-gray-100 object-cover"
+                  onError={(event) => { event.currentTarget.src = placeholderImage; }}
+                />
               ))}
             </div>
-            <div><p className="text-lg font-bold text-gray-900">{detailProduct.title}</p><p className="font-semibold text-emerald-700">₹{Number(detailProduct.price || 0).toLocaleString('en-IN')}</p></div>
-            <p className="whitespace-pre-wrap">{detailProduct.description || 'No description provided.'}</p>
+            <div>
+              <p className="text-lg font-black text-gray-900">{detailProduct.title || 'Untitled ad'}</p>
+              <p className="font-black text-emerald-700">{priceText(detailProduct.price)}</p>
+            </div>
+            <p className="max-h-36 overflow-y-auto whitespace-pre-wrap rounded-xl bg-gray-50 p-3 leading-6">
+              {detailProduct.description || 'No description provided.'}
+            </p>
             <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-3">
               <p><strong>Category:</strong><br />{detailProduct.category || '-'}</p>
               <p><strong>Sub category:</strong><br />{detailProduct.subCategory || '-'}</p>
@@ -296,13 +436,21 @@ const AdminProducts = () => {
               <p><strong>Location:</strong><br />{detailProduct.location || '-'}</p>
               <p><strong>Seller:</strong><br />{detailProduct.sellerName || detailProduct.user?.name || '-'}</p>
               <p><strong>Status:</strong><br />{PRODUCT_STATUS[detailProduct.status] || detailProduct.status}</p>
+              <p><strong>Views:</strong><br />{Number(detailProduct.views || 0).toLocaleString('en-IN')}</p>
+              <p><strong>Posted:</strong><br />{safeDate(detailProduct.createdAt)}</p>
             </div>
-            {detailProduct.status === 'pending' && (
-              <div className="flex gap-3">
-                <button type="button" onClick={() => { handleApprove(detailProduct._id); setDetailProduct(null); }} className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white">Approve</button>
-                <button type="button" onClick={() => { handleReject(detailProduct._id); setDetailProduct(null); }} className="flex-1 rounded-xl bg-red-600 px-4 py-3 font-semibold text-white">Reject</button>
-              </div>
-            )}
+            <div className="flex gap-3">
+              {detailProduct.status !== 'approved' && (
+                <button type="button" onClick={() => { handleApprove(detailProduct._id); setDetailProduct(null); }} className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 font-black text-white">
+                  Approve
+                </button>
+              )}
+              {detailProduct.status !== 'rejected' && (
+                <button type="button" onClick={() => { handleReject(detailProduct._id); setDetailProduct(null); }} className="flex-1 rounded-xl bg-red-600 px-4 py-3 font-black text-white">
+                  Reject
+                </button>
+              )}
+            </div>
           </div>
         )}
       </Modal>
@@ -311,4 +459,3 @@ const AdminProducts = () => {
 };
 
 export default AdminProducts;
-

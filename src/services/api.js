@@ -81,6 +81,11 @@ export const contentApi = {
   updateAdminContent: (payload) => api.put('/admin/content', payload).then((res) => res.data.data),
 };
 
+export const contactApi = {
+  send: (payload) => api.post('/contact', payload).then((res) => res.data),
+  sendWithFile: (formData) => uploadApi.post('/contact', formData).then((res) => res.data),
+};
+
 export const appConfigApi = {
   getPublicConfig: () => api.get('/app-config').then((res) => res.data.data),
   getAdminConfig: () => api.get('/app-config/admin').then((res) => res.data.data),

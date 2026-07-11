@@ -26,7 +26,7 @@ const fallbackFooter = {
         { label: 'Post Free Ad', path: '/create-product' },
         { label: 'My Ads', path: '/my-products' },
         { label: 'Profile', path: '/profile' },
-        { label: 'Saved Searches', path: '/saved' },
+        { label: 'Messages', path: '/chats' },
       ],
     },
     {
@@ -35,7 +35,7 @@ const fallbackFooter = {
         { label: 'All Categories', path: '/categories' },
         { label: 'Search', path: '/search' },
         { label: 'Favorites', path: '/favorites' },
-        { label: 'Trending Now', path: '/trending' },
+        { label: 'Notifications', path: '/notifications' },
       ],
     },
     {
@@ -60,7 +60,7 @@ const fallbackFooter = {
   bottomLinks: [
     { label: 'Privacy Policy', path: '/privacy' },
     { label: 'Terms of Use', path: '/terms' },
-    { label: 'Cookie Policy', path: '/cookies' },
+    { label: 'Safety Tips', path: '/safety' },
     { label: 'Help', path: '/help' },
   ],
   popularCities: ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat'],
@@ -77,7 +77,7 @@ const fallbackFooter = {
     { value: '4.9★', label: 'App Rating' },
   ],
   contact: {
-    email: 'support@buysalladda.com',
+    email: 'support@buyselladda.com',
     phone: '+91 9911356613',
     address: 'New Delhi',
   },

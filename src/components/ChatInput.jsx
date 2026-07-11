@@ -64,7 +64,8 @@ const ChatInput = ({ onSendMessage, onTyping, disabled = false }) => {
         <div className="ci-row">
           <button
             type="button"
-            onClick={() => setQuickOpen((o) => !o)}
+            onClick={() => !disabled && setQuickOpen((o) => !o)}
+            disabled={disabled}
             className={`ci-emoji-btn ${quickOpen ? 'ci-emoji-btn--active' : ''}`}
             title="Quick replies"
             aria-label="Quick replies"
@@ -76,8 +77,9 @@ const ChatInput = ({ onSendMessage, onTyping, disabled = false }) => {
             value={message}
             onChange={(e) => updateMessage(e.target.value)}
             onBlur={() => onTyping?.(false)}
-            placeholder="Type a message…"
+            placeholder={disabled ? 'Chat is unavailable' : 'Type a message...'}
             rows={1}
+            disabled={disabled}
             className="ci-textarea"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -205,6 +207,7 @@ const chatInputStyles = `
   }
   .ci-emoji-btn:hover { background: var(--ci-accent-light); color: var(--ci-accent); }
   .ci-emoji-btn--active { background: var(--ci-accent-light); color: var(--ci-accent); }
+  .ci-emoji-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* ── Textarea ── */
   .ci-textarea {
@@ -223,6 +226,7 @@ const chatInputStyles = `
     scrollbar-width: thin;
   }
   .ci-textarea::placeholder { color: var(--ci-text-3); }
+  .ci-textarea:disabled { cursor: not-allowed; color: var(--ci-text-3); }
   .ci-textarea::-webkit-scrollbar { width: 4px; }
   .ci-textarea::-webkit-scrollbar-track { background: transparent; }
   .ci-textarea::-webkit-scrollbar-thumb { background: var(--ci-border); border-radius: 99px; }

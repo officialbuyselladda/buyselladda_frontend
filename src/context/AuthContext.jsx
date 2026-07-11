@@ -165,6 +165,22 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const updateProfile = async (profileData) => {
+    try {
+      const { data } = await api.put('/users/profile', profileData);
+      if (data.success) {
+        const updatedUser = data.data;
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        toast.success(data.message || 'Profile updated');
+        return { success: true, user: updatedUser };
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Profile update failed');
+      return { success: false };
+    }
+  };
+
 const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -179,6 +195,7 @@ const logout = () => {
     register,
     resetPassword,
     verifyEmail,
+    updateProfile,
     logout,
     loading,
     isAuthenticated: !!user,

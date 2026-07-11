@@ -1,15 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Grid, List } from 'lucide-react';
-import { cn, flattenCategories } from '../utils';
+import {
+  ChevronRight, Grid, List, Package,
+  Bike, BookOpen, Briefcase, Building2, Car, Grid3X3,
+  Home as HomeIcon, KeyRound, MonitorSmartphone, Shirt,
+} from 'lucide-react';
+import { cn, flattenCategories, useCategories } from '../utils';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
 
+/* ─── Category icon mapping (mirrors Home.jsx's category rail) ─── */
+const getCategoryIconElement = (label, iconProps = { size: 28, strokeWidth: 1.9 }) => {
+  const value = String(label || '').toLowerCase();
+  if (value === 'all') return <Grid3X3 {...iconProps} />;
+  if (value.includes('stationary') || value.includes('stationery') || value.includes('book')) return <BookOpen {...iconProps} />;
+  if (value.includes('electronic') || value.includes('mobile') || value.includes('phone')) return <MonitorSmartphone {...iconProps} />;
+  if (value.includes('job')) return <Briefcase {...iconProps} />;
+  if (value.includes('cloth') || value.includes('fashion')) return <Shirt {...iconProps} />;
+  if (value.includes('car')) return <Car {...iconProps} />;
+  if (value.includes('motorcycle') || value.includes('bike') || value.includes('scooter')) return <Bike {...iconProps} />;
+  if (value.includes('rent')) return <KeyRound {...iconProps} />;
+  if (value.includes('flat') || value.includes('building') || value.includes('apartment')) return <Building2 {...iconProps} />;
+  if (value.includes('house') || value.includes('room') || value.includes('property')) return <HomeIcon {...iconProps} />;
+  return <Package {...iconProps} />;
+};
+
 const Categories = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,27 +40,11 @@ const Categories = () => {
   const subCategorySlug = searchParams.get('subCategory') || '';
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
     if (categorySlug) {
       setSelectedCategory(categorySlug);
       fetchCategoryProducts(categorySlug, subCategorySlug, 1);
     }
   }, [categorySlug, subCategorySlug]);
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const { data } = await api.get('/categories/tree');
-      setCategories(data.data || []);
-    } catch (error) {
-      toast.error('Failed to load categories');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchCategoryProducts = async (slug, subSlug = '', currentPage = 1) => {
     try {
@@ -71,7 +75,7 @@ const Categories = () => {
 
   const allCategories = flattenCategories(categories);
 
-  if (loading && !selectedCategory && categories.length === 0) {
+  if (categoriesLoading && !selectedCategory) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4">
@@ -106,8 +110,10 @@ const Categories = () => {
                 onClick={() => handleCategoryClick(category.slug)}
               >
                 <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-xl hover:border-primary-200 transition-all duration-300 h-full flex flex-col items-center text-center cursor-pointer">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                    <span className="text-2xl">{category.icon || '📦'}</span>
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform text-white overflow-hidden">
+                    {category.image
+                      ? <img src={category.image} alt="" className="w-full h-full object-cover" />
+                      : getCategoryIconElement(category.name)}
                   </div>
                   <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2">{category.name}</h3>
                   <p className="text-sm text-gray-500 mb-3">{category.productsCount || 0} listings</p>
@@ -160,8 +166,10 @@ const Categories = () => {
                         : "hover:bg-gray-50 border border-gray-100"
                     )}
                   >
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow">
-                      <span className="text-lg">{sub.icon || '📦'}</span>
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow text-white overflow-hidden">
+                      {sub.image
+                        ? <img src={sub.image} alt="" className="w-full h-full object-cover" />
+                        : getCategoryIconElement(sub.name, { size: 18, strokeWidth: 2 })}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{sub.name}</p>
@@ -207,8 +215,8 @@ const Categories = () => {
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
-                <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <span className="text-3xl">📦</span>
+                <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-gray-400">
+                  <Package size={34} strokeWidth={1.8} />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">No listings yet</h3>
                 <p className="text-gray-500 mb-8 max-w-md mx-auto">
@@ -234,7 +242,7 @@ const Categories = () => {
                 <button
                   onClick={loadMore}
                   disabled={loading}
-                  className="px-8 py-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-2xl font-semibold text-lg hover:from-primary-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-xl hover:shadow-2xl flex items-center gap-3"
+                  className="px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl font-semibold text-lg hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 transition-all shadow-xl hover:shadow-2xl flex items-center gap-3"
                 >
                   {loading ? (
                     <>

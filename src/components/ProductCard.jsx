@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, MapPin, Tag, MessageCircle, Heart, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +9,8 @@ import { getImageUrl, placeholderImage } from '../utils/image';
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [favorited, setFavorited] = useState(Boolean(product.isFavorited));
+  const [favoriting, setFavoriting] = useState(false);
 
   const isNew =
     product.createdAt &&
@@ -26,12 +29,16 @@ const ProductCard = ({ product }) => {
   const handleFavorite = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (requireLogin()) return;
+    if (requireLogin() || favoriting) return;
+    setFavoriting(true);
     try {
       const { data } = await api.post('/favorites/toggle', { productId: product._id });
+      setFavorited(data.data?.action === 'added');
       toast.success(data.message || 'Favorite updated');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not update favorite');
+    } finally {
+      setFavoriting(false);
     }
   };
 
@@ -74,10 +81,10 @@ const ProductCard = ({ product }) => {
           <div className="pc-overlay">
             <button
               onClick={handleFavorite}
-              className="pc-overlay-btn pc-overlay-btn--heart"
-              aria-label="Save to favourites"
+              className={`pc-overlay-btn pc-overlay-btn--heart ${favorited ? 'pc-overlay-btn--heart-active' : ''}`}
+              aria-label={favorited ? 'Remove from favourites' : 'Save to favourites'}
             >
-              <Heart size={16} />
+              <Heart size={16} fill={favorited ? 'currentColor' : 'none'} />
             </button>
           </div>
         </div>
@@ -128,8 +135,12 @@ const ProductCard = ({ product }) => {
 
           {/* Actions */}
           <div className="pc-actions">
-            <button onClick={handleFavorite} className="pc-btn pc-btn--fav" aria-label="Favourite">
-              <Heart size={14} />
+            <button
+              onClick={handleFavorite}
+              className={`pc-btn pc-btn--fav ${favorited ? 'pc-btn--fav-active' : ''}`}
+              aria-label={favorited ? 'Remove from favourites' : 'Favourite'}
+            >
+              <Heart size={14} fill={favorited ? 'currentColor' : 'none'} />
             </button>
             <button onClick={handleChat} className="pc-btn pc-btn--chat">
               <MessageCircle size={14} />
@@ -200,10 +211,10 @@ const cardStyles = `
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
     display: block;
-    transition: transform 0.36s ease;
+    background: var(--pc-bg-2);
   }
-  .pc-card:hover .pc-img { transform: scale(1.06); }
 
   /* NEW badge */
   .pc-new-badge {
@@ -270,6 +281,9 @@ const cardStyles = `
   .pc-overlay-btn--heart:hover {
     background: #fff;
     transform: scale(1.12);
+  }
+  .pc-overlay-btn--heart-active {
+    color: #ef4444;
   }
 
   /* ── Body ── */
@@ -437,6 +451,11 @@ const cardStyles = `
     border-color: var(--pc-border);
   }
   .pc-btn--fav:hover { background: #fff1f1; color: #ef4444; border-color: #fecaca; }
+  .pc-btn--fav-active {
+    background: #fff1f1;
+    color: #ef4444;
+    border-color: #fecaca;
+  }
 
   .pc-btn--chat {
     min-width: 0;

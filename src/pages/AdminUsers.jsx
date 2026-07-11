@@ -12,9 +12,11 @@ import {
   MapPin,
   Phone,
   Plus,
+  RefreshCw,
   Search,
   Shield,
   Send,
+  Download,
   Trash2,
   User,
   Users,
@@ -37,6 +39,13 @@ const emptyPasswordForm = {
   confirmPassword: '',
 };
 
+const formatDate = (value) => {
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('en-IN') : 'Recently';
+};
+
+const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
 const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ role: 'all', status: 'all', search: '', page: 1, limit: 10 });
@@ -46,7 +55,7 @@ const AdminUsers = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [selectedPasswordUser, setSelectedPasswordUser] = useState(null);
 
-  const { data: usersData = { users: [], total: 0, page: 1, pages: 1 }, isLoading } = useQuery({
+  const { data: usersData = { users: [], total: 0, page: 1, pages: 1 }, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['adminUsers', filters],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -189,6 +198,14 @@ const AdminUsers = () => {
       toast.error('Name and email are required');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      toast.error('Enter a valid email address');
+      return;
+    }
+    if (form.phone.trim() && !/^[6-9]\d{9}$/.test(form.phone.trim())) {
+      toast.error('Enter a valid 10 digit Indian mobile number');
+      return;
+    }
     if (modalMode === 'add' && form.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
@@ -214,6 +231,41 @@ const AdminUsers = () => {
   };
 
   const users = usersData.users || [];
+  const pageStats = users.reduce((acc, item) => {
+    acc.admins += item.role === 'admin' ? 1 : 0;
+    acc.blocked += item.isBlocked ? 1 : 0;
+    acc.unverified += !item.isEmailVerified ? 1 : 0;
+    acc.ads += Number(item.productCount || 0);
+    return acc;
+  }, { admins: 0, blocked: 0, unverified: 0, ads: 0 });
+
+  const exportCurrentPage = () => {
+    if (!users.length) {
+      toast.error('No users to export');
+      return;
+    }
+    const rows = [
+      ['Name', 'Email', 'Phone', 'Role', 'Status', 'Email Status', 'Ads', 'Joined'],
+      ...users.map((item) => [
+        item.name,
+        item.email,
+        item.phone || '',
+        item.role,
+        item.isBlocked ? 'Blocked' : 'Active',
+        item.isEmailVerified ? 'Verified' : 'Unverified',
+        item.productCount || 0,
+        formatDate(item.createdAt),
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `users-page-${filters.page}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-8">
@@ -234,6 +286,23 @@ const AdminUsers = () => {
           <Plus size={18} />
           Add New User
         </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: 'Page Users', value: users.length, icon: Users, cls: 'bg-blue-50 text-blue-700' },
+          { label: 'Admins', value: pageStats.admins, icon: Shield, cls: 'bg-purple-50 text-purple-700' },
+          { label: 'Blocked', value: pageStats.blocked, icon: Ban, cls: 'bg-red-50 text-red-700' },
+          { label: 'Total Ads', value: pageStats.ads, icon: Eye, cls: 'bg-emerald-50 text-emerald-700' },
+        ].map(({ label, value, icon: Icon, cls }) => (
+          <div key={label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-xs font-black uppercase tracking-wide text-gray-500">{label}</span>
+              <span className={`rounded-xl p-2 ${cls}`}><Icon size={18} /></span>
+            </div>
+            <p className="text-2xl font-black text-gray-950">{Number(value).toLocaleString('en-IN')}</p>
+          </div>
+        ))}
       </div>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -265,6 +334,35 @@ const AdminUsers = () => {
             <option value="active">Active</option>
             <option value="blocked">Blocked</option>
           </select>
+          <select
+            value={filters.limit}
+            onChange={(event) => setFilters({ ...filters, limit: Number(event.target.value), page: 1 })}
+            className="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value={10}>10 rows</option>
+            <option value={20}>20 rows</option>
+            <option value={50}>50 rows</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 font-bold text-gray-700 hover:bg-gray-50"
+          >
+            <RefreshCw size={17} className={isFetching ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+          <button
+            type="button"
+            onClick={exportCurrentPage}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 font-bold text-gray-700 hover:bg-gray-50"
+          >
+            <Download size={17} />
+            Export
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-gray-500">
+          <span>{users.length} shown, {usersData.total || 0} total</span>
+          {pageStats.unverified > 0 && <span>{pageStats.unverified} unverified on this page</span>}
         </div>
       </div>
 
@@ -293,7 +391,9 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {users.map((user) => (
+                {users.map((user) => {
+                  const isAdminRow = user.role === 'admin';
+                  return (
                   <tr key={user._id} className="hover:bg-gray-50">
                     <td className="p-5">
                       <div className="flex items-center gap-3">
@@ -326,21 +426,25 @@ const AdminUsers = () => {
                       </span>
                     </td>
                     <td className="p-5 font-semibold">{user.productCount || 0}</td>
-                    <td className="p-5 text-sm text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="p-5 text-sm text-gray-500">{formatDate(user.createdAt)}</td>
                     <td className="p-5">
                       <div className="flex gap-1">
                         <button onClick={() => openView(user._id)} className="rounded-lg p-2 text-blue-600 hover:bg-blue-50" title="View">
                           <Eye size={17} />
                         </button>
-                        <button onClick={() => openEdit(user._id)} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50" title="Edit">
-                          <Edit3 size={17} />
-                        </button>
+                        {!isAdminRow && (
+                          <button onClick={() => openEdit(user._id)} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50" title="Edit">
+                            <Edit3 size={17} />
+                          </button>
+                        )}
                         <button onClick={() => openPasswordReset(user)} className="rounded-lg p-2 text-purple-600 hover:bg-purple-50" title="Reset password">
                           <KeyRound size={17} />
                         </button>
-                        <button onClick={() => blockMutation.mutate(user._id)} className="rounded-lg p-2 text-amber-600 hover:bg-amber-50" title={user.isBlocked ? 'Unblock' : 'Block'}>
-                          {user.isBlocked ? <CheckCircle2 size={17} /> : <Ban size={17} />}
-                        </button>
+                        {!isAdminRow && (
+                          <button onClick={() => blockMutation.mutate(user._id)} className="rounded-lg p-2 text-amber-600 hover:bg-amber-50" title={user.isBlocked ? 'Unblock' : 'Block'}>
+                            {user.isBlocked ? <CheckCircle2 size={17} /> : <Ban size={17} />}
+                          </button>
+                        )}
                         {!user.isEmailVerified && user.role !== 'admin' && (
                           <>
                             <button onClick={() => verifyEmailMutation.mutate(user._id)} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50" title="Verify email manually">
@@ -351,19 +455,22 @@ const AdminUsers = () => {
                             </button>
                           </>
                         )}
-                        <button
-                          onClick={() => {
-                            if (confirm('Delete this user? Admin accounts cannot be deleted.')) deleteMutation.mutate(user._id);
-                          }}
-                          className="rounded-lg p-2 text-red-600 hover:bg-red-50"
-                          title="Delete"
-                        >
-                          <Trash2 size={17} />
-                        </button>
+                        {!isAdminRow && (
+                          <button
+                            onClick={() => {
+                              if (confirm('Delete this user?')) deleteMutation.mutate(user._id);
+                            }}
+                            className="rounded-lg p-2 text-red-600 hover:bg-red-50"
+                            title="Delete"
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -431,7 +538,7 @@ const AdminUsers = () => {
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Role</span>
                   <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500">
                     <option value="user">User</option>
-                    <option value="admin">Admin</option>
+                    {modalMode === 'add' && <option value="admin">Admin</option>}
                   </select>
                 </label>
                 <label className="flex items-center gap-3 pt-7">

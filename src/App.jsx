@@ -25,6 +25,7 @@ import Register from './pages/Register';
 import CreateProduct from './pages/CreateProduct';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
+import EditProfile from './pages/EditProfile';
 import MyProducts from './pages/MyProducts';
 import ChatList from './pages/ChatList';
 import ChatRoom from './pages/ChatRoom';
@@ -120,6 +121,15 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/profile/edit" 
+          element={
+            <ProtectedRoute>
+              <EditProfile />
             </ProtectedRoute>
           } 
         />

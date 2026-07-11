@@ -5,6 +5,7 @@ import {
   Edit3,
   KeyRound,
   Plus,
+  RefreshCw,
   Search,
   ShieldCheck,
   Trash2,
@@ -26,9 +27,32 @@ const emptyForm = {
   email: '',
   password: '',
   phone: '',
-  adminPermissions: [],
+  adminPermissions: ['all'],
   isBlocked: false,
 };
+
+const safeDate = (value) => {
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('en-IN') : 'Recently';
+};
+
+const permissionPresets = [
+  {
+    label: 'Support Staff',
+    description: 'Chats, reports, moderation, support, notifications',
+    permissions: ['dashboard', 'chats', 'reports', 'supportTickets', 'notifications', 'moderation'],
+  },
+  {
+    label: 'Listing Manager',
+    description: 'Ads, categories, limits, moderation, reports',
+    permissions: ['dashboard', 'products', 'categories', 'userLimits', 'reports', 'moderation'],
+  },
+  {
+    label: 'Growth Manager',
+    description: 'Analytics, home, campaigns, notifications',
+    permissions: ['dashboard', 'analytics', 'homeControl', 'growthControl', 'notifications', 'favorites'],
+  },
+];
 
 const PermissionCheckbox = ({ permission, checked, onChange }) => (
   <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 p-4 transition hover:border-emerald-200 hover:bg-emerald-50/40">
@@ -52,7 +76,7 @@ const AdminRolePermissions = () => {
   const [selectedAdminId, setSelectedAdminId] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
-  const { data: roleData = { admins: [], total: 0, page: 1, pages: 1 }, isLoading } = useQuery({
+  const { data: roleData = { admins: [], total: 0, page: 1, pages: 1 }, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['adminRolePermissions', filters],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -142,10 +166,35 @@ const AdminRolePermissions = () => {
     });
   };
 
+  const toggleSection = (section, checked) => {
+    const keys = ADMIN_PERMISSIONS.filter((permission) => permission.section === section).map((permission) => permission.key);
+    setForm((prev) => {
+      const current = prev.adminPermissions.filter((item) => item !== 'all');
+      return {
+        ...prev,
+        adminPermissions: checked
+          ? [...new Set([...current, ...keys])]
+          : current.filter((item) => !keys.includes(item)),
+      };
+    });
+  };
+
+  const applyPreset = (permissions) => {
+    setForm((prev) => ({ ...prev, adminPermissions: permissions }));
+  };
+
   const submitForm = (event) => {
     event.preventDefault();
     if (!form.name.trim() || !form.email.trim()) {
       toast.error('Name and email are required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      toast.error('Enter a valid email address');
+      return;
+    }
+    if (form.phone.trim() && !/^[6-9]\d{9}$/.test(form.phone.trim())) {
+      toast.error('Enter a valid 10 digit Indian mobile number');
       return;
     }
     if (modalMode === 'add' && form.password.length < 6) {
@@ -166,6 +215,13 @@ const AdminRolePermissions = () => {
   const admins = roleData.admins || [];
   const fullAccess = form.adminPermissions.includes('all');
   const selectedPermissionCount = form.adminPermissions.filter((permission) => permission !== 'all').length;
+  const stats = admins.reduce((acc, adminUser) => {
+    const permissions = adminUser.adminPermissions?.length ? adminUser.adminPermissions : ['all'];
+    acc.full += permissions.includes('all') ? 1 : 0;
+    acc.limited += permissions.includes('all') ? 0 : 1;
+    acc.blocked += adminUser.isBlocked ? 1 : 0;
+    return acc;
+  }, { full: 0, limited: 0, blocked: 0 });
 
   return (
     <div className="space-y-7">
@@ -188,6 +244,20 @@ const AdminRolePermissions = () => {
         </button>
       </div>
 
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          { label: 'Employees', value: admins.length, tone: 'bg-blue-50 text-blue-700' },
+          { label: 'Full Access', value: stats.full, tone: 'bg-emerald-50 text-emerald-700' },
+          { label: 'Limited', value: stats.limited, tone: 'bg-purple-50 text-purple-700' },
+          { label: 'Blocked', value: stats.blocked, tone: 'bg-red-50 text-red-700' },
+        ].map((item) => (
+          <div key={item.label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <span className="text-xs font-black uppercase tracking-wide text-gray-500">{item.label}</span>
+            <p className={`mt-3 inline-flex rounded-xl px-3 py-2 text-2xl font-black ${item.tone}`}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
@@ -208,6 +278,23 @@ const AdminRolePermissions = () => {
             <option value="active">Active</option>
             <option value="blocked">Blocked</option>
           </select>
+          <select
+            value={filters.limit}
+            onChange={(event) => setFilters({ ...filters, limit: Number(event.target.value), page: 1 })}
+            className="rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value={10}>10 rows</option>
+            <option value={20}>20 rows</option>
+            <option value={50}>50 rows</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 font-bold text-gray-700 hover:bg-gray-50"
+          >
+            <RefreshCw size={17} className={isFetching ? 'animate-spin' : ''} />
+            Refresh
+          </button>
         </div>
       </div>
 
@@ -274,7 +361,7 @@ const AdminRolePermissions = () => {
                           {adminUser.isBlocked ? 'Blocked' : 'Active'}
                         </span>
                       </td>
-                      <td className="p-5 text-sm text-gray-500">{new Date(adminUser.createdAt).toLocaleDateString()}</td>
+                      <td className="p-5 text-sm text-gray-500">{safeDate(adminUser.createdAt)}</td>
                       <td className="p-5">
                         <div className="flex gap-1">
                           <button onClick={() => openEdit(adminUser)} className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50" title="Edit permissions">
@@ -372,6 +459,21 @@ const AdminRolePermissions = () => {
                 <span className="text-sm font-semibold text-gray-500">{fullAccess ? 'Full platform control' : `${selectedPermissionCount} selected`}</span>
               </div>
 
+              <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                {permissionPresets.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => applyPreset(preset.permissions)}
+                    disabled={fullAccess}
+                    className="rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:border-emerald-200 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="block font-bold text-gray-900">{preset.label}</span>
+                    <span className="mt-1 block text-sm text-gray-500">{preset.description}</span>
+                  </button>
+                ))}
+              </div>
+
               <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
                 <PermissionCheckbox
                   permission={{ key: 'all', label: 'Full Access', description: 'Allow this admin to control every admin panel module' }}
@@ -392,9 +494,29 @@ const AdminRolePermissions = () => {
                           <h4 className="font-bold text-gray-900">{section}</h4>
                           <p className="text-sm text-gray-500">Controls linked admin pages and their API access.</p>
                         </div>
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-500">
-                          {fullAccess ? sectionPermissions.length : sectionSelected}/{sectionPermissions.length}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-500">
+                            {fullAccess ? sectionPermissions.length : sectionSelected}/{sectionPermissions.length}
+                          </span>
+                          {!fullAccess && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => toggleSection(section, true)}
+                                className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700"
+                              >
+                                Select all
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleSection(section, false)}
+                                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-500"
+                              >
+                                Clear
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         {sectionPermissions.map((permission) => (

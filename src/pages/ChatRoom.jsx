@@ -9,6 +9,7 @@ import ChatInput from '../components/ChatInput';
 import { format, formatDistanceToNow, isSameDay, isToday, isYesterday } from 'date-fns';
 import { AlertTriangle, ArrowLeft, Ban, Circle, MapPin, Package, Phone, ShieldAlert, User, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getImageUrl, placeholderImage } from '../utils/image';
 
 const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || '/';
 
@@ -40,10 +41,7 @@ const chatRoomStyles = `
   .cr-page {
     min-height: calc(100vh - 80px);
     padding: 18px 12px 28px;
-    background:
-      linear-gradient(135deg, rgba(212,87,26,0.11), transparent 28%),
-      linear-gradient(225deg, rgba(8,145,178,0.10), transparent 32%),
-      #f6f3ee;
+    background: #f8fafc;
   }
 
   .cr-shell {
@@ -57,8 +55,8 @@ const chatRoomStyles = `
     overflow: hidden;
     border: 1px solid rgba(45, 39, 32, 0.10);
     border-radius: 22px;
-    background: #fffaf5;
-    box-shadow: 0 24px 70px rgba(36, 28, 20, 0.16);
+    background: #ffffff;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
   }
 
   .cr-shell::before {
@@ -77,7 +75,7 @@ const chatRoomStyles = `
     padding: 14px 16px;
     border-bottom: 1px solid rgba(45, 39, 32, 0.10);
     background:
-      linear-gradient(135deg, #fffdf9 0%, #fff7ef 56%, #edfdf8 100%);
+      #ffffff;
   }
 
   .cr-header-row {
@@ -121,7 +119,7 @@ const chatRoomStyles = `
     overflow: hidden;
     border: 2px solid #ffffff;
     border-radius: 18px;
-    background: linear-gradient(135deg, #d4571a, #14b8a6);
+    background: linear-gradient(135deg, #1354d8, #ff7a00 55%, #168b2f);
     color: #ffffff;
     box-shadow: 0 10px 24px rgba(212,87,26,0.20);
   }
@@ -210,6 +208,22 @@ const chatRoomStyles = `
     background: #ffffff;
   }
 
+  .cr-safety-strip {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-bottom: 1px solid rgba(45, 39, 32, 0.08);
+    background: #f8fafc;
+    padding: 8px 14px;
+    color: #1a7a4a;
+    font-size: 12px;
+    font-weight: 850;
+    text-align: center;
+  }
+
   .cr-product-strip__meta {
     display: flex;
     min-width: 0;
@@ -222,14 +236,24 @@ const chatRoomStyles = `
 
   .cr-product-strip__icon {
     display: flex;
-    width: 34px;
-    height: 34px;
+    width: 42px;
+    height: 42px;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(45, 39, 32, 0.08);
+    border-radius: 13px;
     background: #fff2ea;
     color: #d4571a;
+  }
+
+  .cr-product-strip__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #faf9f7;
   }
 
   .cr-product-strip__price {
@@ -246,8 +270,8 @@ const chatRoomStyles = `
     overscroll-behavior: contain;
     padding: 22px 16px;
     background:
-      linear-gradient(180deg, rgba(255,250,245,0.90), rgba(238,246,244,0.92)),
-      repeating-linear-gradient(135deg, rgba(212,87,26,0.045) 0 1px, transparent 1px 18px);
+      linear-gradient(180deg, rgba(248,250,252,0.96), rgba(255,255,255,0.96)),
+      repeating-linear-gradient(135deg, rgba(19,84,216,0.035) 0 1px, transparent 1px 18px);
   }
 
   .cr-watermark {
@@ -398,6 +422,66 @@ const chatRoomStyles = `
     font-weight: 800;
   }
 
+  .cr-loading,
+  .cr-error {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    padding: 24px;
+  }
+
+  .cr-state-card {
+    width: min(100%, 420px);
+    border: 1px solid rgba(45, 39, 32, 0.10);
+    border-radius: 22px;
+    background: #ffffff;
+    padding: 28px 22px;
+    text-align: center;
+    box-shadow: 0 18px 48px rgba(36, 28, 20, 0.12);
+  }
+
+  .cr-state-icon {
+    display: flex;
+    width: 66px;
+    height: 66px;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    border-radius: 20px;
+    background: #fff2ea;
+    color: #d4571a;
+  }
+
+  .cr-state-card h3 {
+    margin: 0 0 6px;
+    color: #17120f;
+    font-size: 21px;
+    font-weight: 900;
+  }
+
+  .cr-state-card p {
+    margin: 0 0 16px;
+    color: #6f665d;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .cr-state-action {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 14px;
+    background: #d4571a;
+    padding: 0 16px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
   @media (max-width: 640px) {
     .cr-page {
       min-height: auto;
@@ -434,6 +518,11 @@ const chatRoomStyles = `
       padding: 9px 12px;
     }
 
+    .cr-safety-strip {
+      padding: 7px 12px;
+      font-size: 11.5px;
+    }
+
     .cr-product-strip__price {
       display: none;
     }
@@ -463,7 +552,7 @@ const ChatRoom = () => {
   const messagesEndRef = useRef(null);
   const scrollAreaRef = useRef(null);
 
-  const { data: chatData, isLoading } = useQuery({
+  const { data: chatData, isLoading, error } = useQuery({
     queryKey: ['chat', chatId],
     queryFn: () => chatApi.getMessages(chatId),
     enabled: !!chatId && !!user,
@@ -650,6 +739,8 @@ const ChatRoom = () => {
         ? `Last seen ${formatDistanceToNow(new Date(lastSeen), { addSuffix: true })}`
         : 'Offline';
 
+  const productImage = getImageUrl(chat?.product?.images?.[0]) || placeholderImage;
+
   const openProfile = async () => {
     if (!otherUser?._id) return;
     setProfileOpen(true);
@@ -694,10 +785,36 @@ const ChatRoom = () => {
     }
   };
 
-  if (isLoading || !chat) {
+  if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-[#f6f3ee] text-gray-500">
-        Loading chat...
+      <div className="cr-loading">
+        <style>{chatRoomStyles}</style>
+        <div className="cr-state-card">
+          <div className="cr-state-icon">
+            <Package size={28} />
+          </div>
+          <h3>Loading chat</h3>
+          <p>Your conversation is being prepared.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !chat) {
+    return (
+      <div className="cr-error">
+        <style>{chatRoomStyles}</style>
+        <div className="cr-state-card">
+          <div className="cr-state-icon">
+            <AlertTriangle size={28} />
+          </div>
+          <h3>Could not open chat</h3>
+          <p>{error?.message || 'This conversation may no longer be available.'}</p>
+          <Link to="/chats" className="cr-state-action">
+            <ArrowLeft size={16} />
+            Back to chats
+          </Link>
+        </div>
       </div>
     );
   }
@@ -750,13 +867,26 @@ const ChatRoom = () => {
         <div className="cr-product-strip">
           <div className="cr-product-strip__meta">
             <span className="cr-product-strip__icon">
-              <Package size={16} />
+              {chat.product?.images?.length ? (
+                <img
+                  src={productImage}
+                  alt=""
+                  onError={(event) => { event.currentTarget.src = placeholderImage; }}
+                />
+              ) : (
+                <Package size={17} />
+              )}
             </span>
             <span className="truncate">{chat.product?.title || 'BuySellAdda secure conversation'}</span>
           </div>
           {chat.product?.price && (
             <span className="cr-product-strip__price">Rs {chat.product.price.toLocaleString()}</span>
           )}
+        </div>
+
+        <div className="cr-safety-strip">
+          <ShieldAlert size={14} />
+          <span>Keep payment safe: meet publicly, inspect first, and avoid advance transfers.</span>
         </div>
 
         <div ref={scrollAreaRef} className="cr-messages">

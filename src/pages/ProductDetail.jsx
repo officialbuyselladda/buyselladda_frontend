@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Share2,
   Tag,
-  User,
   ZoomIn,
   X,
 } from 'lucide-react';
@@ -253,6 +252,9 @@ const ProductDetail = () => {
 
   const isSold = product.status === 'sold';
   const statusLabel = PRODUCT_STATUS[product.status] || product.status;
+  const sellerDisplayName = product.sellerName || product.user?.name || 'Seller';
+  const sellerInitial = sellerDisplayName.trim().charAt(0).toUpperCase() || 'S';
+  const postedLabel = product.createdAt ? `${formatDistanceToNow(new Date(product.createdAt))} ago` : 'Recently';
 
   return (
     <>
@@ -301,7 +303,7 @@ const ProductDetail = () => {
         .pdp-page {
           min-height: 100vh;
           background: var(--pdp-bg);
-          padding: 28px 0 60px;
+          padding: 28px 0 88px;
           font-family: var(--pdp-font-body);
           color: var(--pdp-text-primary);
         }
@@ -392,8 +394,15 @@ const ProductDetail = () => {
           flex-shrink: 0;
           background: var(--pdp-bg);
         }
-        .pdp-gallery__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .pdp-gallery__thumb:hover { border-color: var(--pdp-accent); opacity: 1; transform: scale(1.03); }
+        .pdp-gallery__thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          display: block;
+          background: var(--pdp-bg);
+        }
+        .pdp-gallery__thumb:hover { border-color: var(--pdp-accent); opacity: 1; }
         .pdp-gallery__thumb--active { border-color: var(--pdp-accent); box-shadow: 0 0 0 3px rgba(212,87,26,0.15); }
 
         .pdp-gallery__stage {
@@ -401,7 +410,7 @@ const ProductDetail = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #111;
+          background: linear-gradient(135deg, #faf9f7 0%, #f1eee8 100%);
           aspect-ratio: 4/3;
           min-height: 280px;
           max-height: 600px;
@@ -417,11 +426,10 @@ const ProductDetail = () => {
           max-width: 100%;
           max-height: 100%;
           object-fit: contain;
+          object-position: center;
           padding: 12px;
           cursor: zoom-in;
-          transition: transform 0.3s ease;
         }
-        .pdp-gallery__main-img:hover { transform: scale(1.01); }
 
         .pdp-gallery__nav {
           position: absolute;
@@ -489,7 +497,14 @@ const ProductDetail = () => {
           transition: border-color var(--pdp-transition);
           background: var(--pdp-bg);
         }
-        .pdp-gallery__strip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .pdp-gallery__strip-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          display: block;
+          background: var(--pdp-bg);
+        }
         .pdp-gallery__strip-thumb--active { border-color: var(--pdp-accent); }
 
         /* ── Lightbox ── */
@@ -544,6 +559,45 @@ const ProductDetail = () => {
         /* ── Hero Info Card ── */
         .pdp-hero {
           padding: 22px 24px;
+        }
+        .pdp-highlights {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+          padding: 14px;
+        }
+        @media (min-width: 640px) {
+          .pdp-highlights { grid-template-columns: repeat(3, minmax(0,1fr)); }
+        }
+        .pdp-highlight {
+          display: flex;
+          min-width: 0;
+          align-items: flex-start;
+          gap: 10px;
+          border: 1px solid var(--pdp-border);
+          border-radius: 12px;
+          background: var(--pdp-surface-2);
+          padding: 12px;
+        }
+        .pdp-highlight svg {
+          flex-shrink: 0;
+          color: var(--pdp-accent);
+          margin-top: 1px;
+        }
+        .pdp-highlight strong {
+          display: block;
+          color: var(--pdp-text-primary);
+          font-size: 12.5px;
+          font-weight: 800;
+          line-height: 1.25;
+        }
+        .pdp-highlight span {
+          display: block;
+          margin-top: 2px;
+          color: var(--pdp-text-tertiary);
+          font-size: 11.5px;
+          font-weight: 600;
+          line-height: 1.35;
         }
         .pdp-hero__meta {
           display: flex;
@@ -807,11 +861,13 @@ const ProductDetail = () => {
           width: 52px;
           height: 52px;
           border-radius: 50%;
-          background: var(--pdp-text-primary);
+          background: linear-gradient(135deg, var(--pdp-text-primary), #3b342c);
           display: flex;
           align-items: center;
           justify-content: center;
           color: #fff;
+          font-size: 20px;
+          font-weight: 900;
           flex-shrink: 0;
           box-shadow: 0 2px 8px rgba(0,0,0,0.18);
         }
@@ -831,6 +887,35 @@ const ProductDetail = () => {
           font-size: 11.5px;
           font-weight: 600;
           color: var(--pdp-green);
+        }
+        .pdp-seller__facts {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0,1fr));
+          gap: 8px;
+          margin: 14px 0 16px;
+        }
+        .pdp-seller__fact {
+          min-width: 0;
+          border: 1px solid var(--pdp-border);
+          border-radius: 10px;
+          background: var(--pdp-surface-2);
+          padding: 9px 8px;
+          text-align: center;
+        }
+        .pdp-seller__fact strong {
+          display: block;
+          color: var(--pdp-text-primary);
+          font-size: 12px;
+          font-weight: 900;
+          line-height: 1.2;
+        }
+        .pdp-seller__fact span {
+          display: block;
+          margin-top: 2px;
+          color: var(--pdp-text-tertiary);
+          font-size: 10.5px;
+          font-weight: 700;
+          line-height: 1.2;
         }
         .pdp-map-card {
           padding: 22px 24px;
@@ -931,6 +1016,21 @@ const ProductDetail = () => {
         }
         .pdp-cta:active:not(:disabled) { transform: translateY(0); }
         .pdp-cta:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+        .pdp-contact-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 7px;
+          color: var(--pdp-text-tertiary);
+          font-size: 11.5px;
+          font-weight: 600;
+          line-height: 1.45;
+          margin-top: 2px;
+        }
+        .pdp-contact-note svg {
+          color: var(--pdp-green);
+          flex-shrink: 0;
+          margin-top: 1px;
+        }
 
         .pdp-phone-reveal {
           display: flex;
@@ -966,6 +1066,64 @@ const ProductDetail = () => {
           color: var(--pdp-text-secondary);
           word-break: break-all;
           line-height: 1.6;
+        }
+        .pdp-mobile-contact {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 40;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border-top: 1px solid var(--pdp-border);
+          background: rgba(255,255,255,0.96);
+          box-shadow: 0 -8px 24px rgba(15,14,12,0.10);
+          padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+          backdrop-filter: blur(10px);
+        }
+        .pdp-mobile-contact__price {
+          min-width: 0;
+          flex: 1;
+        }
+        .pdp-mobile-contact__price strong {
+          display: block;
+          color: var(--pdp-accent);
+          font-size: 16px;
+          font-weight: 900;
+          line-height: 1.1;
+        }
+        .pdp-mobile-contact__price span {
+          display: block;
+          overflow: hidden;
+          color: var(--pdp-text-tertiary);
+          font-size: 11px;
+          font-weight: 700;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .pdp-mobile-contact__btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          min-height: 42px;
+          border: 0;
+          border-radius: 10px;
+          background: var(--pdp-accent);
+          color: #fff;
+          cursor: pointer;
+          padding: 0 16px;
+          font-size: 13px;
+          font-weight: 900;
+        }
+        .pdp-mobile-contact__btn:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+        @media (min-width: 1024px) {
+          .pdp-page { padding-bottom: 60px; }
+          .pdp-mobile-contact { display: none; }
         }
 
         /* ── Related ── */
@@ -1142,6 +1300,30 @@ const ProductDetail = () => {
                 )}
               </div>
 
+              <div className="pdp-card pdp-highlights" aria-label="Listing highlights">
+                <div className="pdp-highlight">
+                  <BadgeCheck size={18} />
+                  <div>
+                    <strong>Verified seller profile</strong>
+                    <span>Contact through BuySellAdda chat before you meet.</span>
+                  </div>
+                </div>
+                <div className="pdp-highlight">
+                  <ShieldCheck size={18} />
+                  <div>
+                    <strong>Buyer safety first</strong>
+                    <span>Inspect the item and meet in a public location.</span>
+                  </div>
+                </div>
+                <div className="pdp-highlight">
+                  <CalendarDays size={18} />
+                  <div>
+                    <strong>Posted {postedLabel}</strong>
+                    <span>{product.views || 0} people viewed this listing.</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Description + Details */}
               <div className="pdp-info-row">
                 <div className="pdp-card pdp-desc">
@@ -1215,7 +1397,7 @@ const ProductDetail = () => {
             {/* ── Right Aside ── */}
             <div className="pdp-aside">
               {isSold && (
-                <div className="pdp-sold-banner">🚫 This item has already been sold</div>
+                <div className="pdp-sold-banner">This item has already been sold</div>
               )}
 
               {/* Seller Card */}
@@ -1224,16 +1406,31 @@ const ProductDetail = () => {
 
                 <div className="pdp-seller__profile">
                   <div className="pdp-seller__avatar">
-                    <User size={24} />
+                    {sellerInitial}
                   </div>
                   <div>
                     <p className="pdp-seller__name">
-                      {product.sellerName || product.user?.name || 'Seller'}
+                      {sellerDisplayName}
                     </p>
                     <span className="pdp-seller__verified">
                       <BadgeCheck size={13} />
                       Verified profile
                     </span>
+                  </div>
+                </div>
+
+                <div className="pdp-seller__facts" aria-label="Seller trust summary">
+                  <div className="pdp-seller__fact">
+                    <strong>Private</strong>
+                    <span>seller</span>
+                  </div>
+                  <div className="pdp-seller__fact">
+                    <strong>Secure</strong>
+                    <span>chat</span>
+                  </div>
+                  <div className="pdp-seller__fact">
+                    <strong>{product.views || 0}</strong>
+                    <span>views</span>
                   </div>
                 </div>
 
@@ -1272,6 +1469,11 @@ const ProductDetail = () => {
                   {contactMethod === 'phone' ? <Phone size={17} /> : <Mail size={17} />}
                   {contactMethod === 'phone' ? 'Show phone number' : 'Message seller'}
                 </button>
+
+                <div className="pdp-contact-note">
+                  <ShieldCheck size={14} />
+                  <span>For a safer deal, chat first and avoid advance payments before inspection.</span>
+                </div>
 
                 {product.phone && contactMethod === 'phone' && user && (
                   <a href={`tel:${product.phone}`} className="pdp-phone-reveal">
@@ -1323,6 +1525,22 @@ const ProductDetail = () => {
             )}
           </section>
         </div>
+      </div>
+
+      <div className="pdp-mobile-contact">
+        <div className="pdp-mobile-contact__price">
+          <strong>{formatPrice(product.price)}</strong>
+          <span>{product.title}</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleContact}
+          disabled={isSold}
+          className="pdp-mobile-contact__btn"
+        >
+          <MessageCircle size={16} />
+          Contact
+        </button>
       </div>
     </>
   );

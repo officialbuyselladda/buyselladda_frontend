@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Shield } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { contactApi } from '../services/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -9,11 +10,15 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await contactApi.send({ type: 'contact', ...formData });
       toast.success("Message sent! We'll reply within 24 hours.");
       setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not send your message. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (

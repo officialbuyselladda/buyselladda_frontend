@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
-import { ArrowLeft, Inbox, MessageCircle, Package, Search, Send, User } from 'lucide-react';
+import { ArrowLeft, Inbox, MessageCircle, Package, RefreshCw, Search, Send, ShieldCheck, User } from 'lucide-react';
 import io from 'socket.io-client';
 import { chatApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl, placeholderImage } from '../utils/image';
 
 const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || '/';
 
@@ -13,10 +14,7 @@ const chatListStyles = `
   .cl-page {
     min-height: calc(100vh - 80px);
     padding: 20px 12px 30px;
-    background:
-      linear-gradient(135deg, rgba(212,87,26,0.10), transparent 30%),
-      linear-gradient(225deg, rgba(20,184,166,0.10), transparent 34%),
-      #f6f3ee;
+    background: #f8fafc;
   }
 
   .cl-shell {
@@ -32,9 +30,9 @@ const chatListStyles = `
     margin-bottom: 14px;
     border: 1px solid rgba(45, 39, 32, 0.10);
     border-radius: 22px;
-    background: linear-gradient(135deg, #fffdf9 0%, #fff7ef 58%, #effdf9 100%);
+    background: #ffffff;
     padding: 16px;
-    box-shadow: 0 18px 50px rgba(36, 28, 20, 0.12);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
   }
 
   .cl-title-wrap {
@@ -52,7 +50,7 @@ const chatListStyles = `
     align-items: center;
     justify-content: center;
     border-radius: 16px;
-    background: linear-gradient(135deg, #d4571a, #14b8a6);
+    background: linear-gradient(135deg, #1354d8, #ff7a00 55%, #168b2f);
     color: #ffffff;
     box-shadow: 0 10px 24px rgba(212, 87, 26, 0.20);
   }
@@ -97,7 +95,7 @@ const chatListStyles = `
 
   .cl-toolbar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 12px;
     margin-bottom: 14px;
   }
@@ -154,12 +152,37 @@ const chatListStyles = `
     color: #ffffff;
   }
 
+  .cl-refresh {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid rgba(45, 39, 32, 0.10);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.88);
+    padding: 0 14px;
+    color: #d4571a;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 10px 28px rgba(36, 28, 20, 0.08);
+  }
+
+  .cl-refresh:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .cl-spin {
+    animation: cl-spin 0.8s linear infinite;
+  }
+
   .cl-panel {
     overflow: hidden;
     border: 1px solid rgba(45, 39, 32, 0.10);
     border-radius: 22px;
-    background: rgba(255, 250, 245, 0.88);
-    box-shadow: 0 24px 70px rgba(36, 28, 20, 0.14);
+    background: #ffffff;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
   }
 
   .cl-summary {
@@ -199,7 +222,7 @@ const chatListStyles = `
     gap: 13px;
     align-items: center;
     border-bottom: 1px solid rgba(45, 39, 32, 0.07);
-    background: rgba(255,255,255,0.72);
+    background: #ffffff;
     padding: 15px 16px;
     transition: background 0.16s ease, transform 0.16s ease;
   }
@@ -214,7 +237,7 @@ const chatListStyles = `
   }
 
   .cl-row--unread {
-    background: #fff8f2;
+    background: #fff7ed;
   }
 
   .cl-avatar {
@@ -227,7 +250,7 @@ const chatListStyles = `
     overflow: hidden;
     border: 2px solid #ffffff;
     border-radius: 18px;
-    background: linear-gradient(135deg, #d4571a, #14b8a6);
+    background: linear-gradient(135deg, #1354d8, #ff7a00 55%, #168b2f);
     color: #ffffff;
     box-shadow: 0 10px 24px rgba(36, 28, 20, 0.12);
   }
@@ -319,6 +342,22 @@ const chatListStyles = `
     font-weight: 850;
   }
 
+  .cl-product-thumb {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 7px;
+    background: #f5f4f1;
+  }
+
+  .cl-product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
   .cl-product span {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -408,6 +447,19 @@ const chatListStyles = `
     box-shadow: 0 12px 24px rgba(212, 87, 26, 0.22);
   }
 
+  .cl-safe-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-top: 1px solid rgba(45, 39, 32, 0.08);
+    background: #fffdf9;
+    padding: 10px 14px;
+    color: #1a7a4a;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
   .cl-spinner {
     width: 42px;
     height: 42px;
@@ -453,8 +505,18 @@ const chatListStyles = `
     }
 
     .cl-toolbar {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr auto;
       padding: 0 10px;
+    }
+
+    .cl-search {
+      grid-column: 1 / -1;
+    }
+
+    .cl-refresh {
+      width: 46px;
+      padding: 0;
+      font-size: 0;
     }
 
     .cl-filter button {
@@ -516,6 +578,8 @@ const getLastMessageText = (lastMessage, currentUserId) => {
   const senderId = lastMessage.sender?._id || lastMessage.sender;
   return senderId === currentUserId ? `You: ${text}` : text;
 };
+
+const getProductImage = (product) => getImageUrl(product?.images?.[0]) || placeholderImage;
 
 const ChatList = () => {
   const { user } = useAuth();
@@ -644,6 +708,10 @@ const ChatList = () => {
                 Unread
               </button>
             </div>
+            <button type="button" onClick={() => refetch()} disabled={isLoading} className="cl-refresh">
+              <RefreshCw size={16} className={isLoading ? 'cl-spin' : ''} />
+              Refresh
+            </button>
           </div>
         )}
 
@@ -726,7 +794,13 @@ const ChatList = () => {
 
                           {chat.product && (
                             <div className="cl-product">
-                              <Package size={12} />
+                              <span className="cl-product-thumb">
+                                <img
+                                  src={getProductImage(chat.product)}
+                                  alt=""
+                                  onError={(event) => { event.currentTarget.src = placeholderImage; }}
+                                />
+                              </span>
                               <span>{chat.product.title || 'Product chat'}</span>
                               {chat.product.price && (
                                 <strong className="cl-price">Rs {chat.product.price.toLocaleString()}</strong>
@@ -743,6 +817,10 @@ const ChatList = () => {
                   })}
                 </div>
               )}
+              <div className="cl-safe-note">
+                <ShieldCheck size={14} />
+                <span>Meet safely, inspect the item, and avoid advance payments.</span>
+              </div>
             </>
           )}
         </div>

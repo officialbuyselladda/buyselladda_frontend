@@ -489,6 +489,12 @@ const Header = () => {
 
               {/* Favorites + Chat + Notifications */}
               <>
+                {user?.role === 'user' && (
+                  <Link to="/profile" className="hdr-icon-btn hdr-icon-btn--profile" title="Profile">
+                    <User size={19} />
+                  </Link>
+                )}
+
                 <Link
                   to={user?.role === 'user' ? '/favorites' : '/login'}
                   className="hdr-icon-btn"
@@ -553,6 +559,9 @@ const Header = () => {
                         <p className="hdr-dropdown__email">{user.email}</p>
                       </div>
                       <div className="hdr-dropdown__body">
+                        <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="hdr-dropdown__item">
+                          <User size={15} /> Profile
+                        </Link>
                         <Link to="/my-products" onClick={() => setUserMenuOpen(false)} className="hdr-dropdown__item">
                           <Home size={15} /> My Ads
                         </Link>
@@ -911,6 +920,11 @@ const Header = () => {
                   {user.role === 'admin' && (
                     <Link to="/admin/dashboard" onClick={() => setMobileOpen(false)} className="hdr-drawer__menu-item hdr-drawer__menu-item--admin">
                       <Shield size={15} /> Admin Panel
+                    </Link>
+                  )}
+                  {user.role === 'user' && (
+                    <Link to="/profile" onClick={() => setMobileOpen(false)} className="hdr-drawer__menu-item">
+                      <User size={15} /> Profile
                     </Link>
                   )}
                   {user.role === 'user' && (

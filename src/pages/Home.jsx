@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { cn, getCategoryLabel, getCategoryValue, useCategories, useCategoryOptions } from '../utils';
 import api from '../services/api';
@@ -17,6 +17,7 @@ import {
   MapPin,
   MonitorSmartphone,
   Search,
+  ShieldCheck,
   Shirt,
   SlidersHorizontal,
   X,
@@ -67,9 +68,13 @@ const CategoryPill = ({ label, image, active, onClick, children = [] }) => {
   );
 };
 
+const quickSearches = ['iPhone', 'Bike', 'Car', 'Sofa', 'Laptop', 'Flat for rent'];
+
 /* ─── Main Home ─────────────────────────────────── */
 const Home = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [heroSearch, setHeroSearch] = useState(searchParams.get('search') || '');
+  const [heroLocation, setHeroLocation] = useState(searchParams.get('location') || '');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -91,10 +96,16 @@ const Home = () => {
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
     subCategory: searchParams.get('subCategory') || '',
+    location: searchParams.get('location') || '',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
     sortBy: searchParams.get('sortBy') || 'latest',
   }), [searchParams]);
+
+  useEffect(() => {
+    setHeroSearch(filters.search);
+    setHeroLocation(filters.location);
+  }, [filters.search, filters.location]);
 
   const visibleCategories = useMemo(() => (
     categoryTree.length ? categoryTree : allCategories
@@ -124,6 +135,7 @@ const Home = () => {
       if (filters.search) params.append('search', filters.search);
       if (filters.category) params.append('category', filters.category);
       if (filters.subCategory) params.append('subCategory', filters.subCategory);
+      if (filters.location) params.append('location', filters.location);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
       if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
@@ -193,6 +205,22 @@ const Home = () => {
   };
 
   const clearSearch = () => updateFilter('search', '');
+  const handleHeroSearch = (event) => {
+    event.preventDefault();
+    const params = new URLSearchParams(searchParams);
+    const search = heroSearch.trim();
+    const location = heroLocation.trim();
+    search ? params.set('search', search) : params.delete('search');
+    location ? params.set('location', location) : params.delete('location');
+    setSearchParams(params);
+  };
+
+  const applyQuickSearch = (term) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('search', term);
+    setSearchParams(params);
+  };
+
   const dismissLocationPrompt = () => {
     localStorage.setItem('locationPromptDismissed', 'true');
     setLocationPromptDismissed(true);
@@ -204,6 +232,57 @@ const Home = () => {
 
       <div className="home-page">
         <div className="home-container">
+
+          <section className="home-hero" aria-label="Find local deals">
+            <picture className="home-hero__media">
+              <img
+                src="/banner-image.png"
+                alt="BuySellAdda trusted marketplace - buy, sell and connect"
+                className="home-hero__banner"
+              />
+            </picture>
+
+            <form className="home-hero__search" onSubmit={handleHeroSearch}>
+              <label className="home-hero__field home-hero__field--search">
+                <Search size={19} />
+                <input
+                  value={heroSearch}
+                  onChange={(event) => setHeroSearch(event.target.value)}
+                  placeholder="Search mobiles, cars, bikes and more"
+                />
+              </label>
+              <label className="home-hero__field home-hero__field--location">
+                <MapPin size={18} />
+                <input
+                  value={heroLocation}
+                  onChange={(event) => setHeroLocation(event.target.value)}
+                  placeholder="City, area or pincode"
+                />
+              </label>
+              <button type="submit" className="home-hero__submit">Search</button>
+            </form>
+
+            <div className="home-hero__quick" aria-label="Popular searches">
+              <span>Popular:</span>
+              {quickSearches.map((term) => (
+                <button key={term} type="button" onClick={() => applyQuickSearch(term)}>
+                  {term}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <div className="home-trust-strip" aria-label="Marketplace shortcuts">
+            <div className="home-trust-strip__item">
+              <ShieldCheck size={18} />
+              <span>Verified local sellers</span>
+            </div>
+            <div className="home-trust-strip__item">
+              <LocateFixed size={18} />
+              <span>Nearby listings first</span>
+            </div>
+            <Link to="/create-product" className="home-trust-strip__sell">Post free ad</Link>
+          </div>
 
           {/* ── Location Prompt ── */}
           {!userLocation && !locationPromptDismissed && (
@@ -235,9 +314,21 @@ const Home = () => {
             <div className="home-banner home-banner--search">
               <Search size={15} className="home-banner__search-icon" />
               <span className="home-banner__search-text">
-                Results for <strong>"{filters.search}"</strong>
+                Results for <strong>"{filters.search}"</strong>{filters.location ? <> in <strong>{filters.location}</strong></> : null}
               </span>
               <button onClick={clearSearch} className="home-banner__clear" aria-label="Clear search">
+                <X size={13} />
+              </button>
+            </div>
+          )}
+
+          {!filters.search && filters.location && (
+            <div className="home-banner home-banner--search">
+              <MapPin size={15} className="home-banner__search-icon" />
+              <span className="home-banner__search-text">
+                Showing listings in <strong>{filters.location}</strong>
+              </span>
+              <button onClick={() => updateFilter('location', '')} className="home-banner__clear" aria-label="Clear location">
                 <X size={13} />
               </button>
             </div>
@@ -267,11 +358,6 @@ const Home = () => {
           {/* ── Categories ── */}
           <div className="home-cats">
             <div className="home-cats__scroll">
-              <CategoryPill
-                label="All"
-                active={!filters.category}
-                onClick={() => updateFilter('category', '')}
-              />
               {visibleCategories.map(cat => {
                 const slug = getCategoryValue(cat);
                 const name = getCategoryLabel(cat);
@@ -387,7 +473,7 @@ const Home = () => {
               </div>
               <p className="home-empty__title">No listings found</p>
               <p className="home-empty__sub">Try a different search or category</p>
-              {(filters.search || filters.category || filters.subCategory) && (
+              {(filters.search || filters.location || filters.category || filters.subCategory) && (
                 <button
                   onClick={() => setSearchParams({})}
                   className="home-empty__clear-btn"
@@ -483,6 +569,149 @@ const homeStyles = `
   }
   @media (min-width: 640px) { .home-container { padding: 0 24px; } }
   @media (min-width: 1024px) { .home-container { padding: 0 40px; } }
+
+  .home-hero {
+    overflow: hidden;
+    border: 1px solid var(--h-border);
+    border-radius: 18px;
+    background: var(--h-surface);
+    color: var(--h-text);
+    padding: 10px;
+    box-shadow: var(--h-shadow);
+  }
+  .home-hero__media {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  .home-hero__banner {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 260px;
+    aspect-ratio: 1800 / 886;
+    object-fit: cover;
+    object-position: center;
+    background: #ffffff;
+  }
+  .home-hero__search {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(220px, 0.8fr) auto;
+    gap: 8px;
+    margin-top: 10px;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 8px;
+    border: 1px solid var(--h-border);
+    box-shadow: 0 8px 24px rgba(15,14,12,0.07);
+  }
+  .home-hero__field {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid var(--h-border);
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0 12px;
+    color: var(--h-accent);
+  }
+  .home-hero__field input {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .home-hero__field input::placeholder {
+    color: var(--h-text-3);
+    font-weight: 600;
+  }
+  .home-hero__submit {
+    min-width: 112px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--h-accent);
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 900;
+    transition: background var(--h-t), transform var(--h-t);
+  }
+  .home-hero__submit:hover {
+    background: var(--h-accent-hover);
+    transform: translateY(-1px);
+  }
+  .home-hero__quick {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-top: 14px;
+    color: var(--h-text-2);
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .home-hero__quick button {
+    border: 1px solid var(--h-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--h-text-2);
+    cursor: pointer;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 800;
+    transition: background var(--h-t), border-color var(--h-t);
+  }
+  .home-hero__quick button:hover {
+    border-color: #fddcc8;
+    background: var(--h-accent-light);
+    color: var(--h-accent);
+  }
+  .home-trust-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--h-border);
+    border-radius: 14px;
+    background: var(--h-surface);
+    padding: 10px 12px;
+    box-shadow: var(--h-shadow);
+  }
+  .home-trust-strip__item {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+    color: var(--h-text-2);
+    font-size: 12.5px;
+    font-weight: 800;
+  }
+  .home-trust-strip__item svg {
+    color: var(--h-accent);
+    flex-shrink: 0;
+  }
+  .home-trust-strip__sell {
+    margin-left: auto;
+    flex-shrink: 0;
+    border: 1px solid var(--h-accent);
+    border-radius: 999px;
+    background: var(--h-accent);
+    color: #ffffff;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 900;
+    text-decoration: none;
+  }
+  .home-trust-strip__sell:hover {
+    background: var(--h-accent-hover);
+  }
 
   /* ── Banners ── */
   .home-banner {
@@ -1048,6 +1277,44 @@ const homeStyles = `
   }
 
   @media (max-width: 640px) {
+    .home-hero {
+      border-radius: 16px;
+      padding: 8px;
+    }
+    .home-hero__media {
+      border-radius: 11px;
+    }
+    .home-hero__banner {
+      min-height: 240px;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      object-position: 47% center;
+    }
+    .home-hero__search {
+      grid-template-columns: 1fr;
+      gap: 7px;
+      padding: 7px;
+    }
+    .home-hero__field input {
+      height: 42px;
+      font-size: 13px;
+    }
+    .home-hero__submit {
+      min-height: 42px;
+      width: 100%;
+    }
+    .home-trust-strip {
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .home-trust-strip__item {
+      flex: 1 1 160px;
+    }
+    .home-trust-strip__sell {
+      width: 100%;
+      margin-left: 0;
+      text-align: center;
+    }
     .home-filters { display: grid; grid-template-columns: 1fr 1fr; }
     .home-filters__label { grid-column: 1 / -1; }
     .home-filters input, .home-filters select { width: 100%; min-width: 0; margin-left: 0; }
