@@ -7,7 +7,7 @@ export default ({ mode }) => {
 
   const apiTarget = env.VITE_API_URL && env.VITE_API_URL.startsWith('http')
     ? env.VITE_API_URL.replace(/\/api\/?$/, '')
-    : 'http://localhost:5003'
+    : 'https://buyselladda.com'
 
   return defineConfig({
     // Safe base URL
