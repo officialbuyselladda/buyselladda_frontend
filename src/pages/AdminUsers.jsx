@@ -514,29 +514,29 @@ const AdminUsers = () => {
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Name</span>
-                  <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-emerald-500" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Email</span>
-                  <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-emerald-500" />
                 </label>
                 {modalMode === 'add' && (
                   <label className="block">
                     <span className="mb-1 block text-sm font-semibold text-gray-700">Password</span>
-                    <input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                    <input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-emerald-500" />
                   </label>
                 )}
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Phone</span>
-                  <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-emerald-500" />
                 </label>
                 <label className="block md:col-span-2">
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Location</span>
-                  <input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500" />
+                  <input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-emerald-500" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-gray-700">Role</span>
-                  <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500">
+                  <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-emerald-500">
                     <option value="user">User</option>
                     {modalMode === 'add' && <option value="admin">Admin</option>}
                   </select>
@@ -584,7 +584,7 @@ const AdminUsers = () => {
                   type="password"
                   value={passwordForm.password}
                   onChange={(event) => setPasswordForm({ ...passwordForm, password: event.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-purple-500"
                   autoComplete="new-password"
                 />
               </label>
@@ -594,7 +594,7 @@ const AdminUsers = () => {
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={(event) => setPasswordForm({ ...passwordForm, confirmPassword: event.target.value })}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-purple-500"
                   autoComplete="new-password"
                 />
               </label>

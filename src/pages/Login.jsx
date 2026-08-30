@@ -68,6 +68,11 @@ const Login = () => {
             <div className="mb-8">
               <h2 className="text-3xl font-black text-gray-950">Welcome back</h2>
               <p className="mt-2 text-sm text-gray-600">Login to continue to your BuySellAdda account.</p>
+              {new URLSearchParams(window.location.search).get('registered') === '1' && (
+                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  Account created. Please check your email and verify your account before login.
+                </div>
+              )}
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>

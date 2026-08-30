@@ -93,7 +93,7 @@ const TextInput = ({ label, value, onChange, placeholder, type = 'text' }) => (
       value={value || ''}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
     />
   </label>
 );
@@ -105,7 +105,7 @@ const TextArea = ({ label, value, onChange, rows = 3 }) => (
       value={value || ''}
       onChange={(event) => onChange(event.target.value)}
       rows={rows}
-      className="w-full resize-y rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
+      className="w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"
     />
   </label>
 );

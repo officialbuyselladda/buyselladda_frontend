@@ -4,6 +4,11 @@ import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
+const getStoredToken = () => {
+  const token = localStorage.getItem('token');
+  return token && token !== 'undefined' && token !== 'null' ? token : null;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -38,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   // Load initial state - runs only once on mount
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = getStoredToken();
       const storedUser = localStorage.getItem('user');
       
       if (token && storedUser) {
@@ -74,7 +79,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'token' || e.key === 'user') {
-        const token = localStorage.getItem('token');
+        const token = getStoredToken();
         const storedUser = localStorage.getItem('user');
         if (token && storedUser) {
           setUser(JSON.parse(storedUser));
@@ -198,7 +203,7 @@ const logout = () => {
     updateProfile,
     logout,
     loading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!getStoredToken(),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

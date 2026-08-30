@@ -20,11 +20,17 @@ export const useCategories = () => {
 };
 
 export const CATEGORIES = [
+  'Mobiles',
   'Electronics',
+  'Computers & Laptops',
   'Vehicles',
   'Property',
+  'Furniture',
+  'Fashion',
   'Jobs',
   'Services',
+  'Books',
+  'Sports & Fitness',
   'Others'
 ];
 

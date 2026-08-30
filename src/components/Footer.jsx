@@ -65,10 +65,10 @@ const fallbackFooter = {
   ],
   popularCities: ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat'],
   socialLinks: [
-    { label: 'Facebook', url: '#' },
-    { label: 'Twitter', url: '#' },
-    { label: 'Instagram', url: '#' },
-    { label: 'Youtube', url: '#' },
+    { label: 'Facebook', url: 'https://www.facebook.com/buyselladda' },
+    { label: 'Twitter', url: 'https://x.com/buyselladda' },
+    { label: 'Instagram', url: 'https://www.instagram.com/buyselladda/' },
+    { label: 'Youtube', url: 'https://www.youtube.com/@buyselladda' },
   ],
   stats: [
     { value: '10M+', label: 'Happy Users' },

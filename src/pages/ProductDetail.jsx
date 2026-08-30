@@ -195,7 +195,8 @@ const ProductDetail = () => {
   }, [product]);
 
   const handleContact = async () => {
-    if (!user) {
+    const token = localStorage.getItem('token');
+    if (!user || !token || token === 'undefined' || token === 'null') {
       toast.error('Please login to contact seller');
       navigate('/login');
       return;

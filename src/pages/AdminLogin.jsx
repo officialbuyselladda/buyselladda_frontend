@@ -75,7 +75,7 @@ export default function AdminLogin() {
               <input
                 {...register('email')}
                 type="email"
-                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:ring-3 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gradient-to-r from-slate-50 to-gray-50"
+                className="w-full pl-12 pr-4 py-4 border border-gray-200 text-gray-900 placeholder:text-gray-500 rounded-2xl focus:ring-3 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gradient-to-r from-slate-50 to-gray-50"
                 placeholder="admin@buyselladda.com"
               />
             </div>
@@ -92,7 +92,7 @@ export default function AdminLogin() {
               <input
                 {...register('password')}
                 type="password"
-                className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:ring-3 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gradient-to-r from-slate-50 to-gray-50"
+                className="w-full pl-12 pr-4 py-4 border border-gray-200 text-gray-900 placeholder:text-gray-500 rounded-2xl focus:ring-3 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gradient-to-r from-slate-50 to-gray-50"
                 placeholder="Enter your password"
               />
             </div>

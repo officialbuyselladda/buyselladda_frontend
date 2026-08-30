@@ -3,12 +3,16 @@ import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ admin = false, children }) => {
   const { user, loading } = useAuth();
+  const hasToken = () => {
+    const token = localStorage.getItem('token');
+    return Boolean(token && token !== 'undefined' && token !== 'null');
+  };
 
   // During initial loading, check if user exists in localStorage
   // If so, allow access - the user will be restored immediately
   if (loading) {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    if (storedUser && hasToken()) {
       try {
         const parsedUser = JSON.parse(storedUser);
         // Check if user exists in localStorage
@@ -28,7 +32,7 @@ const ProtectedRoute = ({ admin = false, children }) => {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  if (!user) {
+  if (!user || !hasToken()) {
     return <Navigate to="/login" replace />;
   }
 

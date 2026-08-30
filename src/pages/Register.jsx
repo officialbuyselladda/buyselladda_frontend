@@ -27,7 +27,7 @@ const Register = () => {
     setLoading(true);
     const result = await register(data.name, data.email, data.password, data.phone, data.userType);
     setLoading(false);
-    if (result.success) navigate('/login');
+    if (result.success) navigate('/login?registered=1');
   };
 
   return (
