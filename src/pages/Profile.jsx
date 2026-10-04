@@ -191,29 +191,29 @@ const Profile = () => {
 ═══════════════════════════════════════════ */
 const profileStyles = `
   :root {
-    --prf-bg: #f5f4f1;
+    --prf-bg: #f5f7fa;
     --prf-surface: #ffffff;
-    --prf-surface-2: #faf9f7;
-    --prf-border: #edeae5;
-    --prf-accent: #d4571a;
-    --prf-accent-hover: #b84816;
-    --prf-accent-light: #fff4ef;
+    --prf-surface-2: #f5f7fa;
+    --prf-border: #dde5f0;
+    --prf-accent: #ff8200;
+    --prf-accent-hover: #e86f00;
+    --prf-accent-light: #fff3e4;
     --prf-green: #16a34a;
     --prf-green-bg: #f0fdf4;
     --prf-blue: #2563eb;
     --prf-blue-bg: #eff6ff;
     --prf-purple: #7c3aed;
     --prf-purple-bg: #f5f3ff;
-    --prf-text: #0f0e0c;
-    --prf-text-2: #6b6860;
-    --prf-text-3: #9c9890;
+    --prf-text: #17233c;
+    --prf-text-2: #5d6b82;
+    --prf-text-3: #95a1b2;
     --prf-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     --prf-shadow-md: 0 4px 20px rgba(0,0,0,0.08);
     --prf-radius: 16px;
     --prf-radius-sm: 10px;
     --prf-radius-full: 999px;
     --prf-t: 0.16s cubic-bezier(0.4,0,0.2,1);
-    --prf-font-display: 'Georgia', 'Times New Roman', serif;
+    --prf-font-display: 'Roboto', 'Inter', system-ui, sans-serif;
   }
 
   .prf-page {
@@ -250,13 +250,13 @@ const profileStyles = `
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #d4571a 0%, #e8833a 100%);
+    background: linear-gradient(135deg, #ff8200 0%, #e8833a 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
     flex-shrink: 0;
-    box-shadow: 0 4px 16px rgba(212,87,26,0.3);
+    box-shadow: 0 4px 16px rgba(255,130,0,0.3);
   }
   @media (min-width: 640px) { .prf-hero__avatar { width: 80px; height: 80px; } }
 
@@ -328,7 +328,7 @@ const profileStyles = `
   .prf-hero__edit-btn:hover {
     background: var(--prf-accent-light);
     color: var(--prf-accent);
-    border-color: #fddcc8;
+    border-color: #ffcc99;
   }
 
   /* ── Stats ── */
@@ -430,7 +430,7 @@ const profileStyles = `
     font-weight: 800;
     padding: 9px 12px;
     flex-shrink: 0;
-    box-shadow: 0 2px 10px rgba(212,87,26,0.2);
+    box-shadow: 0 2px 10px rgba(255,130,0,0.2);
   }
 
   .prf-quota__cta:hover {
@@ -560,14 +560,14 @@ const profileStyles = `
   .prf-action-item:hover {
     background: var(--prf-accent-light);
     color: var(--prf-accent);
-    border-color: #fddcc8;
+    border-color: #ffcc99;
     transform: translateX(3px);
   }
   .prf-action-item--accent {
     background: var(--prf-accent);
     color: #fff;
     border-color: var(--prf-accent);
-    box-shadow: 0 2px 10px rgba(212,87,26,0.25);
+    box-shadow: 0 2px 10px rgba(255,130,0,0.25);
   }
   .prf-action-item--accent:hover {
     background: var(--prf-accent-hover);
@@ -591,7 +591,7 @@ const profileStyles = `
     color: var(--prf-text-2);
   }
   .prf-action-item:not(.prf-action-item--accent):hover .prf-action-item__icon {
-    background: rgba(212,87,26,0.12);
+    background: rgba(255,130,0,0.12);
     color: var(--prf-accent);
   }
 
@@ -632,7 +632,7 @@ const profileStyles = `
   .prf-account__item:hover {
     background: var(--prf-accent-light);
     color: var(--prf-accent);
-    border-color: #fddcc8;
+    border-color: #ffcc99;
     transform: translateX(3px);
   }
 
@@ -648,7 +648,7 @@ const profileStyles = `
     transition: background var(--prf-t), color var(--prf-t);
   }
   .prf-account__item:hover .prf-account__item-icon {
-    background: rgba(212,87,26,0.12);
+    background: rgba(255,130,0,0.12);
     color: var(--prf-accent);
   }
 

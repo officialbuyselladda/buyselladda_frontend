@@ -26,7 +26,7 @@ const statusOptions = [
   { value: 'all', label: 'All Status' },
   { value: 'pending', label: 'Pending' },
   { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'rejected', label: 'Declined' },
   { value: 'suspicious', label: 'Suspicious' },
   { value: 'paused', label: 'Paused' },
   { value: 'sold', label: 'Sold' },
@@ -92,7 +92,7 @@ const AdminProducts = () => {
     return [
       { label: 'Pending', value: counts.pending + counts.suspicious, icon: Clock, tone: 'amber' },
       { label: 'Approved', value: counts.approved, icon: ShieldCheck, tone: 'emerald' },
-      { label: 'Rejected', value: counts.rejected, icon: XCircle, tone: 'red' },
+      { label: 'Declined', value: counts.rejected, icon: XCircle, tone: 'red' },
       { label: 'Views', value: counts.views, icon: Eye, tone: 'blue' },
     ];
   }, [products]);

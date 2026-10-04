@@ -81,7 +81,7 @@ const Notifications = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-8">
+        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-8 mb-8">
           <div className="flex items-center gap-4 mb-6">
             <Bell className="w-10 h-10 text-blue-500" />
             <div>
@@ -118,7 +118,7 @@ const Notifications = () => {
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
+          <div className="text-center py-24 bg-white rounded-lg border border-gray-100">
             <Bell className="w-24 h-24 text-gray-300 mx-auto mb-6" />
             <h3 className="text-2xl font-bold text-gray-900 mb-2">No notifications</h3>
             <p className="text-gray-500 mb-8">You'll see updates here when someone messages you or your ad status changes.</p>

@@ -71,12 +71,6 @@ const ProductCard = ({ product }) => {
 
           {isNew && <span className="pc-new-badge">NEW</span>}
 
-          {product.status !== 'approved' && (
-            <span className="pc-status-badge">
-              {product.status === 'pending' ? 'Pending' : 'Rejected'}
-            </span>
-          )}
-
           {/* Hover overlay actions */}
           <div className="pc-overlay">
             <button
@@ -160,21 +154,25 @@ const ProductCard = ({ product }) => {
 const cardStyles = `
   :root {
     --pc-bg: #ffffff;
-    --pc-bg-2: #faf9f7;
-    --pc-border: #edeae5;
-    --pc-accent: #d4571a;
-    --pc-accent-hover: #b84816;
-    --pc-accent-light: #fff4ef;
-    --pc-text: #0f0e0c;
-    --pc-text-2: #6b6860;
-    --pc-text-3: #9c9890;
-    --pc-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --pc-shadow-hover: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
-    --pc-radius: 13px;
-    --pc-radius-sm: 7px;
+    --pc-bg-2: #f5f7fa;
+    --pc-border: #dde5f0;
+    --pc-accent: #ff8200;
+    --pc-accent-hover: #e86f00;
+    --pc-accent-light: #fff3e4;
+    --pc-blue: #0b63e5;
+    --pc-blue-light: #eaf2ff;
+    --pc-green: #12a642;
+    --pc-green-light: #eaf8ef;
+    --pc-text: #17233c;
+    --pc-text-2: #5d6b82;
+    --pc-text-3: #95a1b2;
+    --pc-shadow: 0 1px 3px rgba(11,99,229,0.08), 0 1px 2px rgba(23,35,60,0.05);
+    --pc-shadow-hover: 0 8px 24px rgba(11,99,229,0.14), 0 2px 6px rgba(23,35,60,0.08);
+    --pc-radius: 8px;
+    --pc-radius-sm: 8px;
     --pc-radius-full: 999px;
     --pc-t: 0.18s cubic-bezier(0.4,0,0.2,1);
-    --pc-font-display: 'Georgia','Times New Roman',serif;
+    --pc-font-display: 'Roboto','Inter',system-ui,sans-serif;
   }
 
   /* ── Card ── */
@@ -195,7 +193,7 @@ const cardStyles = `
   .pc-card:hover {
     box-shadow: var(--pc-shadow-hover);
     transform: translateY(-3px);
-    border-color: #d4cfc7;
+    border-color: #bfd7ff;
   }
 
   /* ── Image ── */
@@ -228,7 +226,7 @@ const cardStyles = `
     background: var(--pc-accent);
     padding: 3px 8px;
     border-radius: var(--pc-radius-full);
-    box-shadow: 0 2px 6px rgba(212,87,26,0.4);
+    box-shadow: 0 2px 8px rgba(255,130,0,0.30);
     z-index: 2;
   }
 
@@ -240,8 +238,8 @@ const cardStyles = `
     font-size: 9.5px;
     font-weight: 700;
     color: #92400e;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
+    background: #fff3e4;
+    border: 1px solid #ffcc99;
     padding: 3px 8px;
     border-radius: var(--pc-radius-full);
     z-index: 2;
@@ -324,7 +322,7 @@ const cardStyles = `
     font-weight: 600;
     color: var(--pc-accent);
     background: var(--pc-accent-light);
-    border: 1px solid #fddcc8;
+    border: 1px solid #ffcc99;
     padding: 2px 7px;
     border-radius: var(--pc-radius-full);
     white-space: nowrap;
@@ -463,9 +461,9 @@ const cardStyles = `
     background: var(--pc-accent);
     color: #fff;
     border-color: var(--pc-accent);
-    box-shadow: 0 2px 8px rgba(212,87,26,0.22);
+    box-shadow: 0 2px 8px rgba(255,130,0,0.22);
   }
-  .pc-btn--chat:hover { background: var(--pc-accent-hover); border-color: var(--pc-accent-hover); box-shadow: 0 3px 12px rgba(212,87,26,0.32); }
+  .pc-btn--chat:hover { background: var(--pc-accent-hover); border-color: var(--pc-accent-hover); box-shadow: 0 3px 12px rgba(255,130,0,0.32); }
 
   @media (max-width: 420px) {
     .pc-body {

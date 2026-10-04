@@ -336,7 +336,7 @@ const AdminDashboard = () => {
               <span className="font-black text-purple-900">{formatNumber(stats?.urgentSupportTickets)}</span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-red-50 px-4 py-3">
-              <span className="font-semibold text-red-800">Rejected ads</span>
+              <span className="font-semibold text-red-800">Declined ads</span>
               <span className="font-black text-red-900">{formatNumber(stats?.rejectedProducts)}</span>
             </div>
           </div>

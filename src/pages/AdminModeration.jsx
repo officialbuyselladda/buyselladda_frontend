@@ -219,7 +219,7 @@ const AdminModeration = () => {
               <option value="all">All status</option>
               <option value="pending">Pending</option>
               <option value="suspicious">Suspicious</option>
-              <option value="rejected">Rejected</option>
+              <option value="rejected">Declined</option>
               <option value="reviewed">Reviewed</option>
               <option value="dismissed">Dismissed</option>
             </select>

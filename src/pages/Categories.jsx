@@ -5,7 +5,7 @@ import {
   Bike, BookOpen, Briefcase, Building2, Car, Grid3X3,
   Home as HomeIcon, KeyRound, MonitorSmartphone, Shirt,
 } from 'lucide-react';
-import { cn, flattenCategories, useCategories } from '../utils';
+import { cn, flattenCategories, isPublicProductVisible, useCategories } from '../utils';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-hot-toast';
@@ -52,10 +52,11 @@ const Categories = () => {
       const params = new URLSearchParams({ category: slug, page: currentPage, limit: 20 });
       if (subSlug) params.set('subCategory', subSlug);
       const { data } = await api.get(`/products?${params}`);
+      const visibleProducts = (data.data?.products || []).filter(isPublicProductVisible);
       if (currentPage === 1) {
-        setProducts(data.data.products || []);
+        setProducts(visibleProducts);
       } else {
-        setProducts(prev => [...prev, ...data.data.products]);
+        setProducts(prev => [...prev, ...visibleProducts]);
       }
       setPage(currentPage);
     } catch (error) {

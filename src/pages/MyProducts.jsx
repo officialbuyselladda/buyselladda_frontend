@@ -5,14 +5,13 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Trash2, Edit3, Eye, Clock, Package, Plus, BadgeCheck, Search, RefreshCw, PauseCircle, PlayCircle, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { PRODUCT_STATUS } from '../utils';
 import toast from 'react-hot-toast';
 import { getImageUrl, placeholderImage } from '../utils/image';
 
 const STATUS_CONFIG = {
   approved: { label: 'Live', cls: 'mp-badge--green' },
   pending: { label: 'Pending', cls: 'mp-badge--yellow' },
-  rejected: { label: 'Rejected', cls: 'mp-badge--red' },
+  rejected: { label: 'Needs update', cls: 'mp-badge--red' },
   paused: { label: 'Paused', cls: 'mp-badge--gray' },
   sold: { label: 'Sold', cls: 'mp-badge--blue' },
   suspicious: { label: 'Review', cls: 'mp-badge--red' },
@@ -22,10 +21,11 @@ const TABS = [
   { key: 'all', label: 'All' },
   { key: 'pending', label: 'Pending' },
   { key: 'approved', label: 'Live' },
-  { key: 'rejected', label: 'Rejected' },
   { key: 'paused', label: 'Paused' },
   { key: 'sold', label: 'Sold' },
 ];
+
+const isVisibleUserAd = (product) => String(product?.status || '').toLowerCase() !== 'rejected';
 
 const getProductsPayload = (response) => {
   const payload = response?.data || {};
@@ -73,18 +73,19 @@ const MyProducts = () => {
 
   const { products, pagination } = getProductsPayload(productsData);
   const activeTabLabel = TABS.find((tab) => tab.key === activeTab)?.label || 'All';
-  const totalCount = pagination.total ?? products.length;
+  const userVisibleProducts = useMemo(() => products.filter(isVisibleUserAd), [products]);
+  const totalCount = userVisibleProducts.length;
   const visibleProducts = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     const filtered = term
-      ? products.filter((product) => [
+      ? userVisibleProducts.filter((product) => [
           product.title,
           product.description,
           product.category?.name || product.category,
           product.location,
           product.status,
         ].filter(Boolean).join(' ').toLowerCase().includes(term))
-      : products;
+      : userVisibleProducts;
 
     return [...filtered].sort((a, b) => {
       if (sortBy === 'price_low') return (Number(a.price) || 0) - (Number(b.price) || 0);
@@ -93,10 +94,10 @@ const MyProducts = () => {
       if (sortBy === 'oldest') return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
-  }, [products, searchTerm, sortBy]);
+  }, [userVisibleProducts, searchTerm, sortBy]);
 
   const pageStats = useMemo(() => {
-    const counts = products.reduce((acc, product) => {
+    const counts = userVisibleProducts.reduce((acc, product) => {
       const status = product.status || 'pending';
       acc[status] = (acc[status] || 0) + 1;
       acc.views += Number(product.views || 0);
@@ -108,7 +109,7 @@ const MyProducts = () => {
       { label: 'Sold', value: counts.sold || 0, tone: 'blue' },
       { label: 'Views', value: counts.views || 0, tone: 'accent' },
     ];
-  }, [products]);
+  }, [userVisibleProducts]);
 
   const deleteMutation = useMutation({
     mutationFn: (productId) => api.delete(`/products/${productId}`),
@@ -269,7 +270,7 @@ const MyProducts = () => {
                           onError={(e) => { e.currentTarget.src = placeholderImage; }}
                         />
                         <span className={`mp-badge ${statusCfg.cls}`}>
-                          {PRODUCT_STATUS[status] || statusCfg.label}
+                          {statusCfg.label}
                         </span>
                         <div className="mp-card__views">
                           <Eye size={12} />
@@ -405,13 +406,13 @@ const MyProducts = () => {
 ═══════════════════════════════════════════ */
 const mpStyles = `
   :root {
-    --mp-bg: #f5f4f1;
+    --mp-bg: #f5f7fa;
     --mp-surface: #ffffff;
-    --mp-surface-2: #faf9f7;
-    --mp-border: #edeae5;
-    --mp-accent: #d4571a;
-    --mp-accent-hover: #b84816;
-    --mp-accent-light: #fff4ef;
+    --mp-surface-2: #f5f7fa;
+    --mp-border: #dde5f0;
+    --mp-accent: #ff8200;
+    --mp-accent-hover: #e86f00;
+    --mp-accent-light: #fff3e4;
     --mp-green: #16a34a;
     --mp-green-bg: #f0fdf4;
     --mp-green-border: #bbf7d0;
@@ -421,16 +422,16 @@ const mpStyles = `
     --mp-red: #b91c1c;
     --mp-red-bg: #fff1f1;
     --mp-red-border: #fecaca;
-    --mp-text: #0f0e0c;
-    --mp-text-2: #6b6860;
-    --mp-text-3: #9c9890;
+    --mp-text: #17233c;
+    --mp-text-2: #5d6b82;
+    --mp-text-3: #95a1b2;
     --mp-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
     --mp-shadow-md: 0 4px 16px rgba(0,0,0,0.08);
     --mp-radius: 14px;
     --mp-radius-sm: 9px;
     --mp-radius-full: 999px;
     --mp-t: 0.16s cubic-bezier(0.4,0,0.2,1);
-    --mp-font-display: 'Georgia','Times New Roman',serif;
+    --mp-font-display: 'Roboto','Inter',system-ui,sans-serif;
   }
 
   .mp-page {
@@ -502,7 +503,7 @@ const mpStyles = `
   .mp-tab--active {
     background: var(--mp-accent);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(212,87,26,0.25);
+    box-shadow: 0 2px 8px rgba(255,130,0,0.25);
   }
   .mp-tab--active:hover { background: var(--mp-accent-hover); color: #fff; }
 
@@ -518,7 +519,7 @@ const mpStyles = `
     font-weight: 700;
     border-radius: var(--mp-radius-sm);
     text-decoration: none;
-    box-shadow: 0 2px 10px rgba(212,87,26,0.25);
+    box-shadow: 0 2px 10px rgba(255,130,0,0.25);
     transition: background var(--mp-t), transform var(--mp-t), box-shadow var(--mp-t);
     white-space: nowrap;
     flex-shrink: 0;
@@ -526,7 +527,7 @@ const mpStyles = `
   .mp-post-btn:hover {
     background: var(--mp-accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(212,87,26,0.32);
+    box-shadow: 0 4px 16px rgba(255,130,0,0.32);
   }
 
   /* ── Empty State ── */
@@ -564,7 +565,7 @@ const mpStyles = `
   .mp-summary__item--green { border-color: var(--mp-green-border); background: var(--mp-green-bg); }
   .mp-summary__item--yellow { border-color: var(--mp-yellow-border); background: var(--mp-yellow-bg); }
   .mp-summary__item--blue { border-color: #bfdbfe; background: #eff6ff; }
-  .mp-summary__item--accent { border-color: #fddcc8; background: var(--mp-accent-light); }
+  .mp-summary__item--accent { border-color: #ffcc99; background: var(--mp-accent-light); }
 
   .mp-toolbar {
     display: grid;
@@ -626,7 +627,7 @@ const mpStyles = `
   .mp-refresh-btn:hover:not(:disabled) {
     background: var(--mp-accent-light);
     color: var(--mp-accent);
-    border-color: #fddcc8;
+    border-color: #ffcc99;
   }
   .mp-refresh-btn:disabled { opacity: 0.62; cursor: not-allowed; }
 
@@ -667,7 +668,7 @@ const mpStyles = `
     font-weight: 700;
     border-radius: var(--mp-radius-full);
     text-decoration: none;
-    box-shadow: 0 2px 10px rgba(212,87,26,0.25);
+    box-shadow: 0 2px 10px rgba(255,130,0,0.25);
     transition: background var(--mp-t), transform var(--mp-t);
   }
   .mp-empty__btn:hover { background: var(--mp-accent-hover); transform: translateY(-1px); }
@@ -726,7 +727,7 @@ const mpStyles = `
   .mp-badge--green  { background: var(--mp-green-bg);  color: var(--mp-green);  border-color: var(--mp-green-border);  }
   .mp-badge--yellow { background: var(--mp-yellow-bg); color: var(--mp-yellow); border-color: var(--mp-yellow-border); }
   .mp-badge--red    { background: var(--mp-red-bg);    color: var(--mp-red);    border-color: var(--mp-red-border);    }
-  .mp-badge--gray   { background: #f5f4f1; color: var(--mp-text-3); border-color: var(--mp-border); }
+  .mp-badge--gray   { background: #f5f7fa; color: var(--mp-text-3); border-color: var(--mp-border); }
   .mp-badge--blue   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
 
   .mp-refreshing {
@@ -751,7 +752,7 @@ const mpStyles = `
   }
   .mp-skeleton__img {
     aspect-ratio: 16/10;
-    background: #edeae5;
+    background: #dde5f0;
   }
   .mp-skeleton__body {
     display: flex;
@@ -762,7 +763,7 @@ const mpStyles = `
   .mp-skeleton__body span {
     height: 12px;
     border-radius: 999px;
-    background: #edeae5;
+    background: #dde5f0;
   }
   .mp-skeleton__body span:nth-child(1) { width: 78%; }
   .mp-skeleton__body span:nth-child(2) { width: 54%; }
@@ -888,12 +889,12 @@ const mpStyles = `
     color: var(--mp-text-2);
     border-color: var(--mp-border);
   }
-  .mp-action-btn--view:hover { background: #f0eee9; color: var(--mp-text); border-color: #d4cfc7; }
+  .mp-action-btn--view:hover { background: #f0eee9; color: var(--mp-text); border-color: #bfd7ff; }
 
   .mp-action-btn--edit {
     background: var(--mp-accent-light);
     color: var(--mp-accent);
-    border-color: #fddcc8;
+    border-color: #ffcc99;
   }
   .mp-action-btn--edit:hover { background: #fde5d2; border-color: #f9c09b; }
 
@@ -951,7 +952,7 @@ const mpStyles = `
     cursor: pointer;
     transition: background var(--mp-t), color var(--mp-t), border-color var(--mp-t);
   }
-  .mp-page-btn:hover:not(:disabled) { background: var(--mp-accent-light); color: var(--mp-accent); border-color: #fddcc8; }
+  .mp-page-btn:hover:not(:disabled) { background: var(--mp-accent-light); color: var(--mp-accent); border-color: #ffcc99; }
   .mp-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .mp-page-info {
     font-size: 13px;

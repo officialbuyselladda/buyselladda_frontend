@@ -25,7 +25,7 @@ import { formatDistanceToNow } from 'date-fns';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
-import { PRODUCT_STATUS } from '../utils';
+import { isPublicProductVisible } from '../utils';
 import { getImageUrl, placeholderImage } from '../utils/image';
 import toast from 'react-hot-toast';
 
@@ -176,7 +176,9 @@ const ProductDetail = () => {
     queryFn: async () => {
       const params = new URLSearchParams({ category: product.category, limit: '8', page: '1' });
       const { data } = await api.get(`/products?${params}`);
-      return (data.data?.products || []).filter((item) => item?._id && item._id !== id).slice(0, 4);
+      return (data.data?.products || [])
+        .filter((item) => item?._id && item._id !== id && isPublicProductVisible(item))
+        .slice(0, 4);
     },
   });
 
@@ -245,14 +247,13 @@ const ProductDetail = () => {
     </div>
   );
 
-  if (!product) return (
+  if (!product || !isPublicProductVisible(product)) return (
     <div className="pdp-error">
       <p className="pdp-error__msg">Product not found</p>
     </div>
   );
 
   const isSold = product.status === 'sold';
-  const statusLabel = PRODUCT_STATUS[product.status] || product.status;
   const sellerDisplayName = product.sellerName || product.user?.name || 'Seller';
   const sellerInitial = sellerDisplayName.trim().charAt(0).toUpperCase() || 'S';
   const postedLabel = product.createdAt ? `${formatDistanceToNow(new Date(product.createdAt))} ago` : 'Recently';
@@ -264,19 +265,19 @@ const ProductDetail = () => {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --pdp-bg: #f5f4f1;
+          --pdp-bg: #f5f7fa;
           --pdp-surface: #ffffff;
-          --pdp-surface-2: #faf9f7;
-          --pdp-border: #e8e5df;
-          --pdp-border-2: #d4cfc7;
+          --pdp-surface-2: #f5f7fa;
+          --pdp-border: #dde5f0;
+          --pdp-border-2: #bfd7ff;
 
-          --pdp-text-primary: #0f0e0c;
-          --pdp-text-secondary: #6b6860;
-          --pdp-text-tertiary: #9c9890;
+          --pdp-text-primary: #17233c;
+          --pdp-text-secondary: #5d6b82;
+          --pdp-text-tertiary: #95a1b2;
 
-          --pdp-accent: #d4571a;
-          --pdp-accent-light: #fff4ef;
-          --pdp-accent-hover: #b84816;
+          --pdp-accent: #ff8200;
+          --pdp-accent-light: #fff3e4;
+          --pdp-accent-hover: #e86f00;
 
           --pdp-green: #1a7a4a;
           --pdp-green-bg: #f0faf5;
@@ -295,7 +296,7 @@ const ProductDetail = () => {
           --pdp-radius-sm: 8px;
           --pdp-radius-full: 999px;
 
-          --pdp-font-display: 'Georgia', 'Times New Roman', serif;
+          --pdp-font-display: 'Roboto', 'Inter', system-ui, sans-serif;
           --pdp-font-body: 'system-ui', -apple-system, sans-serif;
           --pdp-transition: 0.18s cubic-bezier(0.4,0,0.2,1);
         }
@@ -404,14 +405,14 @@ const ProductDetail = () => {
           background: var(--pdp-bg);
         }
         .pdp-gallery__thumb:hover { border-color: var(--pdp-accent); opacity: 1; }
-        .pdp-gallery__thumb--active { border-color: var(--pdp-accent); box-shadow: 0 0 0 3px rgba(212,87,26,0.15); }
+        .pdp-gallery__thumb--active { border-color: var(--pdp-accent); box-shadow: 0 0 0 3px rgba(255,130,0,0.15); }
 
         .pdp-gallery__stage {
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #faf9f7 0%, #f1eee8 100%);
+          background: linear-gradient(135deg, #f5f7fa 0%, #f1eee8 100%);
           aspect-ratio: 4/3;
           min-height: 280px;
           max-height: 600px;
@@ -1007,13 +1008,13 @@ const ProductDetail = () => {
           letter-spacing: 0.02em;
           cursor: pointer;
           transition: background var(--pdp-transition), transform var(--pdp-transition), box-shadow var(--pdp-transition);
-          box-shadow: 0 2px 12px rgba(212,87,26,0.28);
+          box-shadow: 0 2px 12px rgba(255,130,0,0.28);
           margin-bottom: 10px;
         }
         .pdp-cta:hover:not(:disabled) {
           background: var(--pdp-accent-hover);
           transform: translateY(-1px);
-          box-shadow: 0 4px 20px rgba(212,87,26,0.36);
+          box-shadow: 0 4px 20px rgba(255,130,0,0.36);
         }
         .pdp-cta:active:not(:disabled) { transform: translateY(0); }
         .pdp-cta:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
@@ -1296,9 +1297,6 @@ const ProductDetail = () => {
                   </div>
                 </div>
 
-                {product.status && product.status !== 'approved' && (
-                  <div className="pdp-status-banner">Status: {statusLabel}</div>
-                )}
               </div>
 
               <div className="pdp-card pdp-highlights" aria-label="Listing highlights">

@@ -57,14 +57,14 @@ const Contact = () => {
                     icon: Phone,
                     color: 'blue',
                     title: 'Call Us',
-                    primary: '+91 98765 43210',
+                    primary: '+91 9911356613',
                     secondary: 'Mon–Sat, 9 AM – 7 PM',
                   },
                   {
                     icon: MapPin,
                     color: 'accent',
                     title: 'Visit Us',
-                    primary: 'Mumbai, Maharashtra',
+                    primary: 'New Delhi',
                     secondary: 'By appointment only',
                   },
                 ].map(({ icon: Icon, color, title, primary, secondary }) => (
@@ -88,7 +88,7 @@ const Contact = () => {
                 </div>
                 <div className="ct-safety__content">
                   <p className="ct-safety__title">Safe & Secure</p>
-                  <p className="ct-safety__sub">All communications encrypted. Your data protected.</p>
+                  <p className="ct-safety__sub">Use official support channels and never share OTPs or payment PINs.</p>
                 </div>
               </div>
 
@@ -165,27 +165,27 @@ const Contact = () => {
 ═══════════════════════════════════════════ */
 const contactStyles = `
   :root {
-    --ct-bg: #f5f4f1;
+    --ct-bg: #f5f7fa;
     --ct-surface: #ffffff;
-    --ct-surface-2: #faf9f7;
-    --ct-border: #edeae5;
-    --ct-accent: #d4571a;
-    --ct-accent-hover: #b84816;
-    --ct-accent-light: #fff4ef;
+    --ct-surface-2: #f5f7fa;
+    --ct-border: #dde5f0;
+    --ct-accent: #ff8200;
+    --ct-accent-hover: #e86f00;
+    --ct-accent-light: #fff3e4;
     --ct-green: #16a34a;
     --ct-green-bg: #f0fdf4;
     --ct-blue: #2563eb;
     --ct-blue-bg: #eff6ff;
-    --ct-text: #0f0e0c;
-    --ct-text-2: #6b6860;
-    --ct-text-3: #9c9890;
+    --ct-text: #17233c;
+    --ct-text-2: #5d6b82;
+    --ct-text-3: #95a1b2;
     --ct-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
     --ct-shadow-md: 0 4px 20px rgba(0,0,0,0.08);
     --ct-radius: 16px;
     --ct-radius-sm: 10px;
     --ct-radius-full: 999px;
     --ct-t: 0.16s cubic-bezier(0.4,0,0.2,1);
-    --ct-font-display: 'Georgia','Times New Roman',serif;
+    --ct-font-display: 'Roboto','Inter',system-ui,sans-serif;
   }
 
   .ct-page {
@@ -365,7 +365,7 @@ const contactStyles = `
   .ct-input:focus {
     border-color: var(--ct-accent);
     background: var(--ct-surface);
-    box-shadow: 0 0 0 3px rgba(212,87,26,0.10);
+    box-shadow: 0 0 0 3px rgba(255,130,0,0.10);
   }
   .ct-input--textarea {
     resize: vertical;
@@ -389,13 +389,13 @@ const contactStyles = `
     border: none;
     border-radius: var(--ct-radius-sm);
     cursor: pointer;
-    box-shadow: 0 2px 14px rgba(212,87,26,0.28);
+    box-shadow: 0 2px 14px rgba(255,130,0,0.28);
     transition: background var(--ct-t), transform var(--ct-t), box-shadow var(--ct-t);
   }
   .ct-submit:hover:not(:disabled) {
     background: var(--ct-accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(212,87,26,0.36);
+    box-shadow: 0 4px 20px rgba(255,130,0,0.36);
   }
   .ct-submit:active:not(:disabled) { transform: translateY(0); }
   .ct-submit:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }

@@ -4,7 +4,7 @@ const StatusBadge = ({ status, className = '' }) => {
   const statusConfig = {
     pending: { color: 'yellow', bg: 'bg-yellow-100', text: 'bg-yellow-800', label: 'Pending' },
     approved: { color: 'green', bg: 'bg-emerald-100', text: 'bg-emerald-800', label: 'Approved' },
-    rejected: { color: 'red', bg: 'bg-red-100', text: 'bg-red-800', label: 'Rejected' },
+    rejected: { color: 'red', bg: 'bg-red-100', text: 'bg-red-800', label: 'Declined' },
     active: { color: 'green', bg: 'bg-emerald-100', text: 'bg-emerald-800', label: 'Active' },
     banned: { color: 'red', bg: 'bg-red-100', text: 'bg-red-800', label: 'Banned' },
     reported: { color: 'orange', bg: 'bg-orange-100', text: 'bg-orange-800', label: 'Reported' },

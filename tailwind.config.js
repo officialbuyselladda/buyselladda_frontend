@@ -8,24 +8,25 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#fff7ed',
-          100: '#ffedd5',
-          200: '#fed7aa',
-          300: '#fdba74',
-          400: '#fb923c',
-          500: '#f97316', // OLX Orange
-          600: '#ea580c',
-          700: '#c2410c',
-          800: '#9a3412',
-          900: '#7c2d12',
+          50: '#eaf2ff',
+          100: '#d6e7ff',
+          200: '#bfd7ff',
+          300: '#8db9ff',
+          400: '#4f91f5',
+          500: '#0b63e5',
+          600: '#0647b5',
+          700: '#083b90',
+          800: '#0b3275',
+          900: '#17233c',
         },
         secondary: {
-          500: '#3B82F6', // OLX Blue
+          500: '#12a642',
         },
         olx: {
-          orange: '#f97316',
-          blue: '#3B82F6',
-          gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+          orange: '#ff8200',
+          blue: '#0b63e5',
+          green: '#12a642',
+          gradient: 'linear-gradient(135deg, #0b63e5 0%, #ff8200 100%)',
         },
       },
       fontFamily: {

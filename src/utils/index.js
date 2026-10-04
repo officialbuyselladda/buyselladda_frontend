@@ -73,10 +73,16 @@ export const CONDITIONS = ['New', 'Used'];
 export const PRODUCT_STATUS = {
   pending: 'Pending',
   approved: 'Approved',
-  rejected: 'Rejected',
+  rejected: 'Declined',
   suspicious: 'Suspicious',
   paused: 'Paused',
   sold: 'Sold'
+};
+
+export const isPublicProductVisible = (product) => {
+  if (!product?._id) return false;
+  const status = String(product.status || 'approved').toLowerCase();
+  return status === 'approved' || status === 'active';
 };
 
 export const getLocationFromCache = () => {

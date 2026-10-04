@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { Search, Filter, ChevronLeft, X, MapPin, Tag, DollarSign } from 'lucide-react';
-import { getCategoryOptionLabel, getCategoryValue, useCategoryOptions } from '../utils';
+import { getCategoryOptionLabel, getCategoryValue, isPublicProductVisible, useCategoryOptions } from '../utils';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -34,10 +34,11 @@ const SearchResults = () => {
       });
 
       const { data } = await api.get(`/products?${params}`);
+      const visibleProducts = (data.data?.products || []).filter(isPublicProductVisible);
       if (currentPage === 1) {
-        setProducts(data.data.products || []);
+        setProducts(visibleProducts);
       } else {
-        setProducts(prev => [...prev, ...(data.data.products || [])]);
+        setProducts(prev => [...prev, ...visibleProducts]);
       }
     } catch (error) {
       toast.error('Search failed');
@@ -69,7 +70,7 @@ const SearchResults = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Search Header */}
-        <div className="bg-white rounded-2xl shadow-sm border p-6 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -77,7 +78,7 @@ const SearchResults = () => {
                 type="text"
                 value={query}
                 onChange={(e) => navigate(`/search?q=${encodeURIComponent(e.target.value)}`)}
-                className="w-full pl-12 pr-12 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
+                className="w-full pl-12 pr-12 py-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
                 placeholder="Search for anything..."
               />
               {query && (
@@ -91,7 +92,7 @@ const SearchResults = () => {
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden px-6 py-4 bg-gray-100 hover:bg-gray-200 rounded-2xl font-semibold flex items-center gap-2"
+              className="lg:hidden px-6 py-4 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold flex items-center gap-2"
             >
               <Filter className="w-5 h-5" />
               Filters
@@ -100,7 +101,7 @@ const SearchResults = () => {
         </div>
 
         {/* Filters Desktop */}
-        <div className={`${showFilters ? 'block' : 'hidden'} lg:block bg-white rounded-2xl border p-6 mb-8 sticky top-24`}>
+        <div className={`${showFilters ? 'block' : 'hidden'} lg:block bg-white rounded-lg border p-6 mb-8 sticky top-24`}>
             <h3 className="font-bold text-lg mb-6 text-gray-900">Filters</h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
@@ -180,7 +181,7 @@ const SearchResults = () => {
         </div>
 
         {/* Results Header */}
-        <div className="bg-white rounded-2xl border shadow-sm p-6 mb-8">
+        <div className="bg-white rounded-lg border shadow-sm p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -199,7 +200,7 @@ const SearchResults = () => {
         {loading && products.length === 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {Array(12).fill(0).map((_, i) => (
-              <div key={i} className="animate-pulse bg-white rounded-2xl p-6 border border-gray-100">
+              <div key={i} className="animate-pulse bg-white rounded-lg p-6 border border-gray-100">
                 <div className="bg-gray-100 rounded-xl h-48 mb-4"></div>
                 <div className="h-5 bg-gray-100 rounded w-3/4 mb-3"></div>
                 <div className="h-4 bg-gray-100 rounded w-1/2"></div>
@@ -207,7 +208,7 @@ const SearchResults = () => {
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
+          <div className="text-center py-24 bg-white rounded-lg border border-gray-100">
             <Search className="w-24 h-24 text-gray-300 mx-auto mb-6" />
             <h3 className="text-2xl font-bold text-gray-900 mb-2">No results found</h3>
             <p className="text-gray-500 mb-8 max-w-lg mx-auto">
@@ -240,7 +241,7 @@ const SearchResults = () => {
           <div className="flex justify-center mt-12">
             <button
               onClick={loadMore}
-              className="px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-2xl font-semibold text-lg hover:from-primary-700 hover:to-primary-800 transition-all shadow-xl hover:shadow-2xl"
+              className="px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg font-semibold text-lg hover:from-primary-700 hover:to-primary-800 transition-all shadow-xl hover:shadow-2xl"
             >
               Load More Results
             </button>

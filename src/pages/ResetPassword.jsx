@@ -31,7 +31,7 @@ const ResetPassword = () => {
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl lg:grid-cols-[minmax(0,1fr)_460px]">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-lg border border-gray-100 bg-white shadow-xl lg:grid-cols-[minmax(0,1fr)_460px]">
         <section className="hidden bg-gradient-to-br from-orange-50 via-white to-emerald-50 p-10 lg:flex lg:flex-col lg:justify-between">
           <Link to="/" className="inline-flex w-fit flex-col items-start">
             <img src="/logo-1.png" alt="BuySellAdda" className="h-16 w-auto object-contain" />
@@ -52,9 +52,9 @@ const ResetPassword = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-sm font-semibold text-gray-700">
-            <div className="rounded-2xl bg-white p-4 shadow-sm">New login</div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">Token checked</div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">Auto sign-in</div>
+            <div className="rounded-lg bg-white p-4 shadow-sm">New login</div>
+            <div className="rounded-lg bg-white p-4 shadow-sm">Token checked</div>
+            <div className="rounded-lg bg-white p-4 shadow-sm">Auto sign-in</div>
           </div>
         </section>
 

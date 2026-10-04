@@ -90,7 +90,7 @@ const chatListStyles = `
   .cl-back:hover {
     transform: translateY(-1px);
     background: #ffffff;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cl-toolbar {
@@ -162,7 +162,7 @@ const chatListStyles = `
     border-radius: 16px;
     background: rgba(255,255,255,0.88);
     padding: 0 14px;
-    color: #d4571a;
+    color: #ff8200;
     font-size: 13px;
     font-weight: 900;
     box-shadow: 0 10px 28px rgba(36, 28, 20, 0.08);
@@ -206,7 +206,7 @@ const chatListStyles = `
     border-radius: 999px;
     background: #fff2ea;
     padding: 5px 9px;
-    color: #d4571a;
+    color: #ff8200;
     font-size: 12px;
     font-weight: 900;
   }
@@ -348,7 +348,7 @@ const chatListStyles = `
     flex-shrink: 0;
     overflow: hidden;
     border-radius: 7px;
-    background: #f5f4f1;
+    background: #f5f7fa;
   }
 
   .cl-product-thumb img {
@@ -366,7 +366,7 @@ const chatListStyles = `
 
   .cl-price {
     flex-shrink: 0;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cl-action {
@@ -377,7 +377,7 @@ const chatListStyles = `
     justify-content: center;
     border-radius: 13px;
     background: #fff2ea;
-    color: #d4571a;
+    color: #ff8200;
     opacity: 0;
     transform: translateX(4px);
     transition: opacity 0.16s ease, transform 0.16s ease;
@@ -413,7 +413,7 @@ const chatListStyles = `
     margin: 0 auto 16px;
     border-radius: 24px;
     background: #fff2ea;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cl-empty h3,
@@ -439,7 +439,7 @@ const chatListStyles = `
     justify-content: center;
     gap: 8px;
     border-radius: 15px;
-    background: #d4571a;
+    background: #ff8200;
     padding: 0 16px;
     color: #ffffff;
     font-size: 13px;
@@ -465,7 +465,7 @@ const chatListStyles = `
     height: 42px;
     margin: 0 auto 14px;
     border: 4px solid rgba(212, 87, 26, 0.18);
-    border-top-color: #d4571a;
+    border-top-color: #ff8200;
     border-radius: 999px;
     animation: cl-spin 0.8s linear infinite;
   }

@@ -6,22 +6,67 @@ import { contentApi } from '../services/api';
 const fallbackPages = {
   privacy: {
     title: 'Privacy Policy',
-    subtitle: 'Your privacy matters. We protect your personal information and explain how we collect, use, and safeguard your data.',
+    subtitle: 'This policy explains how BuySellAdda collects, uses, stores, and protects user information on the website and app.',
     accent: 'orange',
-    updatedText: 'January 1, 2025',
+    updatedText: 'September 7, 2026',
     sections: [
-      { heading: '1. Information We Collect', body: 'We collect information you provide directly, such as your name, email, phone number, and location when you create an account, post ads, or contact us.' },
-      { heading: '2. How We Use Your Information', body: 'Your data helps us provide services, improve our platform, communicate with you, and prevent fraud. We never sell your personal information.' },
+      { heading: '1. Information We Collect', body: 'We collect information you provide directly, including name, email address, phone number, city or location, account details, listing details, chat/support messages, and images uploaded for ads. We may also collect device, browser, IP address, and usage information for security and service improvement.' },
+      { heading: '2. How We Use Information', body: 'We use information to create and manage accounts, publish and moderate listings, enable buyer-seller communication, provide customer support, prevent fraud or misuse, improve the platform, and send important service notifications.' },
+      { heading: '3. Payments and Transaction Data', body: 'If paid platform services are enabled, payment processing may be handled by authorised payment partners. BuySellAdda does not store full card numbers, UPI PINs, net-banking passwords, or sensitive payment credentials.' },
+      { heading: '4. Sharing of Information', body: 'We share information only where required to operate the platform, comply with law, prevent fraud, enforce our policies, process support requests, or work with trusted service providers. Public listing information may be visible to other users.' },
+      { heading: '5. User Choices and Data Requests', body: 'Users can update account information from their profile. For account deletion, data correction, or privacy requests, contact support@buyselladda.com. Some information may be retained where required for legal, safety, fraud-prevention, or dispute-resolution purposes.' },
+      { heading: '6. Security', body: 'We use reasonable technical and organisational safeguards to protect user data. Users should keep passwords and OTPs confidential and report suspicious activity immediately.' },
     ],
   },
   terms: {
     title: 'Terms of Use',
-    subtitle: 'By using BuySellAdda, you agree to these terms. Please read carefully.',
+    subtitle: 'These terms govern access to BuySellAdda, a classified listing platform for local buyers and sellers.',
     accent: 'emerald',
-    updatedText: 'January 1, 2025',
+    updatedText: 'September 7, 2026',
     sections: [
-      { heading: '1. Acceptance of Terms', body: 'These Terms govern your use of BuySellAdda platform. Continued use means acceptance.' },
-      { heading: '2. User Conduct', body: 'No spam, illegal content, scams. Respect other users.' },
+      { heading: '1. Acceptance of Terms', body: 'By accessing or using BuySellAdda, you agree to follow these Terms of Use, our Privacy Policy, and all applicable laws. If you do not agree, please do not use the platform.' },
+      { heading: '2. Marketplace Role', body: 'BuySellAdda provides technology for users to post, browse, and respond to classified ads. Unless expressly stated, BuySellAdda is not the seller, buyer, owner, shipper, or manufacturer of items listed by users.' },
+      { heading: '3. Listing Rules', body: 'Users must post accurate, genuine, and lawful listings. Misleading titles, fake images, duplicate spam, impersonation, abusive content, and fraudulent behaviour are not allowed.' },
+      { heading: '4. Prohibited Items and Services', body: 'Users must not list illegal, unsafe, restricted, stolen, counterfeit, adult, gambling, weapons, drugs, alcohol, regulated financial products, or any item or service prohibited by applicable law or payment partner policies.' },
+      { heading: '5. Payments and Paid Services', body: 'Basic browsing and listing may be free. Paid services, if offered, may include listing promotion, featured placement, or other platform services. The payable amount, taxes if applicable, and service details will be shown before payment.' },
+      { heading: '6. User Responsibility', body: 'Users are responsible for verifying products, prices, seller or buyer identity, delivery terms, and legal compliance before completing a transaction. Do not share OTPs, passwords, payment PINs, or sensitive financial information.' },
+      { heading: '7. Enforcement', body: 'BuySellAdda may remove listings, restrict accounts, pause services, or cooperate with lawful authorities where listings or user activity violate these terms, platform rules, or applicable law.' },
+    ],
+  },
+  pricing: {
+    title: 'Pricing Details',
+    subtitle: 'Clear pricing information for BuySellAdda platform services.',
+    accent: 'blue',
+    updatedText: 'September 7, 2026',
+    sections: [
+      { heading: '1. Browsing and Standard Listings', body: 'Users can browse listings and post standard classified ads on BuySellAdda as per the limits shown on the platform.' },
+      { heading: '2. Paid Platform Services', body: 'If paid services such as featured ads, ad boosts, promotions, subscriptions, or premium placement are enabled, the exact price, currency, duration, included benefits, and applicable taxes will be displayed before payment.' },
+      { heading: '3. Buyer-Seller Product Prices', body: 'Product prices shown on listings are provided by individual sellers. Unless expressly stated, BuySellAdda does not collect payment for user-to-user product purchases and does not control final product pricing, negotiation, pickup, delivery, or after-sale terms between users.' },
+      { heading: '4. Invoices and Receipts', body: 'For paid BuySellAdda services, users may receive payment confirmation and receipts through the platform or the payment processor. For user-to-user product purchases, invoices or bills should be provided by the seller where applicable.' },
+    ],
+  },
+  shipping: {
+    title: 'Shipping Policy',
+    subtitle: 'BuySellAdda is a classified marketplace. Shipping and delivery depend on the agreement between buyer and seller.',
+    accent: 'emerald',
+    updatedText: 'September 7, 2026',
+    sections: [
+      { heading: '1. Platform Role', body: 'BuySellAdda does not directly ship, pack, warehouse, or deliver user-listed products. Buyers and sellers should agree on pickup, local meeting, courier, delivery charges, and timelines before completing a transaction.' },
+      { heading: '2. Local Pickup and Delivery', body: 'For local deals, users should meet at safe public places and inspect the product before payment. If courier delivery is agreed between users, the seller is responsible for packing, dispatch, tracking, and delivery communication.' },
+      { heading: '3. Shipping Charges', body: 'Any delivery or shipping charge for user-listed products should be agreed directly between buyer and seller. BuySellAdda is not responsible for third-party courier delays, damage, loss, or delivery disputes unless a specific paid platform service states otherwise.' },
+      { heading: '4. Digital Platform Services', body: 'Paid BuySellAdda services such as ad boosts or featured placement are delivered digitally on the platform and do not involve physical shipping.' },
+    ],
+  },
+  refund: {
+    title: 'Cancellation & Refunds Policy',
+    subtitle: 'This policy explains cancellation and refund handling for BuySellAdda paid platform services.',
+    accent: 'orange',
+    updatedText: 'September 7, 2026',
+    sections: [
+      { heading: '1. User-to-User Transactions', body: 'For purchases made directly between buyers and sellers, cancellation, return, replacement, and refund terms must be agreed between those users. BuySellAdda is not the merchant of record for such product transactions unless expressly stated.' },
+      { heading: '2. Paid Platform Services', body: 'For BuySellAdda paid services, users can request cancellation before the service is activated or consumed. Once a boost, featured placement, subscription period, or similar digital service has started, fees are generally non-refundable except where required by law or where a duplicate payment or technical failure is confirmed.' },
+      { heading: '3. Refund Timeline', body: 'Approved refunds for BuySellAdda paid services will be initiated to the original payment method. Depending on the bank or payment provider, the amount may take 5 to 7 working days to reflect.' },
+      { heading: '4. How to Request Support', body: 'For cancellation, duplicate payment, failed payment, or refund support, contact support@buyselladda.com with your registered mobile/email, payment reference, date, amount, and service details.' },
     ],
   },
   help: {
@@ -52,7 +97,24 @@ const pageMeta = {
     eyebrow: 'Help Center',
     helper: 'Quick guidance for account, listings, chats, support, and safety.',
   },
+  pricing: {
+    icon: FileText,
+    eyebrow: 'Pricing',
+    helper: 'Prices for any paid platform service are shown clearly before payment.',
+  },
+  shipping: {
+    icon: FileText,
+    eyebrow: 'Shipping',
+    helper: 'BuySellAdda listings are local classifieds; delivery terms are agreed by users.',
+  },
+  refund: {
+    icon: FileText,
+    eyebrow: 'Refunds',
+    helper: 'Refund handling is explained for paid platform services and user-to-user deals.',
+  },
 };
+
+const staticPolicyPages = new Set(['privacy', 'terms', 'pricing', 'shipping', 'refund']);
 
 const getCurrentUpdatedDate = () => new Date().toLocaleDateString('en-IN', {
   day: 'numeric',
@@ -365,7 +427,9 @@ const SiteContentPage = ({ pageKey }) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const page = data?.pages?.[pageKey] || fallbackPages[pageKey] || {
+  const page = staticPolicyPages.has(pageKey)
+    ? fallbackPages[pageKey]
+    : data?.pages?.[pageKey] || fallbackPages[pageKey] || {
     title: 'Page',
     subtitle: '',
     accent: 'emerald',

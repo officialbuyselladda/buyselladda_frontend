@@ -105,7 +105,7 @@ const chatRoomStyles = `
   .cr-ad-link:hover {
     transform: translateY(-1px);
     background: #ffffff;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cr-avatar {
@@ -121,7 +121,7 @@ const chatRoomStyles = `
     border-radius: 18px;
     background: linear-gradient(135deg, #1354d8, #ff7a00 55%, #168b2f);
     color: #ffffff;
-    box-shadow: 0 10px 24px rgba(212,87,26,0.20);
+    box-shadow: 0 10px 24px rgba(255,130,0,0.20);
   }
 
   .cr-avatar img {
@@ -245,7 +245,7 @@ const chatRoomStyles = `
     border: 1px solid rgba(45, 39, 32, 0.08);
     border-radius: 13px;
     background: #fff2ea;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cr-product-strip__icon img {
@@ -253,12 +253,12 @@ const chatRoomStyles = `
     height: 100%;
     object-fit: cover;
     display: block;
-    background: #faf9f7;
+    background: #f5f7fa;
   }
 
   .cr-product-strip__price {
     flex-shrink: 0;
-    color: #d4571a;
+    color: #ff8200;
     font-size: 14px;
     font-weight: 900;
   }
@@ -325,7 +325,7 @@ const chatRoomStyles = `
     margin: 0 auto 12px;
     border-radius: 18px;
     background: #fff2ea;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cr-empty-title {
@@ -389,7 +389,7 @@ const chatRoomStyles = `
     justify-content: center;
     border-radius: 999px;
     background: #fff2ea;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cr-typing__bubble {
@@ -451,7 +451,7 @@ const chatRoomStyles = `
     margin: 0 auto 14px;
     border-radius: 20px;
     background: #fff2ea;
-    color: #d4571a;
+    color: #ff8200;
   }
 
   .cr-state-card h3 {
@@ -475,7 +475,7 @@ const chatRoomStyles = `
     justify-content: center;
     gap: 8px;
     border-radius: 14px;
-    background: #d4571a;
+    background: #ff8200;
     padding: 0 16px;
     color: #ffffff;
     font-size: 13px;
@@ -895,13 +895,13 @@ const ChatRoom = () => {
               <defs>
                 <path id="buyselladda-chat-path" d="M72 152 C 170 42, 318 42, 568 152" />
               </defs>
-              <text fill="#d4571a" fontFamily="Inter, Arial, sans-serif" fontSize="44" fontWeight="900" letterSpacing="2">
+              <text fill="#ff8200" fontFamily="Inter, Arial, sans-serif" fontSize="44" fontWeight="900" letterSpacing="2">
                 <textPath href="#buyselladda-chat-path" startOffset="50%" textAnchor="middle">
                   BuySellAdda
                 </textPath>
               </text>
               <path d="M98 174 C 204 232, 408 232, 542 174" fill="none" stroke="#0f766e" strokeWidth="14" strokeLinecap="round" />
-              <path d="M140 120 L208 90 L288 132 L364 92 L498 132" fill="none" stroke="#d4571a" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M140 120 L208 90 L288 132 L364 92 L498 132" fill="none" stroke="#ff8200" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
 
@@ -966,7 +966,7 @@ const ChatRoom = () => {
 
       {profileOpen && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40 sm:items-center sm:justify-center">
-          <div className="w-full rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-md sm:rounded-3xl">
+          <div className="w-full rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-md sm:rounded-lg">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-gray-900">Profile details</h3>
               <button onClick={() => setProfileOpen(false)} className="rounded-xl p-2 text-gray-500 hover:bg-gray-100">
@@ -979,7 +979,7 @@ const ChatRoom = () => {
             ) : (
               <>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-blue-500 text-white">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-emerald-500 to-blue-500 text-white">
                     {profileDetails?.avatar?.url ? <img src={profileDetails.avatar.url} alt={profileDetails.name} className="h-full w-full object-cover" /> : <User size={24} />}
                   </div>
                   <div className="min-w-0">
@@ -989,11 +989,11 @@ const ChatRoom = () => {
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-gray-50 p-3">
+                  <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500">Ads</p>
                     <p className="text-lg font-bold text-gray-900">{profileDetails?.stats?.totalProducts ?? 0}</p>
                   </div>
-                  <div className="rounded-2xl bg-gray-50 p-3">
+                  <div className="rounded-lg bg-gray-50 p-3">
                     <p className="text-xs text-gray-500">Member since</p>
                     <p className="text-sm font-bold text-gray-900">
                       {profileDetails?.createdAt ? new Date(profileDetails.createdAt).toLocaleDateString() : '-'}
@@ -1011,7 +1011,7 @@ const ChatRoom = () => {
                   <button
                     type="button"
                     onClick={toggleBlock}
-                    className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold ${isBlockedByMe ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                    className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold ${isBlockedByMe ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
                   >
                     <Ban size={16} />
                     {isBlockedByMe ? 'Unblock' : 'Block'}
@@ -1019,7 +1019,7 @@ const ChatRoom = () => {
                   <button
                     type="button"
                     onClick={() => setReportOpen(true)}
-                    className="flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 hover:bg-red-100"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm font-bold text-red-700 hover:bg-red-100"
                   >
                     <ShieldAlert size={16} />
                     Report
@@ -1033,7 +1033,7 @@ const ChatRoom = () => {
 
       {reportOpen && (
         <div className="fixed inset-0 z-[60] flex items-end bg-black/40 sm:items-center sm:justify-center">
-          <form onSubmit={submitReport} className="w-full rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-md sm:rounded-3xl">
+          <form onSubmit={submitReport} className="w-full rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-md sm:rounded-lg">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900"><AlertTriangle size={18} /> Report user</h3>
               <button type="button" onClick={() => setReportOpen(false)} className="rounded-xl p-2 text-gray-500 hover:bg-gray-100">
@@ -1042,7 +1042,7 @@ const ChatRoom = () => {
             </div>
             <label className="mb-3 block">
               <span className="mb-1 block text-sm font-semibold text-gray-700">Reason</span>
-              <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-red-200">
+              <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-red-200">
                 <option>Spam or scam</option>
                 <option>Abusive behavior</option>
                 <option>Fake profile</option>
@@ -1052,9 +1052,9 @@ const ChatRoom = () => {
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-semibold text-gray-700">Details</span>
-              <textarea value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} rows={4} className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-red-200" placeholder="Tell us what happened" />
+              <textarea value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} rows={4} className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-red-200" placeholder="Tell us what happened" />
             </label>
-            <button type="submit" className="mt-4 w-full rounded-2xl bg-red-600 px-4 py-3 font-bold text-white hover:bg-red-700">
+            <button type="submit" className="mt-4 w-full rounded-lg bg-red-600 px-4 py-3 font-bold text-white hover:bg-red-700">
               Submit report
             </button>
           </form>

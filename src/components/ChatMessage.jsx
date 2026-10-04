@@ -68,18 +68,18 @@ const ChatMessage = ({ message, isOwn }) => {
 ═══════════════════════════════════════════ */
 const chatMsgStyles = `
   :root {
-    --cm-own-bg: #d4571a;
+    --cm-own-bg: #ff8200;
     --cm-own-bg-2: #c04d16;
     --cm-own-text: #ffffff;
     --cm-own-meta: rgba(255,255,255,0.72);
     --cm-other-bg: #ffffff;
-    --cm-other-border: #edeae5;
-    --cm-other-text: #0f0e0c;
-    --cm-other-meta: #9c9890;
-    --cm-avatar-bg: #f5f4f1;
-    --cm-avatar-border: #edeae5;
-    --cm-avatar-color: #9c9890;
-    --cm-shadow-own: 0 2px 10px rgba(212,87,26,0.22);
+    --cm-other-border: #dde5f0;
+    --cm-other-text: #17233c;
+    --cm-other-meta: #95a1b2;
+    --cm-avatar-bg: #f5f7fa;
+    --cm-avatar-border: #dde5f0;
+    --cm-avatar-color: #95a1b2;
+    --cm-shadow-own: 0 2px 10px rgba(255,130,0,0.22);
     --cm-shadow-other: 0 1px 4px rgba(0,0,0,0.06);
     --cm-t: 0.16s cubic-bezier(0.4,0,0.2,1);
   }

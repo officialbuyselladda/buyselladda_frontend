@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
+import { isPublicProductVisible } from '../utils';
 
 const normalizeFavorite = (item) => {
   const product = item?.product || item;
@@ -56,7 +57,8 @@ const Favorites = () => {
       const payload = data?.data || {};
       const nextFavorites = (payload.favorites || [])
         .map(normalizeFavorite)
-        .filter(Boolean);
+        .filter(Boolean)
+        .filter(isPublicProductVisible);
       const pagination = payload.pagination || {};
 
       setFavorites((prev) => {
@@ -64,7 +66,9 @@ const Favorites = () => {
         const seen = new Set(prev.map((item) => item._id));
         return [...prev, ...nextFavorites.filter((item) => !seen.has(item._id))];
       });
-      setTotalCount(Number(pagination.total || nextFavorites.length || 0));
+      setTotalCount((prevTotal) => (
+        append ? prevTotal + nextFavorites.length : nextFavorites.length
+      ));
       setHasMore(Number(pagination.pages || 1) > currentPage);
       setPage(currentPage);
     } catch (err) {
@@ -244,7 +248,7 @@ const Favorites = () => {
 const favoriteStyles = `
   .fav-page {
     min-height: 100vh;
-    background: #f5f4f1;
+    background: #f5f7fa;
     padding: 24px 0 64px;
   }
   .fav-container {
@@ -260,19 +264,19 @@ const favoriteStyles = `
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: #6b6860;
+    color: #5d6b82;
     font-size: 13px;
     font-weight: 800;
     text-decoration: none;
     margin-bottom: 16px;
   }
-  .fav-back:hover { color: #d4571a; }
+  .fav-back:hover { color: #ff8200; }
 
   .fav-hero {
     display: grid;
     grid-template-columns: minmax(0,1fr);
     gap: 18px;
-    border: 1px solid #edeae5;
+    border: 1px solid #dde5f0;
     border-radius: 16px;
     background: linear-gradient(135deg, #ffffff 0%, #fff8f4 100%);
     box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
@@ -298,12 +302,12 @@ const favoriteStyles = `
     align-items: center;
     justify-content: center;
     border-radius: 15px;
-    color: #d4571a;
-    background: #fff4ef;
-    border: 1px solid #fddcc8;
+    color: #ff8200;
+    background: #fff3e4;
+    border: 1px solid #ffcc99;
   }
   .fav-hero__eyebrow {
-    color: #d4571a;
+    color: #ff8200;
     font-size: 12px;
     font-weight: 900;
     text-transform: uppercase;
@@ -312,14 +316,14 @@ const favoriteStyles = `
   }
   .fav-hero h1 {
     margin: 0;
-    color: #0f0e0c;
+    color: #17233c;
     font-size: clamp(26px, 4vw, 38px);
     font-weight: 900;
     line-height: 1.1;
   }
   .fav-hero__sub {
     max-width: 620px;
-    color: #6b6860;
+    color: #5d6b82;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.5;
@@ -332,7 +336,7 @@ const favoriteStyles = `
   }
   .fav-stat {
     min-width: 92px;
-    border: 1px solid #edeae5;
+    border: 1px solid #dde5f0;
     border-radius: 12px;
     background: #ffffff;
     padding: 12px;
@@ -340,7 +344,7 @@ const favoriteStyles = `
   }
   .fav-stat strong {
     display: block;
-    color: #0f0e0c;
+    color: #17233c;
     font-size: 18px;
     font-weight: 900;
     line-height: 1;
@@ -348,7 +352,7 @@ const favoriteStyles = `
   .fav-stat span {
     display: block;
     margin-top: 5px;
-    color: #9c9890;
+    color: #95a1b2;
     font-size: 11px;
     font-weight: 800;
   }
@@ -365,19 +369,19 @@ const favoriteStyles = `
     display: flex;
     align-items: center;
     gap: 9px;
-    border: 1px solid #edeae5;
+    border: 1px solid #dde5f0;
     border-radius: 12px;
     background: #ffffff;
     padding: 0 12px;
     min-height: 44px;
-    color: #d4571a;
+    color: #ff8200;
   }
   .fav-search input {
     width: 100%;
     min-width: 0;
     border: 0;
     outline: 0;
-    color: #0f0e0c;
+    color: #17233c;
     font-size: 13px;
     font-weight: 700;
   }
@@ -385,7 +389,7 @@ const favoriteStyles = `
   .fav-refresh {
     border: 0;
     background: transparent;
-    color: #d4571a;
+    color: #ff8200;
     cursor: pointer;
     font-size: 12px;
     font-weight: 900;
@@ -396,7 +400,7 @@ const favoriteStyles = `
     gap: 7px;
     min-height: 44px;
     flex-shrink: 0;
-    border: 1px solid #edeae5;
+    border: 1px solid #dde5f0;
     border-radius: 12px;
     background: #ffffff;
     padding: 0 14px;
@@ -410,7 +414,7 @@ const favoriteStyles = `
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    color: #6b6860;
+    color: #5d6b82;
     font-size: 13px;
     font-weight: 800;
     margin-bottom: 12px;
@@ -466,7 +470,7 @@ const favoriteStyles = `
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border: 1px solid #edeae5;
+    border: 1px solid #dde5f0;
     border-radius: 16px;
     background: #ffffff;
     padding: 36px 18px;
@@ -479,20 +483,20 @@ const favoriteStyles = `
     width: 72px;
     height: 72px;
     border-radius: 20px;
-    background: #fff4ef;
-    color: #d4571a;
+    background: #fff3e4;
+    color: #ff8200;
     margin-bottom: 16px;
   }
   .fav-state__icon--warn { color: #92400e; background: #fffbeb; }
   .fav-state h2 {
-    color: #0f0e0c;
+    color: #17233c;
     font-size: 22px;
     font-weight: 900;
     margin-bottom: 7px;
   }
   .fav-state p {
     max-width: 430px;
-    color: #6b6860;
+    color: #5d6b82;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.55;
@@ -507,7 +511,7 @@ const favoriteStyles = `
     min-height: 42px;
     border: 0;
     border-radius: 10px;
-    background: #d4571a;
+    background: #ff8200;
     color: #ffffff;
     cursor: pointer;
     padding: 0 18px;
@@ -524,14 +528,14 @@ const favoriteStyles = `
 
   .fav-skeleton-card {
     overflow: hidden;
-    border: 1px solid #edeae5;
+    border: 1px solid #dde5f0;
     border-radius: 14px;
     background: #ffffff;
     animation: fav-pulse 1.4s ease-in-out infinite;
   }
   .fav-skeleton-card__img {
     aspect-ratio: 4 / 3;
-    background: #edeae5;
+    background: #dde5f0;
   }
   .fav-skeleton-card__body {
     display: flex;
@@ -543,7 +547,7 @@ const favoriteStyles = `
     display: block;
     height: 12px;
     border-radius: 999px;
-    background: #edeae5;
+    background: #dde5f0;
   }
   .fav-skeleton-card__body span:nth-child(1) { width: 76%; }
   .fav-skeleton-card__body span:nth-child(2) { width: 56%; }

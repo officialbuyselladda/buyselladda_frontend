@@ -1,21 +1,22 @@
 export const OLX_THEME = {
   primary: {
-    50: '#fff7ed',
-    500: '#F15A22',
-    600: '#E04E1D',
-    700: '#D33F0E',
+    50: '#EAF2FF',
+    500: '#0B63E5',
+    600: '#0647B5',
+    700: '#083B90',
   },
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    900: '#111827',
+    50: '#F5F7FA',
+    100: '#EEF3F8',
+    900: '#17233C',
   },
 } 
 
 export const OLXColors = {
-  orange: '#F15A22',
-  orangeDark: '#E04E1D',
-  blue: '#0066CC',
-  green: '#00A859',
+  orange: '#FF8200',
+  orangeDark: '#E86F00',
+  blue: '#0B63E5',
+  blueDark: '#0647B5',
+  green: '#12A642',
 };
 

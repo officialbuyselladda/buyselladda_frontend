@@ -85,7 +85,7 @@ const ReportProblem = () => {
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-orange-200 p-12 max-w-3xl mx-auto">
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-2xl border border-orange-200 p-12 max-w-3xl mx-auto">
           <form onSubmit={handleSubmit} className="space-y-8">
             {step === 1 && (
               <div>
@@ -101,7 +101,7 @@ const ReportProblem = () => {
                       required
                       value={formData.reporterName}
                       onChange={(e) => setFormData({...formData, reporterName: e.target.value})}
-                      className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-orange-500 focus:border-orange-400 shadow-sm transition-all"
+                      className="w-full px-5 py-4 border border-gray-200 rounded-lg focus:ring-4 focus:ring-orange-500 focus:border-orange-400 shadow-sm transition-all"
                       placeholder="John Doe"
                     />
                   </div>
@@ -115,7 +115,7 @@ const ReportProblem = () => {
                       required
                       value={formData.reporterEmail}
                       onChange={(e) => setFormData({...formData, reporterEmail: e.target.value})}
-                      className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-orange-500 focus:border-orange-400 shadow-sm transition-all"
+                      className="w-full px-5 py-4 border border-gray-200 rounded-lg focus:ring-4 focus:ring-orange-500 focus:border-orange-400 shadow-sm transition-all"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -144,7 +144,7 @@ const ReportProblem = () => {
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="px-8 py-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1"
+                    className="px-8 py-4 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-bold rounded-lg shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1"
                   >
                     Continue →
                   </button>
@@ -166,7 +166,7 @@ const ReportProblem = () => {
                     rows="5"
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-orange-500 focus:border-orange-400 shadow-sm transition-all resize-vertical"
+                    className="w-full px-5 py-4 border border-gray-200 rounded-lg focus:ring-4 focus:ring-orange-500 focus:border-orange-400 shadow-sm transition-all resize-vertical"
                     placeholder="Describe the problem in detail..."
                   />
                 </div>
@@ -180,7 +180,7 @@ const ReportProblem = () => {
                     type="text"
                     value={formData.adUrl}
                     onChange={(e) => setFormData({...formData, adUrl: e.target.value})}
-                    className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-orange-500 shadow-sm transition-all"
+                    className="w-full px-5 py-4 border border-gray-200 rounded-lg focus:ring-4 focus:ring-orange-500 shadow-sm transition-all"
                     placeholder="https://buyselladda.com/ads/abc123 or ad ID"
                   />
                 </div>
@@ -194,7 +194,7 @@ const ReportProblem = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="w-full px-5 py-6 border-2 border-dashed border-gray-300 rounded-2xl hover:border-orange-400 transition-all file:mr-5 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200 cursor-pointer"
+                    className="w-full px-5 py-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-400 transition-all file:mr-5 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200 cursor-pointer"
                   />
                 </div>
 
@@ -202,14 +202,14 @@ const ReportProblem = () => {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="flex-1 px-6 py-4 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-all font-semibold"
+                    className="flex-1 px-6 py-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all font-semibold"
                   >
                     ← Back
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold py-4 px-6 rounded-lg shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-lg disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
@@ -229,14 +229,14 @@ const ReportProblem = () => {
           </form>
         </div>
 
-        <div className="mt-16 p-8 bg-gradient-to-r from-orange-50 to-red-50 rounded-3xl border border-orange-200">
+        <div className="mt-16 p-8 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
           <div className="max-w-2xl mx-auto text-center">
             <Shield className="w-20 h-20 text-orange-600 mx-auto mb-6" />
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Thank You for Reporting</h3>
             <p className="text-lg text-gray-700 mb-8">
               Our team reviews reports within 24 hours. You can check status in your profile.
             </p>
-            <a href="/help" className="inline-flex items-center gap-2 bg-white px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all font-bold text-gray-900">
+            <a href="/help" className="inline-flex items-center gap-2 bg-white px-8 py-4 rounded-lg shadow-lg hover:shadow-xl transition-all font-bold text-gray-900">
               Help Center
             </a>
           </div>

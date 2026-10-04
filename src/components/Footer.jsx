@@ -2,20 +2,20 @@ import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Facebook, Twitter, Instagram, Youtube,
-  Plus, Shield, Download, Map, Link as LinkIcon,
-  ChevronRight, ArrowUpRight, Star,
+  Map, Link as LinkIcon,
+  ChevronRight,
   Mail, Phone, MapPin,
 } from 'lucide-react';
 import { contentApi } from '../services/api';
 import { cn } from '../utils';
+
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.buyselladda.app&hl=en_IN';
 
 /* ─── Fallback data ─────────────────────────────────────────── */
 const fallbackFooter = {
   brandName: 'BuySellAdda',
   logoUrl: '/logo-1.png',
   tagline: 'Har Deal, Ek Nayi Shuruaat.\nBuy and sell locally with confidence.',
-  trustTitle: 'Trusted by 10M+ users',
-  trustSubtitle: "India's #1 buying & selling platform",
   bannerButtonText: 'Post Your Ad',
   bannerButtonPath: '/create-product',
   copyrightText: 'BuySellAdda. All rights reserved',
@@ -60,6 +60,9 @@ const fallbackFooter = {
   bottomLinks: [
     { label: 'Privacy Policy', path: '/privacy' },
     { label: 'Terms of Use', path: '/terms' },
+    { label: 'Pricing Details', path: '/pricing' },
+    { label: 'Shipping Policy', path: '/shipping-policy' },
+    { label: 'Cancellation & Refunds', path: '/cancellation-refund' },
     { label: 'Safety Tips', path: '/safety' },
     { label: 'Help', path: '/help' },
   ],
@@ -69,12 +72,6 @@ const fallbackFooter = {
     { label: 'Twitter', url: 'https://x.com/buyselladda' },
     { label: 'Instagram', url: 'https://www.instagram.com/buyselladda/' },
     { label: 'Youtube', url: 'https://www.youtube.com/@buyselladda' },
-  ],
-  stats: [
-    { value: '10M+', label: 'Happy Users' },
-    { value: '50M+', label: 'Listings Posted' },
-    { value: '500+', label: 'Cities Covered' },
-    { value: '4.9★', label: 'App Rating' },
   ],
   contact: {
     email: 'support@buyselladda.com',
@@ -89,7 +86,8 @@ const getSocialIcon = (label = '') => socialIconMap[label.toLowerCase()] || Link
 const SmartLink = ({ item, className, children, onClick }) => {
   const target = item?.path || item?.url || '#';
   if (target.startsWith('http') || target.startsWith('mailto:') || target.startsWith('tel:') || target === '#') {
-    return <a href={target} className={className} onClick={onClick} rel="noopener noreferrer">{children}</a>;
+    const external = target.startsWith('http');
+    return <a href={target} className={className} onClick={onClick} rel="noopener noreferrer" target={external ? '_blank' : undefined}>{children}</a>;
   }
   return <Link to={target} className={className} onClick={onClick}>{children}</Link>;
 };
@@ -149,6 +147,14 @@ const SvgLinePattern = () => (
 );
 
 /* ─── Component ─────────────────────────────────────────────── */
+const PlayStoreIcon = () => (
+  <svg className="ftr-play-store-icon" viewBox="0 0 28 30" aria-hidden="true">
+    <path fill="#00A0FF" d="M1.4 1.2C.8 1.8.5 2.8.5 4v22c0 1.2.3 2.2.9 2.8l.1.1L14 15.2v-.4L1.5 1.1l-.1.1Z" />
+    <path fill="#00F076" d="m18.2 10.6-4.2 4.2v.4l4.2 4.2.1-.1 5-2.9c1.4-.8 1.4-2.1 0-2.9l-5-2.9h-.1Z" />
+    <path fill="#FFCE00" d="m18.3 19.3-4.3-4.3L1.4 28.8c.9.9 2.2 1 3.7.2l13.2-9.7Z" />
+    <path fill="#FF3A44" d="M18.3 10.7 5.1 1C3.6.1 2.3.3 1.4 1.2L14 15l4.3-4.3Z" />
+  </svg>
+);
 const Footer = () => {
   const location = useLocation();
   const { data } = useQuery({
@@ -157,7 +163,6 @@ const Footer = () => {
     staleTime: 5 * 60 * 1000,
   });
   const footer = { ...fallbackFooter, ...(data?.footer || {}) };
-  const stats = footer.stats || fallbackFooter.stats;
   const contact = footer.contact || fallbackFooter.contact;
 
   return (
@@ -165,63 +170,6 @@ const Footer = () => {
       <style>{footerStyles}</style>
 
       <footer className="ftr-root">
-        {/* SVG background decorations */}
-        <SvgDotGrid />
-        <SvgCircleDecor />
-        <SvgLinePattern />
-
-        {/* ── Stats strip ───────────────────────────────────── */}
-        <div className="ftr-stats-strip">
-          <SvgCurveTop />
-          <div className="ftr-stats-inner">
-            {stats.map((s, i) => (
-              <div className="ftr-stat-item" key={i}>
-                <span className="ftr-stat-value">{s.value}</span>
-                <span className="ftr-stat-label">{s.label}</span>
-                {i < stats.length - 1 && <span className="ftr-stat-sep" aria-hidden />}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── CTA Banner ────────────────────────────────────── */}
-        <div className="ftr-banner">
-          <div className="ftr-banner-svg-left">
-            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" fill="none">
-              <path d="M10,60 Q30,10 60,30 Q90,50 110,20" stroke="#2563EB" strokeOpacity=".15" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M0,80 Q40,40 80,70 Q110,90 120,60" stroke="#2563EB" strokeOpacity=".1" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="60" cy="60" r="40" stroke="#2563EB" strokeOpacity=".07" strokeWidth="12"/>
-            </svg>
-          </div>
-          <div className="ftr-banner-inner">
-            <div className="ftr-banner-left">
-              <div className="ftr-banner-icon">
-                <Shield size={22} strokeWidth={1.8} />
-              </div>
-              <div>
-                <p className="ftr-banner-title">
-                  {footer.trustTitle}
-                  <span className="ftr-banner-badge">
-                    <Star size={9} fill="#F59E0B" color="#F59E0B" /> 4.9
-                  </span>
-                </p>
-                <p className="ftr-banner-sub">{footer.trustSubtitle}</p>
-              </div>
-            </div>
-            <SmartLink item={{ path: footer.bannerButtonPath }} className="ftr-banner-btn">
-              <span className="ftr-banner-btn-icon"><Plus size={13} strokeWidth={3} /></span>
-              {footer.bannerButtonText}
-              <ArrowUpRight size={14} className="ftr-banner-btn-arrow" />
-            </SmartLink>
-          </div>
-          <div className="ftr-banner-svg-right">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none">
-              <path d="M80,20 Q60,60 20,40 Q0,30 10,60" stroke="#2563EB" strokeOpacity=".12" strokeWidth="2.5" strokeLinecap="round"/>
-              <circle cx="70" cy="70" r="25" stroke="#2563EB" strokeOpacity=".08" strokeWidth="10"/>
-            </svg>
-          </div>
-        </div>
-
         {/* ── Main grid ─────────────────────────────────────── */}
         <div className="ftr-main">
           <div className="ftr-grid">
@@ -273,11 +221,11 @@ const Footer = () => {
               </div>
 
               <div className="ftr-play-store-cta">
-                <SmartLink item={{ path: '/app-testing' }} className="ftr-play-store-btn">
-                  <Download size={15} />
+                <SmartLink item={{ url: PLAY_STORE_URL }} className="ftr-play-store-btn">
+                  <PlayStoreIcon />
                   <div className="ftr-play-store-text">
-                    <span>Play Store</span>
-                    <span className="ftr-play-store-sub">App testing — Launch soon</span>
+                    <span className="ftr-play-store-kicker">Get it on</span>
+                    <span>Google Play</span>
                   </div>
                 </SmartLink>
               </div>
@@ -606,20 +554,26 @@ const footerStyles = `
   .ftr-play-store-btn {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    border-radius: 13px;
-    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    gap: 9px;
+    padding: 8px 13px 9px;
+    border: 1px solid #2d3445;
+    border-radius: 8px;
+    background: #111827;
     color: #fff;
     text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 800;
     transition: transform .2s, box-shadow .2s;
-    box-shadow: 0 6px 18px rgba(16,185,129,.24);
+    box-shadow: 0 6px 18px rgba(17,24,39,.18);
   }
   .ftr-play-store-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(16,185,129,.28);
+    box-shadow: 0 10px 24px rgba(17,24,39,.24);
+  }
+  .ftr-play-store-icon {
+    width: 24px;
+    height: 26px;
+    flex-shrink: 0;
   }
   .ftr-play-store-text {
     display: flex;
@@ -627,10 +581,12 @@ const footerStyles = `
     line-height: 1.1;
     text-align: left;
   }
-  .ftr-play-store-sub {
-    font-size: 11px;
-    color: rgba(255,255,255,.85);
-    font-weight: 500;
+  .ftr-play-store-kicker {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: rgba(255,255,255,.78);
+    text-transform: uppercase;
   }
 
   /* ── Nav columns ──────────────────────────────────────────── */

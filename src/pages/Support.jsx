@@ -95,7 +95,7 @@ const Support = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-5 flex items-center gap-2 text-xl font-black text-gray-950">
               <MessageSquare size={22} className="text-orange-600" />
               Tell us what happened
@@ -187,7 +187,7 @@ const Support = () => {
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
               <h2 className="flex items-center gap-2 text-lg font-black text-gray-950">
                 <HelpCircle size={20} className="text-orange-600" />
                 What happens next
@@ -201,7 +201,7 @@ const Support = () => {
           </aside>
         </div>
 
-        <section className="mt-8 rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <section className="mt-8 rounded-lg border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-100 p-5">
             <h2 className="text-xl font-black text-gray-950">Your tickets</h2>
           </div>

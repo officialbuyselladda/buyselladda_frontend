@@ -58,6 +58,9 @@ import SearchResults from './pages/SearchResults';
 
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
+import PricingDetails from './pages/PricingDetails';
+import ShippingPolicy from './pages/ShippingPolicy';
+import CancellationRefundPolicy from './pages/CancellationRefundPolicy';
 import Help from './pages/Help';
 import Contact from './pages/Contact';
 import Safety from './pages/Safety';
@@ -218,6 +221,9 @@ const AppContent = () => {
 
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfUse />} />
+        <Route path="/pricing" element={<PricingDetails />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
+        <Route path="/cancellation-refund" element={<CancellationRefundPolicy />} />
         <Route path="/help" element={<Help />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/safety" element={<Safety />} />

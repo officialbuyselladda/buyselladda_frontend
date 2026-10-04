@@ -32,7 +32,7 @@ const Register = () => {
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl lg:grid-cols-[460px_minmax(0,1fr)]">
+      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl grid-cols-1 overflow-hidden rounded-lg border border-gray-100 bg-white shadow-xl lg:grid-cols-[460px_minmax(0,1fr)]">
         <section className="flex flex-col justify-center p-6 sm:p-10">
           <div className="mx-auto w-full max-w-sm">
             <div className="mb-8 text-center">
@@ -169,9 +169,9 @@ const Register = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-sm font-semibold text-gray-700">
-            <div className="rounded-2xl bg-white p-4 shadow-sm">Free ad posting</div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">Buyer chats</div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">Support desk</div>
+            <div className="rounded-lg bg-white p-4 shadow-sm">Free ad posting</div>
+            <div className="rounded-lg bg-white p-4 shadow-sm">Buyer chats</div>
+            <div className="rounded-lg bg-white p-4 shadow-sm">Support desk</div>
           </div>
         </section>
       </div>

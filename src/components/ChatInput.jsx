@@ -110,14 +110,14 @@ const ChatInput = ({ onSendMessage, onTyping, disabled = false }) => {
 const chatInputStyles = `
   :root {
     --ci-bg: #ffffff;
-    --ci-surface: #faf9f7;
-    --ci-border: #edeae5;
-    --ci-accent: #d4571a;
-    --ci-accent-hover: #b84816;
-    --ci-accent-light: #fff4ef;
-    --ci-text: #0f0e0c;
-    --ci-text-2: #6b6860;
-    --ci-text-3: #9c9890;
+    --ci-surface: #f5f7fa;
+    --ci-border: #dde5f0;
+    --ci-accent: #ff8200;
+    --ci-accent-hover: #e86f00;
+    --ci-accent-light: #fff3e4;
+    --ci-text: #17233c;
+    --ci-text-2: #5d6b82;
+    --ci-text-3: #95a1b2;
     --ci-radius: 14px;
     --ci-radius-sm: 9px;
     --ci-radius-full: 999px;
@@ -167,7 +167,7 @@ const chatInputStyles = `
   .ci-quick__pill:hover {
     background: var(--ci-accent-light);
     color: var(--ci-accent);
-    border-color: #fddcc8;
+    border-color: #ffcc99;
     transform: translateY(-1px);
   }
 
@@ -184,7 +184,7 @@ const chatInputStyles = `
   }
   .ci-row:focus-within {
     border-color: var(--ci-accent);
-    box-shadow: 0 0 0 3px rgba(212,87,26,0.10);
+    box-shadow: 0 0 0 3px rgba(255,130,0,0.10);
     background: var(--ci-bg);
   }
 
@@ -244,14 +244,14 @@ const chatInputStyles = `
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 10px rgba(212,87,26,0.28);
+    box-shadow: 0 2px 10px rgba(255,130,0,0.28);
     transition: background var(--ci-t), transform var(--ci-t), box-shadow var(--ci-t);
     align-self: flex-end;
   }
   .ci-send-btn:hover:not(:disabled) {
     background: var(--ci-accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(212,87,26,0.36);
+    box-shadow: 0 4px 14px rgba(255,130,0,0.36);
   }
   .ci-send-btn:active:not(:disabled) { transform: translateY(0); }
   .ci-send-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }

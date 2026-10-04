@@ -77,7 +77,7 @@ const AdminReports = () => {
             <option value="all">All Review Items</option>
             <option value="pending">Pending</option>
             <option value="suspicious">Suspicious</option>
-            <option value="rejected">Rejected</option>
+            <option value="rejected">Declined</option>
           </select>
         </div>
       </div>
